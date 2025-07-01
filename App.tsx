@@ -2,6 +2,8 @@
 
 
 
+
+
 import React, { useState, useEffect, useCallback, createContext, useContext } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation, Outlet } from 'react-router-dom';
 import type { User, AuthContextType, NavItem, UserGroup, ApplicationCardData } from './types';
@@ -390,6 +392,7 @@ const generateBreadcrumbItems = (pathname: string, userRole?: User['role']): { l
     if (segment.toLowerCase() === 'email-subscriptions') label = 'Email Subscriptions';
     if (segment.toLowerCase() === 'cloudedge-configurations') label = 'CloudEdge Configurations';
     if (segment.toLowerCase() === 'settings') label = 'Settings';
+    if (segment.toLowerCase() === 'billing') label = 'Subscriptions';
     if (segment.toLowerCase() === 'admin') { 
         label = 'Admin Panel'; 
     }
@@ -440,7 +443,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   const navItems: NavItem[] = [
     { name: 'Dashboard', path: user?.role === 'admin' ? '/app/admin-dashboard' : user?.role === 'reseller' ? '/app/reseller-dashboard' : '/app/dashboard', iconName: "fas fa-home" },
-    { name: 'Billings', path: '/app/billing', iconName: "far fa-credit-card" },
+    { name: 'Subscriptions', path: '/app/billing', iconName: "far fa-credit-card" },
     { name: 'Invoice History', path: '/app/invoices', iconName: "fas fa-file-invoice-dollar" },
     
     ...(user?.role === 'admin' ? [
@@ -462,7 +465,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const baseApps: ApplicationCardData[] = [
         { 
             id: 'cloudedge', 
-            name: 'CloudEdge Pro', 
+            name: 'CloudEdge', 
             description: '',
             iconName: "https://console.worldposta.com/assets/loginImgs/edgeLogo.png", 
             launchUrl: 'https://console.worldposta.com/auth/login' 
@@ -479,7 +482,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     if (role === 'customer') {
         return [
             ...baseApps,
-            { id: 'billing', name: 'Billing Center', description: '', iconName: 'fas fa-wallet', launchUrl: '/app/billing' },
+            { id: 'billing', name: 'Subscriptions', description: '', iconName: 'fas fa-wallet', launchUrl: '/app/billing' },
             { id: 'action-logs', name: 'Action Logs', description: '', iconName: 'fas fa-history', launchUrl: '/app/action-logs' },
         ];
     }

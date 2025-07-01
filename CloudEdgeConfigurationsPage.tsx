@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Button, Card, FormField, Modal, CollapsibleSection, SliderInput, Icon, Stepper } from './ui';
-import type { CloudEdgeConfiguration, InstanceTemplate, GPUType, CloudEdgeComponentType, CommitmentTerm, MachineTypeBootDisk, ProvisioningModel } from './types';
+import type { CloudEdgeConfiguration, InstanceTemplate, GPUType, CloudEdgeComponentType, MachineType, ProvisioningModel, SubscriptionTermUnit } from './types';
 import { v4 as uuidv4 } from 'uuid'; // For generating unique IDs for configurations
 
 // Mock Data (Ideally this would come from an API or config files)
@@ -48,14 +48,6 @@ const mockReadyPlans: ReadyPlan[] = [
     { id: 'rp-web', name: 'General Web Server', description: 'A balanced configuration suitable for hosting most websites and web applications.', priceMonthly: 50, specs: { cpu: 4, ramGB: 8, storageGB: 100, storageType: 'Balanced SSD' } },
     { id: 'rp-db', name: 'Database Server', description: 'High memory and performance storage for demanding database workloads.', priceMonthly: 120, specs: { cpu: 4, ramGB: 32, storageGB: 200, storageType: 'Performance SSD' } },
 ];
-
-const commitmentTermDiscounts: Record<CommitmentTerm, number> = {
-    monthly: 0,
-    '3months': 0.05, // 5%
-    '6months': 0.08, // 8%
-    '1year': 0.10,   // 10%
-    '2years': 0.20,  // 20%
-};
 
 
 // Pricing constants (per unit per month for base calculation)
@@ -106,12 +98,6 @@ const calculateCloudEdgeSubtotal = (config: Partial<CloudEdgeConfiguration>): nu
     if (config.advancedFirewall) subtotal += PRICE_ADVANCED_FIREWALL_MONTHLY * (config.type === 'vdc' ? 1 : qtyMultiplier) ;
     if (config.enhancedMonitoring) subtotal += PRICE_ENHANCED_MONITORING_MONTHLY * (config.type === 'vdc' ? 1 : qtyMultiplier);
 
-    // Apply commitment term discount
-    if (config.commitmentTerm) {
-        const discount = commitmentTermDiscounts[config.commitmentTerm];
-        subtotal *= (1 - discount);
-    }
-    
     // Spot/Preemptible Discount (conceptual 70%)
     if (config.provisioningModel === 'spot') {
         subtotal *= 0.30;
@@ -142,14 +128,36 @@ const AddCloudEdgeConfigurationModal: React.FC<AddCloudEdgeConfigurationModalPro
     const [config, setConfig] = useState<Partial<CloudEdgeConfiguration>>({
         type: 'instance',
         quantity: 1,
-        commitmentTerm: 'monthly',
+        subscriptionTermValue: 1,
+        subscriptionTermUnit: 'month',
         deploymentRegion: mockRegions[0].id,
         provisioningModel: 'regular',
+        machineType: 'performance-01',
     });
     const [currentSubtotal, setCurrentSubtotal] = useState(0);
     const [modalStep, setModalStep] = useState(1);
     const [individualNames, setIndividualNames] = useState<string[]>([]);
 
+    const RadioCard = ({ id, name, value, checked, onChange, label, iconName, tooltipText, showTooltip = true }: { id: string, name: string, value: string, checked: boolean, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, label: string, iconName: string, tooltipText: string, showTooltip?: boolean}) => (
+        <div className="h-full">
+            <label htmlFor={id} className={`relative block p-4 border-2 rounded-lg cursor-pointer transition-all h-full flex items-center justify-center text-center ${checked ? 'border-[#679a41] ring-2 ring-[#679a41]/50 bg-green-50 dark:bg-emerald-900/30' : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'}`}>
+                <input type="radio" id={id} name={name} value={value} checked={checked} onChange={onChange} className="sr-only" />
+                
+                <div className="flex items-center justify-center gap-2">
+                    <Icon name={iconName} className="text-2xl text-[#679a41] dark:text-emerald-400" />
+                    <span className="font-semibold text-sm text-[#293c51] dark:text-gray-200">{label}</span>
+                    {showTooltip && (
+                         <div className="group relative flex items-center">
+                            <Icon name="fas fa-info-circle" className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 cursor-help" />
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-xs p-2 text-xs text-white bg-gray-900 dark:bg-black rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-50">
+                                {tooltipText}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </label>
+        </div>
+    );
 
     useEffect(() => {
         setModalStep(1); // Reset to step 1 whenever modal opens or config being edited changes
@@ -159,9 +167,11 @@ const AddCloudEdgeConfigurationModal: React.FC<AddCloudEdgeConfigurationModalPro
              setConfig({ // Reset to default when not editing
                 type: 'instance',
                 quantity: 1,
-                commitmentTerm: 'monthly',
+                subscriptionTermValue: 1,
+                subscriptionTermUnit: 'month',
                 deploymentRegion: mockRegions[0].id,
                 provisioningModel: 'regular',
+                machineType: 'performance-01',
             });
         }
     }, [editingConfig, isOpen]); // Reset/Repopulate when modal opens or editingConfig changes
@@ -177,10 +187,6 @@ const AddCloudEdgeConfigurationModal: React.FC<AddCloudEdgeConfigurationModalPro
              // For instance/VDC, calculate based on all options, but with quantity 1 for unit price
             subtotal = calculateCloudEdgeSubtotal({ ...config, quantity: 1 });
         }
-
-        // Apply commitment discount universally
-        const discount = commitmentTermDiscounts[config.commitmentTerm || 'monthly'];
-        subtotal *= (1 - discount);
         
         setCurrentSubtotal(subtotal);
     }, [config]);
@@ -190,7 +196,7 @@ const AddCloudEdgeConfigurationModal: React.FC<AddCloudEdgeConfigurationModalPro
         const checked = (e.target as HTMLInputElement).checked;
         
         const newConfig = { ...config };
-        (newConfig as any)[name] = type === 'checkbox' ? checked : type === 'number' ? parseFloat(value) || 0 : value;
+        (newConfig as any)[name] = type === 'checkbox' ? checked : (e.target as HTMLInputElement).type === 'number' ? parseFloat(value) || 0 : value;
 
         // if type changes, reset type-specific fields
         if(name === 'type') {
@@ -219,8 +225,8 @@ const AddCloudEdgeConfigurationModal: React.FC<AddCloudEdgeConfigurationModalPro
     };
 
     const handleSubmit = () => {
-        if (!config.name || !config.type || !config.deploymentRegion || !config.commitmentTerm || (config.quantity || 0) < 1) {
-            alert("Please fill all required fields: Name, Type, Region, Subscription Term, Quantity.");
+        if (!config.name || !config.type || !config.deploymentRegion || (config.quantity || 0) < 1 || (config.subscriptionTermValue || 0) < 1) {
+            alert("Please fill all required fields: Name, Type, Region, Subscription Term, and Quantity.");
             return;
         }
         if (config.type === 'ready-plan' && !config.readyPlanId) {
@@ -242,7 +248,8 @@ const AddCloudEdgeConfigurationModal: React.FC<AddCloudEdgeConfigurationModalPro
                 name: config.name || 'Unnamed Config',
                 type: config.type || 'instance',
                 deploymentRegion: config.deploymentRegion || mockRegions[0].id,
-                commitmentTerm: config.commitmentTerm || 'monthly',
+                subscriptionTermValue: config.subscriptionTermValue || 1,
+                subscriptionTermUnit: config.subscriptionTermUnit || 'month',
                 quantity: config.quantity || 1,
                 unitSubtotalMonthly: currentSubtotal * (config.quantity || 1), // Total for the single line item
             };
@@ -289,28 +296,58 @@ const AddCloudEdgeConfigurationModal: React.FC<AddCloudEdgeConfigurationModalPro
 
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={editingConfig ? "Edit CloudEdge Configuration" : "Add New CloudEdge Configuration"} size="4xl" footer={null}>
+    <Modal isOpen={isOpen} onClose={onClose} title="" size="4xl" footer={null}>
       {modalStep === 1 && (
           <>
-            <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+            <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2 -mt-4">
+                <h3 className="text-xl font-semibold text-center mb-4 text-[#293c51] dark:text-gray-100">
+                    {editingConfig ? "Edit CloudEdge Configuration" : "Add New CloudEdge Configuration"}
+                </h3>
+                
+                <fieldset>
+                    <legend className="block text-sm font-medium mb-2 text-[#293c51] dark:text-gray-300">Configuration Type</legend>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <RadioCard 
+                            id="type-instance" name="type" value="instance" checked={config.type === 'instance'} onChange={handleChange} 
+                            label="Instances" iconName="fas fa-server" tooltipText="Deploy one or more pre-defined virtual machine instances." />
+                        <RadioCard 
+                            id="type-vdc" name="type" value="vdc" checked={config.type === 'vdc'} onChange={handleChange} 
+                            label="VDC" iconName="fas fa-cloud" tooltipText="Create a Virtual Data Center with a custom pool of resources (CPU, RAM, Storage)." />
+                        <RadioCard 
+                            id="type-ready-plan" name="type" value="ready-plan" checked={config.type === 'ready-plan'} onChange={handleChange} 
+                            label="Ready Plans" iconName="fas fa-bolt" tooltipText="" showTooltip={false} />
+                    </div>
+                </fieldset>
+                <div className="text-center mt-2 text-sm">
+                    <a href="#" onClick={(e) => { e.preventDefault(); alert('Helpful information about the differences between Instances, VDCs, and Ready Plans would be displayed here.'); }} className="text-[#679a41] dark:text-emerald-400 hover:underline">
+                        Click here to know the difference between types
+                    </a>
+                </div>
+
                 <FormField id="configName" name="name" label="Configuration Name" value={config.name || ''} onChange={handleChange} placeholder="e.g., My Web Server Cluster" required />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField id="configType" name="type" label="Configuration Type" as="select" value={config.type || 'instance'} onChange={handleChange} required>
-                        <option value="instance">Instances</option>
-                        <option value="vdc">Virtual Data Center (VDC)</option>
-                        <option value="ready-plan">Ready Plans</option>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField id="subscriptionTermValue" name="subscriptionTermValue" label="Subscription Term" type="number" value={config.subscriptionTermValue || 1} onChange={handleChange} min={1} required />
+                    <FormField id="subscriptionTermUnit" name="subscriptionTermUnit" label="Duration" as="select" value={config.subscriptionTermUnit || 'month'} onChange={handleChange}>
+                        <option value="hr">Hour(s)</option>
+                        <option value="week">Week(s)</option>
+                        <option value="month">Month(s)</option>
+                        <option value="year">Year(s)</option>
                     </FormField>
                     <FormField id="quantity" name="quantity" label="Quantity" type="number" value={config.quantity || 1} onChange={handleChange} min={1} required disabled={!!editingConfig} />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                <div className={`grid grid-cols-1 ${config.type === 'instance' ? 'md:grid-cols-2' : ''} gap-4`}>
                     <FormField id="deploymentRegion" name="deploymentRegion" label="Deployment Region" as="select" value={config.deploymentRegion || ''} onChange={handleChange} required>
                         {mockRegions.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                     </FormField>
-                    <FormField id="commitmentTerm" name="commitmentTerm" label="Subscription Term" as="select" value={config.commitmentTerm || 'monthly'} onChange={handleChange} required>
-                        {Object.entries(commitmentTermDiscounts).map(([key, discount]) => (
-                            <option key={key} value={key}>{key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')} ({discount*100}% disc.)</option>
-                        ))}
-                    </FormField>
+                    {config.type === 'instance' && (
+                        <FormField id="machineType" name="machineType" label="Machine Type" as="select" value={config.machineType || 'performance-01'} onChange={handleChange}>
+                            <option value="performance-01">Performance 01</option>
+                            <option value="performance-02">Performance 02</option>
+                            <option value="performance-03">Performance 03</option>
+                        </FormField>
+                    )}
                 </div>
 
                 {config.type === 'instance' && (
@@ -320,11 +357,6 @@ const AddCloudEdgeConfigurationModal: React.FC<AddCloudEdgeConfigurationModalPro
                     {mockInstanceTemplates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                     </FormField>
                     {selectedTemplate && <p className="text-xs text-gray-500 dark:text-gray-400 -mt-2">Template provides: {selectedTemplate.description}</p>}
-                    <FormField id="machineTypeBootDisk" name="machineTypeBootDisk" label="Machine Type Boot Disk" as="select" value={config.machineTypeBootDisk || 'balanced-ssd'} onChange={handleChange}>
-                        <option value="balanced-ssd">Balanced SSD</option>
-                        <option value="performance-ssd">Performance SSD</option>
-                        <option value="standard-hdd">Standard HDD</option>
-                    </FormField>
                 </>
                 )}
                 
@@ -397,7 +429,7 @@ const AddCloudEdgeConfigurationModal: React.FC<AddCloudEdgeConfigurationModalPro
 
                 <div className="mt-6 pt-4 border-t dark:border-gray-700">
                     <p className="text-lg font-semibold text-right text-[#293c51] dark:text-gray-100">
-                        Unit Subtotal (Monthly): ${currentSubtotal.toFixed(2)}
+                        Unit Subtotal (Monthly Estimate): ${currentSubtotal.toFixed(2)}
                     </p>
                 </div>
             </div>
@@ -450,7 +482,7 @@ const ConfigurationItemCard: React.FC<ConfigurationItemCardProps> = ({ config, o
       <div className="flex justify-between items-start">
         <div>
           <h3 className="text-lg font-semibold text-[#293c51] dark:text-gray-100">{config.name}</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Type: {config.type} | Qty: {config.quantity} | Term: {config.commitmentTerm}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Type: {config.type} | Qty: {config.quantity} | Term: {`${config.subscriptionTermValue} ${config.subscriptionTermUnit}${config.subscriptionTermValue > 1 ? 's' : ''}`}</p>
           {config.type === 'instance' && config.instanceTemplateId && (
             <p className="text-xs text-gray-500 dark:text-gray-400">Template: {mockInstanceTemplates.find(t=>t.id === config.instanceTemplateId)?.name}</p>
           )}
@@ -529,7 +561,7 @@ const PaymentStep: React.FC<{
                             <li key={config.id} className="flex justify-between items-start text-sm">
                                 <div>
                                     <p className="font-medium text-[#293c51] dark:text-gray-200">{config.name} x {config.quantity}</p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">{config.commitmentTerm}</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">{`${config.subscriptionTermValue} ${config.subscriptionTermUnit}${config.subscriptionTermValue > 1 ? 's' : ''}`}</p>
                                 </div>
                                 <p className="font-semibold text-gray-700 dark:text-gray-300">${config.unitSubtotalMonthly.toFixed(2)}</p>
                             </li>
@@ -683,7 +715,7 @@ const CloudEdgeConfigurationsPage: React.FC = () => {
         />
       )}
 
-      {currentStep === 2 && (
+      {currentStep === 2 &&(
           <ConfirmationStep onFinish={resetFlow} />
       )}
       

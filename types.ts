@@ -1,7 +1,6 @@
 
 
 
-
 export interface User {
   id: string;
   fullName: string;
@@ -66,7 +65,7 @@ export interface ProductPortal {
 
 // Data for the Floating App Launcher and Dashboard Cards
 export interface ApplicationCardData {
-  id: string;
+  id:string;
   name: string;
   description: string;
   iconName: string; 
@@ -100,8 +99,8 @@ export interface EmailCartItem {
 
 // Types for CloudEdge Configuration Management
 export type CloudEdgeComponentType = 'instance' | 'vdc' | 'ready-plan';
-export type CommitmentTerm = 'monthly' | '3months' | '6months' | '1year' | '2years';
-export type MachineTypeBootDisk = 'balanced-ssd' | 'performance-ssd' | 'standard-hdd';
+export type SubscriptionTermUnit = 'hr' | 'week' | 'month' | 'year';
+export type MachineType = 'performance-01' | 'performance-02' | 'performance-03';
 export type ProvisioningModel = 'regular' | 'spot';
 
 export interface InstanceTemplate {
@@ -125,8 +124,9 @@ export interface CloudEdgeConfiguration {
   name: string;
   type: CloudEdgeComponentType;
   deploymentRegion: string;
-  commitmentTerm: CommitmentTerm;
-  machineTypeBootDisk?: MachineTypeBootDisk; // For instance
+  subscriptionTermValue: number;
+  subscriptionTermUnit: SubscriptionTermUnit;
+  machineType?: MachineType; // For instance
   quantity: number;
   
   // Instance specific
@@ -170,21 +170,31 @@ export interface StepperStep {
   status?: 'completed' | 'current' | 'upcoming'; // Optional: for visual indication
 }
 
+// New type for ticket attachments
+export interface TicketAttachment {
+  name: string;
+  type: string;
+  size: number;
+  dataUrl: string; // base64 representation
+}
+
 // New type for comments
 export interface SupportTicketComment {
   author: string; // e.g., 'Customer Name', 'Support Staff'
   timestamp: string; // ISO String
   content: string;
+  attachments?: TicketAttachment[];
 }
 
 // Type for Support Tickets
 export interface SupportTicket {
   id: string; // e.g., 'TKT-12345'
   subject: string;
-  product: 'CloudEdge Pro' | 'Posta Email' | 'Billing' | 'General Inquiry';
+  product: 'CloudEdge' | 'Posta Email' | 'Subscriptions' | 'General Inquiry';
   status: 'Open' | 'In Progress' | 'Resolved' | 'Closed';
   lastUpdate: string; // ISO String
   description: string; 
+  attachments?: TicketAttachment[];
   customerId?: string; // ID of the customer who opened the ticket
   customerName?: string; // Name of the customer for display
   comments?: SupportTicketComment[];

@@ -1,9 +1,11 @@
 
 
 
+
+
 import React, { useState, useEffect, useRef, Fragment } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import type { NavItem, User, AppNotification, StepperStep, EmailPlan, EmailCartItem, CloudEdgeConfiguration, InstanceTemplate, GPUType, EmailPlanDuration, CommitmentTerm, ApplicationCardData } from './types';
+import type { NavItem, User, AppNotification, StepperStep, EmailPlan, EmailCartItem, CloudEdgeConfiguration, InstanceTemplate, GPUType, EmailPlanDuration, ApplicationCardData } from './types';
 import { NotificationType } from './types'; // Import enum for usage
 
 // Generic Icon Component for Font Awesome
@@ -458,7 +460,7 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout, onToggleMobileSi
                     <Icon name="fas fa-cog" className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" fixedWidth /> Account Settings
                   </Link>
                    <Link to="/app/billing" onClick={() => setUserMenuOpen(false)} className="flex items-center px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-slate-600">
-                    <Icon name="far fa-credit-card" className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" fixedWidth /> Billings
+                    <Icon name="far fa-credit-card" className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" fixedWidth /> Subscriptions
                   </Link>
                   <Link to="/app/support" onClick={() => setUserMenuOpen(false)} className="flex items-center px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-slate-600">
                     <Icon name="fas fa-headset" className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" fixedWidth /> Support
@@ -495,9 +497,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ navItems, isOpen, isCollapsed,
   const activeBgColor = "bg-[#679a41] dark:bg-emerald-600";
   const activeTextColor = "text-white dark:text-white";
   
-  const iconBaseColor = "text-gray-500 dark:text-gray-400";
+  const iconBaseColor = "text-[#679a41] dark:text-emerald-400";
   const iconActiveColor = "text-white dark:text-white"; 
-  const iconHoverColor = "group-hover:text-[#679a41] dark:group-hover:text-emerald-400";
+  const iconHoverColor = "group-hover:text-[#588836] dark:group-hover:text-emerald-500";
 
   const settingsNavItem: NavItem = { name: 'Settings', path: '/app/settings', iconName: "fas fa-cog" };
   
@@ -886,7 +888,7 @@ export const FloatingAppLauncher: React.FC<FloatingAppLauncherProps> = ({ navIte
   );
 
   const settingsItem: NavItem = { name: 'Settings', path: '/app/settings', iconName: 'fas fa-cog' };
-  const filteredNavItems = navItems.filter(item => item.name !== 'Billings');
+  const filteredNavItems = navItems.filter(item => item.name !== 'Subscriptions');
   const quickLinkItems = [...filteredNavItems, settingsItem];
 
   return (
@@ -895,7 +897,7 @@ export const FloatingAppLauncher: React.FC<FloatingAppLauncherProps> = ({ navIte
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed top-[calc(25%_-_50px)] right-0 -translate-y-1/2 z-50 bg-[#f8f8f8] dark:bg-slate-800 border-l border-t border-b border-gray-200 dark:border-slate-700 text-[#679a41] dark:text-emerald-400 py-4 px-2 rounded-l-lg shadow-lg hover:bg-gray-200 dark:hover:bg-slate-700 focus:outline-none focus:ring-4 focus:ring-[#679a41]/50 dark:focus:ring-emerald-400/50 transition-all duration-200 transform hover:scale-105"
+          className="fixed top-[80px] right-0 z-50 bg-[#f8f8f8] dark:bg-slate-800 border-l border-t border-b border-gray-200 dark:border-slate-700 text-[#679a41] dark:text-emerald-400 py-4 px-2 rounded-l-lg shadow-lg hover:bg-gray-200 dark:hover:bg-slate-700 focus:outline-none focus:ring-4 focus:ring-[#679a41]/50 dark:focus:ring-emerald-400/50 transition-all duration-200 transform hover:scale-105"
           aria-label="Open application launcher"
         >
           <Icon name="fas fa-rocket" className="text-2xl" />
@@ -1066,7 +1068,7 @@ export const SliderInput: React.FC<SliderInputProps> = ({ id, label, value, onCh
           value={value}
           onChange={handleSliderChange}
           disabled={disabled}
-          className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#679a41] dark:accent-emerald-500"
+          className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#679a41] dark:accent-emerald-500"
         />
         <input
           type="number"
@@ -1079,6 +1081,18 @@ export const SliderInput: React.FC<SliderInputProps> = ({ id, label, value, onCh
           disabled={disabled}
           className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 dark:text-white focus:ring-[#679a41] dark:focus:ring-emerald-400 focus:border-[#679a41] dark:focus:border-emerald-400"
         />
+      </div>
+    </div>
+  );
+};
+
+// Tooltip Component
+export const Tooltip: React.FC<{ text: string; children: React.ReactNode; className?: string }> = ({ text, children, className }) => {
+  return (
+    <div className={`relative flex items-center group ${className}`}>
+      {children}
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-xs p-2 text-xs text-white bg-gray-900 dark:bg-black rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10">
+        {text}
       </div>
     </div>
   );
