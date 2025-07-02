@@ -4,7 +4,9 @@
 
 
 
-import React, { useState, useEffect, useCallback, createContext, useContext } from 'react';
+
+
+import React, { useState, useEffect, useCallback, createContext, useContext, useMemo } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation, Outlet } from 'react-router-dom';
 import type { User, AuthContextType, NavItem, UserGroup, ApplicationCardData } from './types';
 import { Navbar, Sidebar, Spinner, Breadcrumbs, Footer, Icon, FloatingAppLauncher } from './ui'; 
@@ -216,6 +218,20 @@ const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       {children}
     </ThemeContext.Provider>
   );
+};
+
+
+// App Layout Context
+interface AppLayoutContextType {
+    setSearchPanelOpen: (isOpen: boolean) => void;
+}
+const AppLayoutContext = createContext<AppLayoutContextType | null>(null);
+export const useAppLayout = () => {
+    const context = useContext(AppLayoutContext);
+    if (!context) {
+        throw new Error("useAppLayout must be used within AppLayout");
+    }
+    return context;
 };
 
 
@@ -440,6 +456,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [desktopSidebarCollapsed, setDesktopSidebarCollapsed] = useState(false);
   const location = useLocation();
+  const [isActionLogSearchPanelOpen, setIsActionLogSearchPanelOpen] = useState(false);
 
   const navItems: NavItem[] = [
     { name: 'Dashboard', path: user?.role === 'admin' ? '/app/admin-dashboard' : user?.role === 'reseller' ? '/app/reseller-dashboard' : '/app/dashboard', iconName: "fas fa-home" },
@@ -510,31 +527,38 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const handleToggleDesktopSidebar = () => setDesktopSidebarCollapsed(!desktopSidebarCollapsed);
 
   const breadcrumbItems = generateBreadcrumbItems(location.pathname, user?.role);
+  
+  const appLayoutContextValue = useMemo(() => ({
+    setSearchPanelOpen: setIsActionLogSearchPanelOpen
+  }), []);
+
 
   return (
-    <div className="flex h-screen bg-[#fcfcfc] dark:bg-gray-900 overflow-hidden">
-      <Sidebar 
-        navItems={navItems} 
-        isOpen={mobileSidebarOpen} 
-        isCollapsed={desktopSidebarCollapsed} 
-        onClose={handleCloseMobileSidebar} 
-      />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Navbar 
-          user={user} 
-          onLogout={logout} 
-          onToggleMobileSidebar={handleToggleMobileSidebar}
-          onToggleDesktopSidebar={handleToggleDesktopSidebar}
-          sidebarCollapsed={desktopSidebarCollapsed}
+    <AppLayoutContext.Provider value={appLayoutContextValue}>
+      <div className="flex h-screen bg-[#fcfcfc] dark:bg-gray-900 overflow-hidden">
+        <Sidebar 
+          navItems={navItems} 
+          isOpen={mobileSidebarOpen} 
+          isCollapsed={desktopSidebarCollapsed} 
+          onClose={handleCloseMobileSidebar} 
         />
-        <main className={`flex-1 overflow-x-hidden overflow-y-auto bg-[#fcfcfc] dark:bg-gray-900 p-4 sm:p-6 lg:p-8 transition-all duration-300 ease-in-out`}>
-          <Breadcrumbs items={breadcrumbItems} />
-          {children}
-        </main>
-        <Footer />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <Navbar 
+            user={user} 
+            onLogout={logout} 
+            onToggleMobileSidebar={handleToggleMobileSidebar}
+            onToggleDesktopSidebar={handleToggleDesktopSidebar}
+            sidebarCollapsed={desktopSidebarCollapsed}
+          />
+          <main className={`flex-1 overflow-x-hidden overflow-y-auto bg-[#fcfcfc] dark:bg-gray-900 p-4 sm:p-6 lg:p-8 transition-all duration-300 ease-in-out`}>
+            <Breadcrumbs items={breadcrumbItems} />
+            {children}
+          </main>
+          <Footer />
+        </div>
+        {!isActionLogSearchPanelOpen && <FloatingAppLauncher navItems={navItems} appItems={appLauncherItems} />}
       </div>
-      <FloatingAppLauncher navItems={navItems} appItems={appLauncherItems} />
-    </div>
+    </AppLayoutContext.Provider>
   );
 };
 

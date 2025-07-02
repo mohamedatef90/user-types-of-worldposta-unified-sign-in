@@ -1,12 +1,11 @@
 
-
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useNavigate, Routes, Route, Outlet, Navigate, useLocation, NavLink, useSearchParams } from 'react-router-dom';
 import { 
     FormField, Button, Card, Spinner, Icon,
-    Modal, AuthLayout, Footer 
+    Modal, AuthLayout, Footer, SearchableSelect
 } from './ui';
-import { useAuth, useTheme, getMockUserById, getAllMockCustomers, getAllMockInternalUsers, getUsersForTeam, getGroupsForTeam, MOCK_USER_GROUPS, MOCK_PERMISSIONS } from './App'; 
+import { useAuth, useTheme, getMockUserById, getAllMockCustomers, getAllMockInternalUsers, getUsersForTeam, getGroupsForTeam, MOCK_USER_GROUPS, MOCK_PERMISSIONS, useAppLayout } from './App'; 
 import type { User, AppNotification, LogEntry, UserGroup, ApplicationCardData, SupportTicket, SupportTicketComment, TicketAttachment } from './types';
 import { NotificationType } from './types';
 import { v4 as uuidv4 } from 'uuid';
@@ -1065,10 +1064,11 @@ const ActionLogAdvancedSearchPanel: React.FC<{
     onClose: () => void;
     filters: any;
     onFilterChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+    onSearchableSelectChange: (name: string, value: string) => void;
     onSearch: () => void;
     onClear: () => void;
     allLogEntries: (LogEntry & { sourceKey: string })[];
-}> = ({ isOpen, onClose, filters, onFilterChange, onSearch, onClear, allLogEntries }) => {
+}> = ({ isOpen, onClose, filters, onFilterChange, onSearchableSelectChange, onSearch, onClear, allLogEntries }) => {
     
     const searchOptions = useMemo(() => {
         return {
@@ -1112,7 +1112,7 @@ const ActionLogAdvancedSearchPanel: React.FC<{
             />
             <div
                 ref={panelRef}
-                className={`fixed top-0 right-0 h-full w-full max-w-sm bg-[#f8f8f8] dark:bg-slate-800 shadow-2xl z-50 transform transition-transform duration-300 ease-in-out flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+                className={`fixed top-0 right-0 h-auto max-h-[calc(100vh-2rem)] my-4 mr-4 w-full max-w-sm bg-[#f8f8f8] dark:bg-slate-800 shadow-2xl z-50 transform transition-transform duration-300 ease-in-out flex flex-col rounded-lg ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="advanced-search-title"
@@ -1126,8 +1126,8 @@ const ActionLogAdvancedSearchPanel: React.FC<{
 
                 <div className="flex-grow overflow-y-auto p-4 space-y-4">
                     <FormField id="objectName" name="objectName" label="Object Name" value={filters.objectName} onChange={onFilterChange} placeholder="e.g., prod-web-01" />
-                    <FormField as="select" id="action" name="action" label="Action" value={filters.action} onChange={onFilterChange}><option value="">All Actions</option>{searchOptions.actions.map(o => <option key={o} value={o}>{o}</option>)}</FormField>
-                    <FormField as="select" id="user" name="user" label="User" value={filters.user} onChange={onFilterChange}><option value="">All Users</option>{searchOptions.users.map(o => <option key={o} value={o}>{o}</option>)}</FormField>
+                    <SearchableSelect id="action" label="Action" value={filters.action} onChange={(value) => onSearchableSelectChange('action', value)} options={searchOptions.actions.map(o => ({ value: o, label: o }))} placeholder="Search actions..."/>
+                    <SearchableSelect id="user" label="User" value={filters.user} onChange={(value) => onSearchableSelectChange('user', value)} options={searchOptions.users.map(o => ({ value: o, label: o }))} placeholder="Search users..." />
                     <FormField as="select" id="product" name="product" label="Product" value={filters.product} onChange={onFilterChange}><option value="">All Products</option>{searchOptions.products.map(o => <option key={o} value={o}>{o}</option>)}</FormField>
                     <FormField as="select" id="application" name="application" label="Application" value={filters.application} onChange={onFilterChange}><option value="">All Applications</option>{searchOptions.applications.map(o => <option key={o} value={o}>{o}</option>)}</FormField>
                     <FormField as="select" id="status" name="status" label="Status" value={filters.status} onChange={onFilterChange}><option value="">All Statuses</option>{searchOptions.statuses.map(o => <option key={o} value={o}>{o}</option>)}</FormField>
@@ -1155,6 +1155,12 @@ export const ActionLogsPage: React.FC = () => {
   const [searchFilters, setSearchFilters] = useState(initialFilters);
   const [searchResults, setSearchResults] = useState<{ [key: string]: { title: string, logs: LogEntry[] } } | null>(null);
   const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false);
+  const { setSearchPanelOpen } = useAppLayout();
+
+  useEffect(() => {
+    setSearchPanelOpen(isSearchPanelOpen);
+  }, [isSearchPanelOpen, setSearchPanelOpen]);
+
 
   const allLogData = useMemo(() => {
     const allLogEntries = Object.entries(logSources).flatMap(([key, source]) => 
@@ -1170,6 +1176,7 @@ export const ActionLogsPage: React.FC = () => {
     if (tab === 'advanced') {
       setIsSearchPanelOpen(true);
     } else {
+      setIsSearchPanelOpen(false);
       setSearchFilters(initialFilters);
       setSearchResults(null);
     }
@@ -1177,6 +1184,10 @@ export const ActionLogsPage: React.FC = () => {
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setSearchFilters(prev => ({...prev, [e.target.name]: e.target.value}));
+  };
+
+  const handleSearchableSelectChange = (name: string, value: string) => {
+      setSearchFilters(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSearch = useCallback(() => {
@@ -1274,6 +1285,7 @@ export const ActionLogsPage: React.FC = () => {
             onClose={() => setIsSearchPanelOpen(false)}
             filters={searchFilters}
             onFilterChange={handleFilterChange}
+            onSearchableSelectChange={handleSearchableSelectChange}
             onSearch={handleSearchFromPanel}
             onClear={handleClearFromPanel}
             allLogEntries={allLogData.allLogEntries}
@@ -1432,6 +1444,9 @@ let mockSupportTickets: SupportTicket[] = [
         comments: [
             { author: 'Demo Customer Alpha', timestamp: new Date(Date.now() - 3600000 * 2).toISOString(), content: 'I have been trying to SSH into my main web server VM for the past hour and it keeps timing out. The VM appears to be running in the portal.'},
             { author: 'Support Staff', timestamp: new Date(Date.now() - 3600000 * 1).toISOString(), content: 'We are looking into the network rules for your VM. We suspect a firewall issue and will update you shortly.'}
+        ],
+        internalComments: [
+            { author: 'Admin User', timestamp: new Date(Date.now() - 3600000 * 1.5).toISOString(), content: 'This looks like a network ACL misconfiguration on our end. I am investigating.' }
         ]
     },
     { 
@@ -1486,6 +1501,7 @@ export const SupportPage: React.FC = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
+    const [activeTicketTab, setActiveTicketTab] = useState<'conversation' | 'internal'>('conversation');
     const [newTicket, setNewTicket] = useState({ 
         product: 'General Inquiry' as SupportTicket['product'], 
         subject: '', 
@@ -1494,6 +1510,7 @@ export const SupportPage: React.FC = () => {
 
     const [newTicketAttachments, setNewTicketAttachments] = useState<File[]>([]);
     const [newComment, setNewComment] = useState('');
+    const [newInternalComment, setNewInternalComment] = useState('');
     const [newCommentAttachments, setNewCommentAttachments] = useState<File[]>([]);
     const [newStatus, setNewStatus] = useState<SupportTicket['status']>('Open');
     const commentFileInputRef = useRef<HTMLInputElement>(null);
@@ -1551,8 +1568,45 @@ export const SupportPage: React.FC = () => {
         setSelectedTicket(ticket);
         setNewStatus(ticket.status);
         setNewComment('');
+        setNewInternalComment('');
         setNewCommentAttachments([]);
+        setActiveTicketTab('conversation'); // Reset to default tab
         setIsViewModalOpen(true);
+    };
+
+    const handleDeleteComment = (ticketId: string, commentTimestamp: string, commentType: 'public' | 'internal') => {
+        if (!window.confirm('Are you sure you want to delete this comment? This action cannot be undone.')) {
+            return;
+        }
+
+        const ticketToUpdate = tickets.find(t => t.id === ticketId);
+        if (!ticketToUpdate) return;
+
+        let updatedTicket: SupportTicket;
+
+        if (commentType === 'public') {
+            updatedTicket = {
+                ...ticketToUpdate,
+                comments: ticketToUpdate.comments?.filter(c => c.timestamp !== commentTimestamp)
+            };
+        } else { // internal
+            updatedTicket = {
+                ...ticketToUpdate,
+                internalComments: ticketToUpdate.internalComments?.filter(c => c.timestamp !== commentTimestamp)
+            };
+        }
+        
+        const newTickets = tickets.map(t => t.id === ticketId ? updatedTicket : t);
+        setTickets(newTickets);
+        
+        if (selectedTicket?.id === ticketId) {
+            setSelectedTicket(updatedTicket);
+        }
+
+        const mockIndex = mockSupportTickets.findIndex(t => t.id === ticketId);
+        if (mockIndex !== -1) {
+            mockSupportTickets[mockIndex] = updatedTicket;
+        }
     };
 
     const handleUpdateTicket = async (e: React.FormEvent) => {
@@ -1585,6 +1639,33 @@ export const SupportPage: React.FC = () => {
 
         setIsViewModalOpen(false);
         setSelectedTicket(null);
+    };
+
+    const handleAddInternalComment = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedTicket || !newInternalComment.trim()) return;
+
+        const newCommentObject: SupportTicketComment = {
+            author: user?.fullName || 'Staff Member',
+            timestamp: new Date().toISOString(),
+            content: newInternalComment.trim(),
+        };
+
+        const updatedTicketData: SupportTicket = {
+            ...selectedTicket,
+            internalComments: [...(selectedTicket.internalComments || []), newCommentObject]
+        };
+        
+        const newTickets = tickets.map(t => t.id === updatedTicketData.id ? updatedTicketData : t);
+        setTickets(newTickets);
+        setSelectedTicket(updatedTicketData);
+        
+        const mockIndex = mockSupportTickets.findIndex(t => t.id === updatedTicketData.id);
+        if (mockIndex !== -1) {
+            mockSupportTickets[mockIndex] = updatedTicketData;
+        }
+
+        setNewInternalComment('');
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -1620,7 +1701,7 @@ export const SupportPage: React.FC = () => {
         };
         const newTickets = [newTicketData, ...tickets];
         setTickets(newTickets);
-        mockSupportTickets.unshift(newTicketData); // Persist for session
+        mockSupportTickets.unshift(newTicketData);
         
         setIsCreateModalOpen(false);
         setNewTicket({ product: 'General Inquiry', subject: '', description: '' });
@@ -1730,7 +1811,7 @@ export const SupportPage: React.FC = () => {
             
             {selectedTicket && (
                 <Modal isOpen={isViewModalOpen} onClose={() => setIsViewModalOpen(false)} title={`Ticket Details: ${selectedTicket.id}`} size="3xl">
-                    <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-4">
+                    <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-4 -mr-2">
                         <div className="p-4 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
                             <h3 className="font-semibold text-lg text-[#293c51] dark:text-gray-100">{selectedTicket.subject}</h3>
                             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400 mt-3 pt-3 border-t dark:border-slate-600">
@@ -1740,92 +1821,121 @@ export const SupportPage: React.FC = () => {
                             </div>
                         </div>
 
-                        <div>
-                            <h4 className="font-semibold text-md mb-2 text-[#293c51] dark:text-gray-200">Conversation History</h4>
-                            <div className="space-y-3">
-                                {selectedTicket.comments?.map((comment, index) => (
-                                    <div key={index} className="p-3 bg-white dark:bg-slate-800 rounded-lg border dark:border-slate-700">
-                                        <div className="flex justify-between items-center text-xs mb-1">
-                                            <span className="font-bold text-[#293c51] dark:text-gray-200">{comment.author}</span>
-                                            <span className="text-gray-500 dark:text-gray-400">{new Date(comment.timestamp).toLocaleString()}</span>
+                         <div className="border-b border-gray-200 dark:border-gray-700">
+                            <nav className="-mb-px flex space-x-4" aria-label="Tabs">
+                                <button onClick={() => setActiveTicketTab('conversation')} className={`flex items-center gap-2 whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm ${activeTicketTab === 'conversation' ? 'border-[#679a41] text-[#679a41]' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-600'}`}>
+                                    <Icon name="fas fa-comments" />
+                                    Conversation History
+                                </button>
+                                {(user?.role === 'admin' || user?.role === 'reseller') && (
+                                    <button onClick={() => setActiveTicketTab('internal')} className={`flex items-center gap-2 whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm ${activeTicketTab === 'internal' ? 'border-yellow-500 text-yellow-500' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-600'}`}>
+                                        <Icon name="fas fa-user-shield" />
+                                        Internal Notes
+                                    </button>
+                                )}
+                            </nav>
+                        </div>
+                        
+                        <div className="mt-4">
+                            {activeTicketTab === 'conversation' && (
+                                <div className="space-y-4">
+                                    <div className="space-y-3">
+                                        {selectedTicket.comments?.map((comment, index) => (
+                                            <div key={index} className="relative group p-3 bg-white dark:bg-slate-800 rounded-lg border dark:border-slate-700">
+                                                <div className="flex justify-between items-center text-xs mb-1">
+                                                    <span className="font-bold text-[#293c51] dark:text-gray-200">{comment.author}</span>
+                                                    <span className="text-gray-500 dark:text-gray-400">{new Date(comment.timestamp).toLocaleString()}</span>
+                                                </div>
+                                                {comment.content && <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{comment.content}</p>}
+                                                {comment.attachments && comment.attachments.length > 0 && (
+                                                    <div className="mt-2 pt-2 border-t border-dashed dark:border-slate-600">
+                                                        <ul className="flex flex-wrap gap-2">
+                                                            {comment.attachments.map((att, attIndex) => (
+                                                                <li key={attIndex}>
+                                                                    <a href={att.dataUrl} download={att.name} className="text-sm text-[#679a41] dark:text-emerald-400 hover:underline flex items-center gap-1.5 p-1 bg-gray-100 dark:bg-slate-700 rounded-md">
+                                                                        <Icon name="fas fa-file-alt" /> {att.name}
+                                                                    </a>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                )}
+                                                {(user?.role === 'admin' || user?.role === 'reseller') && (
+                                                    <Button size="icon" variant="ghost" className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity" title="Delete Comment" onClick={() => handleDeleteComment(selectedTicket.id, comment.timestamp, 'public')}>
+                                                        <Icon name="fas fa-trash-alt" className="text-red-500" />
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        ))}
+                                        {!selectedTicket.comments?.length && <p className="text-sm text-center text-gray-500 dark:text-gray-400 py-4">No comments yet.</p>}
+                                    </div>
+
+                                    <form onSubmit={handleUpdateTicket} className="space-y-4 pt-4 border-t dark:border-slate-600">
+                                        <FormField as="textarea" name="newComment" id="newComment" label="Add a Reply" value={newComment} onChange={(e) => setNewComment(e.target.value)} rows={4} placeholder="Type your response here..." />
+                                        <div>
+                                            <Button type="button" variant="outline" size="sm" onClick={() => commentFileInputRef.current?.click()} leftIconName="fas fa-paperclip">
+                                              Attach Files
+                                            </Button>
+                                            <input ref={commentFileInputRef} id="file-upload-comment" name="file-upload-comment" type="file" multiple className="sr-only" onChange={(e) => handleFileChange(e, setNewCommentAttachments)} accept=".jpg,.jpeg,.png,.pdf" />
                                         </div>
-                                        {comment.content && <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{comment.content}</p>}
-                                        {comment.attachments && comment.attachments.length > 0 && (
-                                            <div className="mt-2 pt-2 border-t border-dashed dark:border-slate-600">
-                                                <ul className="flex flex-wrap gap-2">
-                                                    {comment.attachments.map((att, attIndex) => (
-                                                        <li key={attIndex}>
-                                                            <a href={att.dataUrl} download={att.name} className="text-sm text-[#679a41] dark:text-emerald-400 hover:underline flex items-center gap-1.5 p-1 bg-gray-100 dark:bg-slate-700 rounded-md">
-                                                                <Icon name="fas fa-file-alt" /> {att.name}
-                                                            </a>
+                                        {newCommentAttachments.length > 0 && (
+                                            <div className="mt-2 text-sm">
+                                                <ul className="list-disc pl-5 mt-1 space-y-1">
+                                                    {newCommentAttachments.map((file, index) => (
+                                                        <li key={index} className="flex justify-between items-center text-gray-600 dark:text-gray-400">
+                                                            <span>{file.name} ({formatBytes(file.size)})</span>
+                                                            <button type="button" onClick={() => setNewCommentAttachments(files => files.filter((_, i) => i !== index))} className="text-red-500 hover:text-red-700"><Icon name="fas fa-times-circle" /></button>
                                                         </li>
                                                     ))}
                                                 </ul>
                                             </div>
                                         )}
-                                    </div>
-                                ))}
-                                {!selectedTicket.comments?.length && <p className="text-sm text-center text-gray-500 dark:text-gray-400 py-4">No comments yet.</p>}
-                            </div>
-                        </div>
-                        
-                        <form onSubmit={handleUpdateTicket} className="space-y-4 pt-4 border-t dark:border-slate-600">
-                            <FormField as="textarea" name="newComment" id="newComment" label="Add a Reply" value={newComment} onChange={(e) => setNewComment(e.target.value)} rows={4} placeholder="Type your response here..." />
-                            
-                             <div className="mt-2">
-                                <label className="block text-sm font-medium mb-1 text-[#293c51] dark:text-gray-300">Add Attachments</label>
-                                <div className="flex items-center gap-4">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => commentFileInputRef.current?.click()}
-                                        leftIconName="fas fa-paperclip"
-                                    >
-                                      Attach Files
-                                    </Button>
-                                    <input
-                                        ref={commentFileInputRef}
-                                        id="file-upload-comment"
-                                        name="file-upload-comment"
-                                        type="file"
-                                        multiple
-                                        className="sr-only"
-                                        onChange={(e) => handleFileChange(e, setNewCommentAttachments)}
-                                        accept=".jpg,.jpeg,.png,.pdf"
-                                    />
+                                        {(user?.role === 'admin' || user?.role === 'reseller') && (
+                                            <FormField as="select" name="newStatus" id="newStatus" label="Change Status" value={newStatus} onChange={(e) => setNewStatus(e.target.value as SupportTicket['status'])}>
+                                                <option value="Open">Open</option>
+                                                <option value="In Progress">In Progress</option>
+                                                <option value="Resolved">Resolved</option>
+                                                <option value="Closed">Closed</option>
+                                            </FormField>
+                                        )}
+                                        <div className="flex justify-end space-x-2 pt-2">
+                                            <Button type="button" variant="ghost" onClick={() => setIsViewModalOpen(false)}>Cancel</Button>
+                                            <Button type="submit" disabled={!newComment.trim() && newCommentAttachments.length === 0}>
+                                                {user?.role === 'admin' || user?.role === 'reseller' ? 'Update Ticket' : 'Add Reply'}
+                                            </Button>
+                                        </div>
+                                    </form>
                                 </div>
-                                {newCommentAttachments.length > 0 && (
-                                    <div className="mt-2 text-sm">
-                                        <ul className="list-disc pl-5 mt-1 space-y-1">
-                                            {newCommentAttachments.map((file, index) => (
-                                                <li key={index} className="flex justify-between items-center text-gray-600 dark:text-gray-400">
-                                                    <span>{file.name} ({formatBytes(file.size)})</span>
-                                                    <button type="button" onClick={() => setNewCommentAttachments(files => files.filter((_, i) => i !== index))} className="text-red-500 hover:text-red-700">
-                                                        <Icon name="fas fa-times-circle" />
-                                                    </button>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
-                            </div>
-
-                            {(user?.role === 'admin' || user?.role === 'reseller') && (
-                                <FormField as="select" name="newStatus" id="newStatus" label="Change Status" value={newStatus} onChange={(e) => setNewStatus(e.target.value as SupportTicket['status'])}>
-                                    <option value="Open">Open</option>
-                                    <option value="In Progress">In Progress</option>
-                                    <option value="Resolved">Resolved</option>
-                                    <option value="Closed">Closed</option>
-                                </FormField>
                             )}
-                            <div className="flex justify-end space-x-2 pt-2">
-                                <Button type="button" variant="ghost" onClick={() => setIsViewModalOpen(false)}>Cancel</Button>
-                                <Button type="submit" disabled={!newComment.trim() && newCommentAttachments.length === 0}>
-                                    {user?.role === 'admin' || user?.role === 'reseller' ? 'Update Ticket' : 'Add Reply'}
-                                </Button>
-                            </div>
-                        </form>
+
+                             {activeTicketTab === 'internal' && (user?.role === 'admin' || user?.role === 'reseller') && (
+                                <div className="space-y-4">
+                                    <div className="space-y-3 mb-4 max-h-48 overflow-y-auto pr-2">
+                                        {selectedTicket.internalComments?.map((comment, index) => (
+                                            <div key={`internal-${index}`} className="relative group p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800/50">
+                                                <div className="flex justify-between items-center text-xs mb-1">
+                                                    <span className="font-bold text-yellow-800 dark:text-yellow-300">{comment.author}</span>
+                                                    <span className="text-yellow-600 dark:text-yellow-400">{new Date(comment.timestamp).toLocaleString()}</span>
+                                                </div>
+                                                {comment.content && <p className="text-sm text-yellow-900 dark:text-yellow-200 whitespace-pre-wrap">{comment.content}</p>}
+                                                <Button size="icon" variant="ghost" className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity" title="Delete Internal Note" onClick={() => handleDeleteComment(selectedTicket.id, comment.timestamp, 'internal')}>
+                                                     <Icon name="fas fa-trash-alt" className="text-red-500" />
+                                                </Button>
+                                            </div>
+                                        ))}
+                                        {!selectedTicket.internalComments?.length && <p className="text-sm text-center text-gray-500 dark:text-gray-400 py-4">No internal notes yet.</p>}
+                                    </div>
+                                    <form onSubmit={handleAddInternalComment} className="space-y-2 pt-4 border-t dark:border-slate-600">
+                                        <FormField as="textarea" name="newInternalComment" id="newInternalComment" label="Add an Internal Note" value={newInternalComment} onChange={(e) => setNewInternalComment(e.target.value)} rows={3} placeholder="Type an internal note..." />
+                                        <div className="flex justify-end">
+                                            <Button type="submit" variant="secondary" size="sm" disabled={!newInternalComment.trim()}>
+                                                Add Note
+                                            </Button>
+                                        </div>
+                                    </form>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </Modal>
             )}

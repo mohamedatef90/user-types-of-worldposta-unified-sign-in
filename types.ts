@@ -1,6 +1,7 @@
 
 
 
+
 export interface User {
   id: string;
   fullName: string;
@@ -198,6 +199,7 @@ export interface SupportTicket {
   customerId?: string; // ID of the customer who opened the ticket
   customerName?: string; // Name of the customer for display
   comments?: SupportTicketComment[];
+  internalComments?: SupportTicketComment[];
 }
 
 
