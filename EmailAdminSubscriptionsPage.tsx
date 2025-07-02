@@ -1,5 +1,4 @@
 
-
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Button, Card, FormField, CollapsibleSection, Stepper, Icon, Spinner } from './ui'; 
 import type { EmailPlan, EmailPlanDuration } from './types';
@@ -22,7 +21,8 @@ const ADVANCED_RULES_PRICE_MONTHLY = 2.00;
 interface ConfiguredPlan {
   planId: string;
   quantity: number;
-  duration: EmailPlanDuration;
+  subscriptionTerm: number;
+  subscriptionUnit: EmailPlanDuration;
   advancedRulesEnabled: boolean;
   region: string;
 }
@@ -39,18 +39,15 @@ const calculateOrderTotal = (configuredPlans: ConfiguredPlan[]): number => {
     }
 
     let planTotal = 0;
-    switch (configuredPlan.duration) {
+    const term = configuredPlan.subscriptionTerm || 1;
+
+    switch (configuredPlan.subscriptionUnit) {
       case 'monthly':
-        planTotal = monthlyPricePerUnit * configuredPlan.quantity;
-        break;
-      case '3months':
-        planTotal = monthlyPricePerUnit * 3 * configuredPlan.quantity;
-        break;
-      case '6months':
-        planTotal = monthlyPricePerUnit * 6 * configuredPlan.quantity;
+        planTotal = monthlyPricePerUnit * configuredPlan.quantity * term;
         break;
       case 'yearly':
-        planTotal = (monthlyPricePerUnit * 12 * configuredPlan.quantity) * 0.90; // 10% discount
+        // Apply 10% discount for yearly, and multiply by term (number of years)
+        planTotal = (monthlyPricePerUnit * 12 * configuredPlan.quantity * term) * 0.90; 
         break;
     }
     return total + planTotal;
@@ -66,18 +63,24 @@ interface PlanCardProps {
 
 const PlanCardInternal: React.FC<PlanCardProps> = ({ plan, currentConfig, onPlanChange }) => {
   const [quantity, setQuantity] = useState(currentConfig?.quantity || 0); // Default to 0 if not configured
-  const [duration, setDuration] = useState<EmailPlanDuration>(currentConfig?.duration ||'monthly');
+  const [subscriptionTerm, setSubscriptionTerm] = useState(currentConfig?.subscriptionTerm || 1);
+  const [subscriptionUnit, setSubscriptionUnit] = useState<EmailPlanDuration>(currentConfig?.subscriptionUnit ||'monthly');
   const [advancedRulesEnabled, setAdvancedRulesEnabled] = useState(currentConfig?.advancedRulesEnabled || false);
   const [region, setRegion] = useState<string>(currentConfig?.region || mockRegions[0].id);
 
   // Update parent when local state changes
   useEffect(() => {
-    onPlanChange({ planId: plan.id, quantity, duration, advancedRulesEnabled, region });
-  }, [plan.id, quantity, duration, advancedRulesEnabled, region, onPlanChange]);
+    onPlanChange({ planId: plan.id, quantity, subscriptionTerm, subscriptionUnit, advancedRulesEnabled, region });
+  }, [plan.id, quantity, subscriptionTerm, subscriptionUnit, advancedRulesEnabled, region, onPlanChange]);
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseInt(e.target.value, 10);
     setQuantity(isNaN(val) || val < 0 ? 0 : val); // Allow 0 to "deselect"
+  };
+
+  const handleSubscriptionTermChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseInt(e.target.value, 10);
+    setSubscriptionTerm(isNaN(val) || val < 1 ? 1 : val);
   };
 
   return (
@@ -96,27 +99,25 @@ const PlanCardInternal: React.FC<PlanCardProps> = ({ plan, currentConfig, onPlan
          <></>
       </CollapsibleSection>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
         <FormField
-          id={`${plan.id}-quantity`}
-          label="Quantity"
+          id={`${plan.id}-subscription-term`}
+          label="Subscription Term"
           type="number"
-          value={quantity}
-          onChange={handleQuantityChange}
-          min={0}
-          inputClassName="w-full text-sm py-2" 
+          value={subscriptionTerm}
+          onChange={handleSubscriptionTermChange}
+          min={1}
+          inputClassName="w-full text-sm py-2"
         />
         <FormField
-          id={`${plan.id}-duration`}
-          label="Duration"
+          id={`${plan.id}-subscription-unit`}
+          label="Subscription Unit"
           as="select"
-          value={duration}
-          onChange={(e) => setDuration(e.target.value as EmailPlanDuration)}
+          value={subscriptionUnit}
+          onChange={(e) => setSubscriptionUnit(e.target.value as EmailPlanDuration)}
           inputClassName="w-full text-sm py-2"
         >
           <option value="monthly">Monthly</option>
-          <option value="3months">3 Months</option>
-          <option value="6months">6 Months</option>
           <option value="yearly">Yearly (10% Off)</option>
         </FormField>
          <FormField
@@ -129,6 +130,15 @@ const PlanCardInternal: React.FC<PlanCardProps> = ({ plan, currentConfig, onPlan
         >
           {mockRegions.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
         </FormField>
+        <FormField
+          id={`${plan.id}-quantity`}
+          label="Quantity"
+          type="number"
+          value={quantity}
+          onChange={handleQuantityChange}
+          min={0}
+          inputClassName="w-full text-sm py-2" 
+        />
       </div>
       
       <FormField
@@ -164,7 +174,7 @@ const SubscriptionSummaryCardInternal: React.FC<SubscriptionSummaryCardProps> = 
               if (!planDetails) return null;
               return (
                 <li key={item.planId} className="text-sm text-gray-700 dark:text-gray-300">
-                    <div>{planDetails.name} x {item.quantity} ({item.duration})</div>
+                    <div>{planDetails.name} x {item.quantity} ({item.subscriptionTerm} {item.subscriptionUnit})</div>
                     <div className="text-xs text-gray-500 dark:text-gray-400">
                         Region: {mockRegions.find(r => r.id === item.region)?.name}
                         {item.advancedRulesEnabled && " / Adv. Rules"}
@@ -222,7 +232,7 @@ const PaymentStep: React.FC<{
                                 <li key={item.planId} className="flex justify-between items-start text-sm">
                                     <div>
                                         <p className="font-medium text-[#293c51] dark:text-gray-200">{planDetails.name} x {item.quantity}</p>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">{item.duration} | {mockRegions.find(r => r.id === item.region)?.name}</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">{item.subscriptionTerm} {item.subscriptionUnit} | {mockRegions.find(r => r.id === item.region)?.name}</p>
                                     </div>
                                     <p className="font-semibold text-gray-700 dark:text-gray-300">${(calculateOrderTotal([item])).toFixed(2)}</p>
                                 </li>
@@ -280,7 +290,8 @@ const EmailAdminSubscriptionsPage: React.FC = () => {
     mockEmailPlans.map(plan => ({
       planId: plan.id,
       quantity: 0,
-      duration: 'monthly',
+      subscriptionTerm: 1,
+      subscriptionUnit: 'monthly',
       advancedRulesEnabled: false,
       region: mockRegions[0].id,
     }))
@@ -304,7 +315,8 @@ const EmailAdminSubscriptionsPage: React.FC = () => {
      setOrderConfiguration(mockEmailPlans.map(plan => ({
       planId: plan.id,
       quantity: 0,
-      duration: 'monthly',
+      subscriptionTerm: 1,
+      subscriptionUnit: 'monthly',
       advancedRulesEnabled: false,
       region: mockRegions[0].id,
     })));

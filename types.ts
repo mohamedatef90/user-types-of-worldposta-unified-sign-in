@@ -1,7 +1,4 @@
 
-
-
-
 export interface User {
   id: string;
   fullName: string;
@@ -69,25 +66,61 @@ export interface ApplicationCardData {
   id:string;
   name: string;
   description: string;
-  iconName: string; 
+  iconName: string;
   launchUrl: string;
 }
 
-// Types for Email Admin Subscription Management
-export interface EmailPlanFeature {
+export interface LogEntry {
   id: string;
-  name: string;
-  included: boolean; // Or could be a string describing the limit
+  timestamp: string;
+  action: string;
+  resource: string;
+  performedBy: string;
+  status: 'Success' | 'Failed' | 'Pending User Action' | 'Pending System Action' | 'Information' | 'Warning';
 }
 
-export type EmailPlanDuration = 'monthly' | '3months' | '6months' | 'yearly';
+export type SupportTicketProduct = 'CloudEdge' | 'Posta Email' | 'Subscriptions' | 'General Inquiry';
+
+export interface TicketAttachment {
+    name: string;
+    type: string;
+    size: number;
+    dataUrl: string; // base64
+}
+
+export interface SupportTicketComment {
+    author: string;
+    timestamp: string;
+    content: string;
+    attachments?: TicketAttachment[];
+}
+
+export interface SupportTicket {
+    id: string;
+    subject: string;
+    product: SupportTicketProduct;
+    status: 'Open' | 'In Progress' | 'Resolved' | 'Closed';
+    lastUpdate: string;
+    description: string;
+    attachments?: TicketAttachment[];
+    customerId?: string;
+    customerName?: string;
+    comments?: SupportTicketComment[];
+    internalComments?: SupportTicketComment[];
+}
+
+export interface StepperStep {
+  name: string;
+}
+
+export type EmailPlanDuration = 'monthly' | 'yearly';
 
 export interface EmailPlan {
   id: string;
   name: string;
-  basePriceMonthly: number; // Price for monthly, other durations will be calculated
+  basePriceMonthly: number;
   features: string[];
-  description?: string;
+  description: string;
 }
 
 export interface EmailCartItem {
@@ -95,121 +128,70 @@ export interface EmailCartItem {
   quantity: number;
   duration: EmailPlanDuration;
   advancedRulesEnabled: boolean;
-  calculatedPrice: number;
 }
 
-// Types for CloudEdge Configuration Management
 export type CloudEdgeComponentType = 'instance' | 'vdc' | 'ready-plan';
-export type SubscriptionTermUnit = 'hr' | 'week' | 'month' | 'year';
 export type MachineType = 'performance-01' | 'performance-02' | 'performance-03';
 export type ProvisioningModel = 'regular' | 'spot';
+export type SubscriptionTermUnit = 'hr' | 'week' | 'month' | 'year';
 
+export interface CloudEdgeConfiguration {
+    id: string;
+    name: string;
+    type: CloudEdgeComponentType;
+    quantity: number;
+    subscriptionTermValue: number;
+    subscriptionTermUnit: SubscriptionTermUnit;
+    deploymentRegion: string;
+    
+    // Instance specific
+    instanceTemplateId?: string;
+    machineType?: MachineType;
+    osSoftware?: string;
+
+    // VDC specific
+    vdcCPU?: number;
+    vdcRAM?: number;
+    vdcFlashStorage?: number;
+
+    // Ready Plan specific
+    readyPlanId?: string;
+    
+    // Advanced/Optional
+    provisioningModel?: ProvisioningModel;
+    confidentialVM?: boolean;
+    addGPUs?: boolean;
+    gpuType?: string;
+    gpuCount?: number;
+
+    // Other resources
+    staticPublicIPs?: number;
+    objectStorageGB?: number;
+    advancedBackupGB?: number;
+    trendMicroEndpoints?: number;
+    windowsServerLicenses?: number;
+    linuxEnterpriseLicenses?: number;
+    cortexXDREndpoints?: number;
+    loadBalancerInstances?: number;
+    
+    // Add-ons
+    advancedFirewall?: boolean;
+    enhancedMonitoring?: boolean;
+
+    // Calculated
+    unitSubtotalMonthly: number;
+}
 export interface InstanceTemplate {
   id: string;
   name: string;
   cpu: number;
   ramGB: number;
   bootDiskGB: number;
-  priceMonthly: number; // Optional: if templates have fixed prices
-  description: string; // e.g., "2 vCPU / 4 GB RAM / 50 GB Boot Disk"
+  priceMonthly: number;
+  description: string;
 }
-
 export interface GPUType {
   id: string;
   name: string;
   priceMonthly: number;
-}
-
-export interface CloudEdgeConfiguration {
-  id: string; // Unique ID for this configuration item
-  name: string;
-  type: CloudEdgeComponentType;
-  deploymentRegion: string;
-  subscriptionTermValue: number;
-  subscriptionTermUnit: SubscriptionTermUnit;
-  machineType?: MachineType; // For instance
-  quantity: number;
-  
-  // Instance specific
-  instanceTemplateId?: string;
-  
-  // VDC specific
-  vdcCPU?: number;         // cores
-  vdcRAM?: number;         // GB
-  vdcFlashStorage?: number; // GB
-  
-  // Ready Plan specific
-  readyPlanId?: string;
-    
-  // Advanced & Optional
-  osSoftware?: string;
-  provisioningModel?: ProvisioningModel;
-  confidentialVM?: boolean;
-  addGPUs?: boolean;
-  gpuType?: string;
-  gpuCount?: number;
-
-  // Other Configurable Resources
-  staticPublicIPs?: number;
-  objectStorageGB?: number; // GB
-  advancedBackupGB?: number; // GB
-  trendMicroEndpoints?: number;
-  windowsServerLicenses?: number;
-  linuxEnterpriseLicenses?: number;
-  cortexXDREndpoints?: number;
-  loadBalancerInstances?: number;
-  
-  // Add-ons (Monthly)
-  advancedFirewall?: boolean;
-  enhancedMonitoring?: boolean;
-
-  unitSubtotalMonthly: number; // Calculated subtotal for this configuration item
-}
-
-export interface StepperStep {
-  name: string;
-  status?: 'completed' | 'current' | 'upcoming'; // Optional: for visual indication
-}
-
-// New type for ticket attachments
-export interface TicketAttachment {
-  name: string;
-  type: string;
-  size: number;
-  dataUrl: string; // base64 representation
-}
-
-// New type for comments
-export interface SupportTicketComment {
-  author: string; // e.g., 'Customer Name', 'Support Staff'
-  timestamp: string; // ISO String
-  content: string;
-  attachments?: TicketAttachment[];
-}
-
-// Type for Support Tickets
-export interface SupportTicket {
-  id: string; // e.g., 'TKT-12345'
-  subject: string;
-  product: 'CloudEdge' | 'Posta Email' | 'Subscriptions' | 'General Inquiry';
-  status: 'Open' | 'In Progress' | 'Resolved' | 'Closed';
-  lastUpdate: string; // ISO String
-  description: string; 
-  attachments?: TicketAttachment[];
-  customerId?: string; // ID of the customer who opened the ticket
-  customerName?: string; // Name of the customer for display
-  comments?: SupportTicketComment[];
-  internalComments?: SupportTicketComment[];
-}
-
-
-// Type for Action Logs
-export interface LogEntry {
-  id:string;
-  timestamp: string; // ISO string format for date and time
-  action: string; // Description of the action performed
-  resource: string; // Identifier for the resource affected (e.g., VM name, Mailbox ID, Domain)
-  performedBy: string; // User ID/email or 'System' if automated
-  status: 'Success' | 'Failed' | 'Pending User Action' | 'Pending System Action' | 'Information' | 'Warning'; // Status of the action
-  details?: string; // Optional additional details or error messages
 }
