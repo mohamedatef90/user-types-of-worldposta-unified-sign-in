@@ -1,15 +1,25 @@
 
+
+
+
+
 export interface User {
   id: string;
   fullName: string;
   email: string;
   companyName: string;
   role: 'customer' | 'admin' | 'reseller'; // Added role
+  status?: 'active' | 'suspended' | 'blocked';
   displayName?: string;
   phoneNumber?: string;
   avatarUrl?: string; // URL to placeholder image
   teamManagerId?: string; // ID of the primary customer managing this user
   assignedGroupId?: string; // ID of the UserGroup this user belongs to
+  staffGroupId?: string; // ID of the StaffGroup this user belongs to
+  creationDate?: string;
+  mfaEnabled?: boolean;
+  country?: string;
+  isTrial?: boolean;
 }
 
 export interface UserGroup {
@@ -20,14 +30,21 @@ export interface UserGroup {
   teamManagerId: string; // ID of the customer who owns/manages this group
 }
 
+export interface StaffGroup {
+  id: string;
+  name: string;
+  description: string;
+  permissions: string[];
+}
+
 export interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
   isLoading: boolean;
-  login: (email: string, pass: string) => Promise<void>;
-  signup: (details: Omit<User, 'id' | 'avatarUrl' | 'displayName' | 'phoneNumber' | 'role' | 'teamManagerId' | 'assignedGroupId'> & {password: string}) => Promise<void>;
+  login: (email: string, pass: string, redirectPath?: string) => Promise<void>;
+  signup: (details: Omit<User, 'id' | 'avatarUrl' | 'displayName' | 'phoneNumber' | 'role' | 'teamManagerId' | 'assignedGroupId' | 'status' | 'creationDate' | 'mfaEnabled' | 'country' | 'isTrial'> & {password: string}) => Promise<void>;
   logout: () => void;
-  updateProfile: (details: Partial<Pick<User, 'fullName' | 'companyName' | 'displayName' | 'phoneNumber'>>) => Promise<void>;
+  updateProfile: (details: Partial<Pick<User, 'fullName' | 'companyName' | 'displayName' | 'phoneNumber' | 'avatarUrl'>>) => Promise<void>;
   changePassword: (oldPass: string, newPass: string) => Promise<void>;
 }
 
@@ -95,6 +112,10 @@ export interface SupportTicketComment {
     attachments?: TicketAttachment[];
 }
 
+export type SupportTicketRequestType = 'Incident' | 'Question' | 'Problem' | 'Feature Request';
+export type SupportTicketPriority = 'Low' | 'Medium' | 'High' | 'Urgent';
+export type SupportTicketDepartment = 'Technical Support' | 'Billing Department' | 'Sales Inquiry';
+
 export interface SupportTicket {
     id: string;
     subject: string;
@@ -107,6 +128,9 @@ export interface SupportTicket {
     customerName?: string;
     comments?: SupportTicketComment[];
     internalComments?: SupportTicketComment[];
+    priority: SupportTicketPriority;
+    department: SupportTicketDepartment;
+    requestType: SupportTicketRequestType;
 }
 
 export interface StepperStep {
@@ -121,6 +145,7 @@ export interface EmailPlan {
   basePriceMonthly: number;
   features: string[];
   description: string;
+  isRecommended?: boolean;
 }
 
 export interface EmailCartItem {
@@ -194,4 +219,70 @@ export interface GPUType {
   id: string;
   name: string;
   priceMonthly: number;
+}
+export interface InvoiceLineItem {
+  description: string;
+  units: number;
+  amount: number;
+}
+
+export interface Invoice {
+  id: string;
+  date: string;
+  amount: number;
+  status: 'Paid' | 'Unpaid';
+  url: string; // for PDF download
+  customerId: string;
+  customerName: string;
+  customerAddress: string[];
+  customerEmail: string;
+  billingPeriod: string;
+  nextBillingDate: string;
+  subscriptionId: string;
+  lineItems: InvoiceLineItem[];
+  subTotal: number;
+  tax: {
+    label: string;
+    amount: number;
+  };
+  payments: number;
+  amountDue: number;
+  paymentDetails: string;
+  dueDate?: string;
+  packageName?: string;
+  type?: 'New Subscription' | 'Renewal' | 'Upgrade';
+}
+
+export interface AddedResource {
+    id: string; // Unique ID for the table row
+    productId: 'posta' | 'cloudedge' | string;
+    packageId: string;
+    organizationId: string;
+    domainIds: string[];
+}
+
+export interface PricingPlan {
+  id: string;
+  name: string;
+  priceMonthly: number;
+  priceAnnually: number;
+  priceAnnuallyPerMonth: number;
+  description: string;
+  features: string[];
+  isRecommended?: boolean;
+}
+
+export interface Feature {
+  name:string;
+  availability: { [planId: string]: boolean | string };
+}
+
+export interface FeatureCategory {
+  name: string;
+  features: Feature[];
+}
+
+export interface FaqItem {
+  question: string;
+  answer: string;
 }

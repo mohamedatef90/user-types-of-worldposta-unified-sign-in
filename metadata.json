@@ -1,6 +1,6 @@
 {
-  "name": "user types of WorldPosta Unified Sign-In",
-  "description": "A single sign-on (SSO) and account management portal for WorldPosta services, featuring MFA (conceptual), user management, and access to various product portals. Built with React, TypeScript, and Tailwind CSS.",
+  "name": "Simulations of user types of WorldPosta Unified Sign-In",
+  "description": "Simulations UX for all soultion",
   "requestFramePermissions": [],
   "prompt": ""
 }
