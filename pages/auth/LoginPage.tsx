@@ -98,9 +98,6 @@ export const LoginPage: React.FC = () => {
         <Button onClick={() => handleRoleLogin('admin@worldposta.com', 'password_admin')} variant="outline" size="md" fullWidth isLoading={isLoading}>
           Login as Admin (Demo)
         </Button>
-        <Button onClick={() => handleRoleLogin('reseller@worldposta.com', 'password_reseller')} variant="outline" size="md" fullWidth isLoading={isLoading}>
-          Login as Reseller (Demo)
-        </Button>
       </div>
     </AuthLayout>
   );
