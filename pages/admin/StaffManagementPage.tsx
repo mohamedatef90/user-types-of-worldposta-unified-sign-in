@@ -1,5 +1,3 @@
-
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Card, Button, FormField, Modal, Icon, SearchableSelect, Tooltip, ToggleSwitch } from '@/components/ui';
 import { useAuth } from '@/context';
@@ -437,12 +435,22 @@ export const StaffManagementPage: React.FC = () => {
 
     return (
         <div className="space-y-4">
-            <div className="border-b border-gray-200 dark:border-gray-700">
-                <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-                    {tabItems.map(tab => (
-                        <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeTab === tab.id ? 'border-[#679a41] text-[#679a41]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>{tab.name}</button>
-                    ))}
-                </nav>
+            <div role="tablist" className="inline-flex space-x-1 p-1 bg-gray-200/50 dark:bg-slate-700/50 rounded-lg">
+                {tabItems.map(tab => (
+                    <button
+                        key={tab.id}
+                        role="tab"
+                        aria-selected={activeTab === tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#679a41] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${
+                            activeTab === tab.id
+                                ? 'bg-white dark:bg-slate-800 text-[#679a41] dark:text-emerald-400 shadow-sm'
+                                : 'text-gray-600 dark:text-gray-400 hover:text-[#293c51] dark:hover:text-gray-100'
+                        }`}
+                    >
+                        {tab.name}
+                    </button>
+                ))}
             </div>
             <div>
                 {activeTab === 'members' && (

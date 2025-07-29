@@ -1,5 +1,3 @@
-
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, Card, Icon, FormField } from '@/components/ui';
@@ -479,12 +477,33 @@ const AdminBillingDashboard: React.FC = () => {
     return (
         <>
             <h1 className="text-3xl font-bold text-[#293c51] dark:text-gray-100 mb-4">Billing Management</h1>
-            <div className="border-b border-gray-200 dark:border-gray-700">
-                <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-                    <button onClick={() => setActiveTab('dueInvoices')} className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'dueInvoices' ? 'border-[#679a41] text-[#679a41]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>Due Invoices</button>
-                    <button onClick={() => setActiveTab('paymentValidations')} className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'paymentValidations' ? 'border-[#679a41] text-[#679a41]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>Payment Validations</button>
-                </nav>
+            <div role="tablist" className="inline-flex space-x-1 p-1 bg-gray-200/50 dark:bg-slate-700/50 rounded-lg">
+                <button
+                    role="tab"
+                    aria-selected={activeTab === 'dueInvoices'}
+                    onClick={() => setActiveTab('dueInvoices')}
+                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#679a41] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${
+                        activeTab === 'dueInvoices'
+                            ? 'bg-white dark:bg-slate-800 text-[#679a41] dark:text-emerald-400 shadow-sm'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-[#293c51] dark:hover:text-gray-100'
+                    }`}
+                >
+                    Due Invoices
+                </button>
+                <button
+                    role="tab"
+                    aria-selected={activeTab === 'paymentValidations'}
+                    onClick={() => setActiveTab('paymentValidations')}
+                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#679a41] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${
+                        activeTab === 'paymentValidations'
+                            ? 'bg-white dark:bg-slate-800 text-[#679a41] dark:text-emerald-400 shadow-sm'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-[#293c51] dark:hover:text-gray-100'
+                    }`}
+                >
+                    Payment Validations
+                </button>
             </div>
+
 
             <div className="mt-4">
                 {activeTab === 'dueInvoices' && (

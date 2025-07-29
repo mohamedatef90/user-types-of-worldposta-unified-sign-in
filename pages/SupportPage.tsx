@@ -280,116 +280,124 @@ const ViewTicketModal: React.FC<ViewTicketModalProps> = ({ isOpen, onClose, tick
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={`Ticket: ${ticket.id}`} size="3xl">
-            <div className="space-y-4 max-h-[75vh] overflow-y-auto pr-4">
-                <div className="flex justify-between items-center">
-                    <h3 className="text-xl font-bold text-[#293c51] dark:text-gray-100">{ticket.subject}</h3>
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusChipClass(ticket.status)}`}>{ticket.status}</span>
-                </div>
-                
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                    Product/Service: <span className="font-medium text-[#293c51] dark:text-gray-300">{ticket.product}</span>
-                </div>
-
-                <div className="p-4 bg-gray-100 dark:bg-slate-700 rounded-lg">
-                    <h4 className="font-semibold text-sm mb-1 text-[#293c51] dark:text-gray-200">Initial Description</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{ticket.description}</p>
-                    {ticket.attachments && ticket.attachments.length > 0 && (
-                        <div className="mt-2 pt-2 border-t dark:border-gray-600 flex flex-wrap gap-2">
-                            {ticket.attachments.map((att, i) => <AttachmentChip key={i} attachment={att} />)}
-                        </div>
-                    )}
-                </div>
-
-                {isUserAdminOrReseller && (
-                    <div className="border-b border-gray-200 dark:border-gray-700">
-                        <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-                            <button onClick={() => setActiveTab('customer')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'customer' ? 'border-[#679a41] text-[#679a41] dark:border-emerald-400 dark:text-emerald-400' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-                                Customer Comments
-                            </button>
-                            <button onClick={() => setActiveTab('internal')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'internal' ? 'border-yellow-500 text-yellow-600 dark:border-yellow-400 dark:text-yellow-400' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-                                Internal Notes
-                            </button>
-                        </nav>
+            <div className="flex flex-col max-h-[75vh]">
+                {/* --- Pinned Section --- */}
+                <div className="flex-shrink-0 pr-4 space-y-4">
+                    <div className="flex justify-between items-center">
+                        <h3 className="text-xl font-bold text-[#293c51] dark:text-gray-100">{ticket.subject}</h3>
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusChipClass(ticket.status)}`}>{ticket.status}</span>
                     </div>
-                )}
-                
-                <div className="space-y-3">
-                    {activeTab === 'customer' && (
-                        ticket.comments && ticket.comments.length > 0
-                        ? ticket.comments.map((comment, i) => <div className="group" key={`cust-${i}`}><Comment comment={comment} onDelete={() => handleDeleteComment(comment, false)} /></div>)
-                        : <p className="text-sm text-center text-gray-500 dark:text-gray-400 py-4">No customer comments yet.</p>
-                    )}
-                    {activeTab === 'internal' && isUserAdminOrReseller && (
-                        ticket.internalComments && ticket.internalComments.length > 0
-                        ? ticket.internalComments.map((comment, i) => <div className="group" key={`int-${i}`}><Comment comment={comment} isInternal onDelete={() => handleDeleteComment(comment, true)} /></div>)
-                        : <p className="text-sm text-center text-gray-500 dark:text-gray-400 py-4">No internal notes yet.</p>
-                    )}
+                    
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                        Product/Service: <span className="font-medium text-[#293c51] dark:text-gray-300">{ticket.product}</span>
+                    </div>
+
+                    <div className="p-4 bg-gray-100 dark:bg-slate-700 rounded-lg">
+                        <h4 className="font-semibold text-sm mb-1 text-[#293c51] dark:text-gray-200">Initial Description</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{ticket.description}</p>
+                        {ticket.attachments && ticket.attachments.length > 0 && (
+                            <div className="mt-2 pt-2 border-t dark:border-gray-600 flex flex-wrap gap-2">
+                                {ticket.attachments.map((att, i) => <AttachmentChip key={i} attachment={att} />)}
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                <div className="pt-4 border-t dark:border-gray-600">
-                    <h4 className="font-semibold text-lg mb-2">Add Reply / Update Status</h4>
-                    <FormField
-                        id="new-comment"
-                        label=""
-                        as="textarea"
-                        rows={3}
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                        placeholder="Type your reply here..."
-                    />
-                    
-                    <div className="mt-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            leftIconName="fas fa-paperclip"
-                            onClick={() => fileInputRef.current?.click()}
-                        >
-                            Attach Files
-                        </Button>
-                        <input
-                            type="file"
-                            multiple
-                            ref={fileInputRef}
-                            onChange={handleFileChange}
-                            className="hidden"
-                        />
-                    </div>
-                    {newAttachments.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-2">
-                            {newAttachments.map((att, i) => (
-                                <AttachmentChip key={i} attachment={att} onRemove={() => removeAttachment(att.name)} />
-                            ))}
+                {/* --- Scrollable Section --- */}
+                <div className="flex-grow overflow-y-auto pr-4 mt-4 pt-4 border-t dark:border-gray-700">
+                    <div className="space-y-4">
+                        {isUserAdminOrReseller && (
+                            <div className="border-b border-gray-200 dark:border-gray-700">
+                                <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+                                    <button onClick={() => setActiveTab('customer')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'customer' ? 'border-[#679a41] text-[#679a41] dark:border-emerald-400 dark:text-emerald-400' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+                                        Customer Comments
+                                    </button>
+                                    <button onClick={() => setActiveTab('internal')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'internal' ? 'border-yellow-500 text-yellow-600 dark:border-yellow-400 dark:text-yellow-400' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+                                        Internal Notes
+                                    </button>
+                                </nav>
+                            </div>
+                        )}
+                        
+                        <div className="space-y-3">
+                            {activeTab === 'customer' && (
+                                ticket.comments && ticket.comments.length > 0
+                                ? ticket.comments.map((comment, i) => <div className="group" key={`cust-${i}`}><Comment comment={comment} onDelete={() => handleDeleteComment(comment, false)} /></div>)
+                                : <p className="text-sm text-center text-gray-500 dark:text-gray-400 py-4">No customer comments yet.</p>
+                            )}
+                            {activeTab === 'internal' && isUserAdminOrReseller && (
+                                ticket.internalComments && ticket.internalComments.length > 0
+                                ? ticket.internalComments.map((comment, i) => <div className="group" key={`int-${i}`}><Comment comment={comment} isInternal onDelete={() => handleDeleteComment(comment, true)} /></div>)
+                                : <p className="text-sm text-center text-gray-500 dark:text-gray-400 py-4">No internal notes yet.</p>
+                            )}
                         </div>
-                    )}
-                    
-                    {isUserAdminOrReseller && (
-                        <div className="mt-4">
+
+                        <div className="pt-4 border-t dark:border-gray-600">
+                            <h4 className="font-semibold text-lg mb-2">Add Reply / Update Status</h4>
                             <FormField
-                                id="ticket-status"
-                                name="status"
-                                label="Change Ticket Status"
-                                as="select"
-                                value={newStatus}
-                                onChange={(e) => setNewStatus(e.target.value as SupportTicket['status'])}
-                            >
-                                <option value="Open">Open</option>
-                                <option value="In Progress">In Progress</option>
-                                <option value="Resolved">Resolved</option>
-                                <option value="Closed">Closed</option>
-                            </FormField>
-                        </div>
-                    )}
+                                id="new-comment"
+                                label=""
+                                as="textarea"
+                                rows={3}
+                                value={newComment}
+                                onChange={(e) => setNewComment(e.target.value)}
+                                placeholder="Type your reply here..."
+                            />
+                            
+                            <div className="mt-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    leftIconName="fas fa-paperclip"
+                                    onClick={() => fileInputRef.current?.click()}
+                                >
+                                    Attach Files
+                                </Button>
+                                <input
+                                    type="file"
+                                    multiple
+                                    ref={fileInputRef}
+                                    onChange={handleFileChange}
+                                    className="hidden"
+                                />
+                            </div>
+                            {newAttachments.length > 0 && (
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                    {newAttachments.map((att, i) => (
+                                        <AttachmentChip key={i} attachment={att} onRemove={() => removeAttachment(att.name)} />
+                                    ))}
+                                </div>
+                            )}
+                            
+                            {isUserAdminOrReseller && (
+                                <div className="mt-4">
+                                    <FormField
+                                        id="ticket-status"
+                                        name="status"
+                                        label="Change Ticket Status"
+                                        as="select"
+                                        value={newStatus}
+                                        onChange={(e) => setNewStatus(e.target.value as SupportTicket['status'])}
+                                    >
+                                        <option value="Open">Open</option>
+                                        <option value="In Progress">In Progress</option>
+                                        <option value="Resolved">Resolved</option>
+                                        <option value="Closed">Closed</option>
+                                    </FormField>
+                                </div>
+                            )}
 
-                    <div className="mt-4 flex justify-end items-center">
-                        <div className="space-x-2">
-                            <Button variant="ghost" onClick={onClose}>Cancel</Button>
-                            <Button 
-                                onClick={handleTicketUpdate} 
-                                disabled={(!newComment.trim() && newAttachments.length === 0) && (newStatus === ticket.status)}
-                            >
-                                Update Ticket
-                            </Button>
+                            <div className="mt-4 flex justify-end items-center">
+                                <div className="space-x-2">
+                                    <Button variant="ghost" onClick={onClose}>Cancel</Button>
+                                    <Button 
+                                        onClick={handleTicketUpdate} 
+                                        disabled={(!newComment.trim() && newAttachments.length === 0) && (newStatus === ticket.status)}
+                                    >
+                                        Update Ticket
+                                    </Button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

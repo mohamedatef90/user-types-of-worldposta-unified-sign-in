@@ -333,15 +333,18 @@ export const ActionLogsPage: React.FC = () => {
         <>
             <Card title="Action Logs">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
-                    <div className="flex items-center border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
+                    <div role="tablist" className="inline-flex space-x-1 p-1 bg-gray-200/50 dark:bg-slate-700/50 rounded-lg">
                         {tabItems.map(tab => (
                             <button
                                 key={tab.id}
+                                role="tab"
+                                aria-selected={activeTab === tab.id}
                                 onClick={() => handleTabClick(tab.id)}
-                                className={`px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors ${activeTab === tab.id
-                                    ? 'border-b-2 border-[#679a41] text-[#679a41] dark:border-emerald-400 dark:text-emerald-400'
-                                    : 'border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                                    }`}
+                                className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#679a41] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${
+                                    activeTab === tab.id
+                                        ? 'bg-white dark:bg-slate-800 text-[#679a41] dark:text-emerald-400 shadow-sm'
+                                        : 'text-gray-600 dark:text-gray-400 hover:text-[#293c51] dark:hover:text-gray-100'
+                                }`}
                             >
                                 {tab.name}
                             </button>
