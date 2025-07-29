@@ -3,7 +3,8 @@
 
 
 
-import type { User, UserGroup, Invoice, SupportTicket, LogEntry, SupportTicketProduct, InvoiceLineItem, StaffGroup } from './types';
+
+import type { User, UserGroup, Invoice, SupportTicket, LogEntry, SupportTicketProduct, InvoiceLineItem, StaffGroup, SmtpLogEntry } from './types';
 
 // Mock User Data
 export const MOCK_USERS: { [email: string]: User & { passwordHash: string } } = {
@@ -488,4 +489,17 @@ export const mockDomains = [
     { id: 'dom-alpha', name: 'alpha-inc.com' },
     { id: 'dom-beta', name: 'betadivision.net' },
     { id: 'dom-gamma', name: 'gamma-corp.io' },
+];
+
+export const mockSmtpLogs: SmtpLogEntry[] = [
+    { id: 'smtp1', timestamp: new Date(Date.now() - 3600000 * 0.1).toISOString(), from: 'marketing@example.com', to: 'customer1@worldposta.com', subject: 'Your Weekly Newsletter', action: 'DELIVER', status: 'Passed', details: 'Message-ID: <abc-1@example.com>' },
+    { id: 'smtp2', timestamp: new Date(Date.now() - 3600000 * 0.2).toISOString(), from: 'billing@service.com', to: 'customer2@worldposta.com', subject: 'Invoice #12345 Due', action: 'PASS', status: 'Passed', details: 'Message-ID: <abc-2@service.com>' },
+    { id: 'smtp3', timestamp: new Date(Date.now() - 3600000 * 0.3).toISOString(), from: 'nigerian.prince@scam.net', to: 'customer1@worldposta.com', subject: 'URGENT: Your Inheritance', action: 'REJECT', status: 'Spam (Scam)', details: 'High spam score (9.8)' },
+    { id: 'smtp4', timestamp: new Date(Date.now() - 3600000 * 0.4).toISOString(), from: 'support@legit-but-flagged.com', to: 'customer3@worldposta.com', subject: 'FW: Support Ticket Update', action: 'QUARANTINE', status: 'Rejected (Suspect)', details: 'Contains suspicious link' },
+    { id: 'smtp5', timestamp: new Date(Date.now() - 3600000 * 0.5).toISOString(), from: 'hr@corporate.com', to: 'archive@worldposta.com', subject: 'Internal Memo Q3', action: 'ARCHIVE', status: 'Archived', details: 'Message-ID: <abc-5@corporate.com>' },
+    { id: 'smtp6', timestamp: new Date(Date.now() - 3600000 * 0.6).toISOString(), from: 'bad.actor@malware.com', to: 'customer2@worldposta.com', subject: 'Your account is suspended!', action: 'REJECT', status: 'Spam (Confirmed)', details: 'Known malware signature' },
+    { id: 'smtp7', timestamp: new Date(Date.now() - 3600000 * 0.7).toISOString(), from: 'sales@partner.com', to: 'customer1@worldposta.com', subject: 'Follow up on our meeting', action: 'DELIVER', status: 'Passed', details: 'Message-ID: <abc-7@partner.com>' },
+    { id: 'smtp8', timestamp: new Date(Date.now() - 3600000 * 0.8).toISOString(), from: 'sender@blocked-domain.com', to: 'customer3@worldposta.com', subject: 'You have won!', action: 'REJECT', status: 'Rejected (Block)', details: 'Sender domain on blocklist' },
+    { id: 'smtp9', timestamp: new Date(Date.now() - 3600000 * 0.9).toISOString(), from: 'info@valid.com', to: 'nonexistent-user@worldposta.com', subject: 'Welcome!', action: 'REJECT', status: 'User Invalid', details: 'Recipient address does not exist' },
+    { id: 'smtp10', timestamp: new Date(Date.now() - 3600000 * 1.0).toISOString(), from: 'legal@corporate.com', to: 'archive@worldposta.com', subject: 'Legal Hold Notice #L-554', action: 'ARCHIVE', status: 'Archived', details: 'Message-ID: <abc-10@corporate.com>' },
 ];

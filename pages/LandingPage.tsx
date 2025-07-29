@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button, Card, FormField, Icon, Logo, FloatingAppLauncher } from '@/components/ui';
@@ -25,7 +26,7 @@ const getAppLauncherItems = (role: User['role'] | undefined): ApplicationCardDat
             name: 'Email Admin Suite', 
             description: 'Administer your email services, mailboxes, users, and domains with ease.',
             iconName: "https://www.worldposta.com/assets/Posta-Logo.png", 
-            launchUrl: 'https://tools.worldposta.com/login'
+            launchUrl: '/app/email-admin-suite'
         }
     ];
 

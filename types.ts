@@ -3,6 +3,7 @@
 
 
 
+
 export interface User {
   id: string;
   fullName: string;
@@ -285,4 +286,18 @@ export interface FeatureCategory {
 export interface FaqItem {
   question: string;
   answer: string;
+}
+
+export type SmtpLogAction = 'DELIVER' | 'QUARANTINE' | 'REJECT' | 'ARCHIVE' | 'PASS';
+export type SmtpLogStatus = 'Passed' | 'Archived' | 'Rejected (Data)' | 'Rejected (Block)' | 'Spam (Confirmed)' | 'Spam (Scam)' | 'Rejected (Suspect)' | 'User Invalid';
+
+export interface SmtpLogEntry {
+  id: string;
+  timestamp: string;
+  from: string;
+  to: string;
+  subject: string;
+  action: SmtpLogAction;
+  status: SmtpLogStatus;
+  details: string; // e.g., Message-ID or reason for rejection
 }

@@ -2,13 +2,11 @@
 
 
 
-
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation, Outlet, useSearchParams, Link } from 'react-router-dom';
 import { AuthProvider, ThemeProvider, useAuth, AppLayoutContext } from '@/context';
 import type { User, AuthContextType, NavItem, UserGroup, ApplicationCardData } from '@/types';
-import { Navbar, Sidebar, Spinner, Breadcrumbs, Footer, Icon, Button } from '@/components/ui'; 
+import { Navbar, Sidebar, Spinner, Breadcrumbs, Footer, Icon, Button, Chatbot } from '@/components/ui'; 
 import { getMockUserById } from '@/data';
 import { 
     LandingPage, 
@@ -28,8 +26,6 @@ import {
     ProfilePage,
     AccountSettingsPage,
     SecuritySettingsPage,
-    NotificationSettingsPage,
-    SystemSettingsPage,
     BillingSettingsPage,
     EmailConfigurationsPage,
     InvoiceHistoryPage,
@@ -47,7 +43,8 @@ import {
     EmailAdminSubscriptionsPage,
     CloudEdgeConfigurationsPage,
     PostaPricingPage,
-    CreateTicketPage
+    CreateTicketPage,
+    EmailAdminSmtpLogsPage
 } from '@/pages';
 
 
@@ -87,7 +84,6 @@ const getNavItems = (role: User['role']): NavItem[] => {
         { name: 'Customers', path: '/app/admin/users', iconName: 'fas fa-users' },
         { name: 'Billings', path: '/app/billing', iconName: 'fas fa-file-invoice-dollar' },
         { name: 'Support Center', path: '/app/admin/support', iconName: 'fas fa-headset' },
-        { name: 'System', path: '/app/admin/system', iconName: 'fas fa-cogs' },
       ];
     case 'reseller':
       return [
@@ -128,10 +124,10 @@ const getAppLauncherItems = (role: User['role'] | undefined): ApplicationCardDat
         },
         { 
             id: 'emailadmin', 
-            name: 'Email Admin Suite', 
-            description: 'Administer your email services, mailboxes, users, and domains with ease.',
+            name: 'SMTP Logs', 
+            description: 'View and filter SMTP logs for your email services.',
             iconName: "https://www.worldposta.com/assets/Posta-Logo.png", 
-            launchUrl: 'https://tools.worldposta.com/login'
+            launchUrl: '/app/email-admin-suite'
         }
     ];
 
@@ -246,6 +242,7 @@ const AppLayout: React.FC = () => {
             'reseller': 'Reseller',
             'customers': 'My Customers',
             'program': 'My Program',
+            'email-admin-suite': 'SMTP Logs',
         };
         
         const getLabel = (value: string) => {
@@ -369,6 +366,7 @@ const AppLayout: React.FC = () => {
                         <Outlet />
                     </main>
                 </div>
+                <Chatbot />
             </div>
         </AppLayoutContext.Provider>
     );
@@ -435,7 +433,6 @@ const AppRoutes: React.FC = () => {
                         <Route index element={<Navigate to="account" replace />} />
                         <Route path="account" element={<AccountSettingsPage />} />
                         <Route path="security" element={<SecuritySettingsPage />} />
-                        <Route path="notifications" element={<NotificationSettingsPage />} />
                     </Route>
                      <Route path="notifications" element={<AllNotificationsPage />} />
 
@@ -445,7 +442,6 @@ const AppRoutes: React.FC = () => {
                         <Route path="users" element={<UserManagementPage />} />
                         <Route path="users/add" element={<AddCustomerPage />} />
                         <Route path="staff" element={<StaffManagementPage />} />
-                        <Route path="system" element={<SystemSettingsPage />} />
                         <Route path="support" element={<Outlet />}>
                             <Route index element={<SupportPage />} />
                             <Route path="create" element={<CreateTicketPage />} />
@@ -459,30 +455,28 @@ const AppRoutes: React.FC = () => {
                          <Route path="customers" element={<ResellerCustomersPage />} />
                          <Route path="program" element={<ResellerProgramPage />} />
                     </Route>
-                    <Route path="reseller-dashboard" element={<ResellerDashboardPage />} />
-
-                    {/* CloudEdge Route (special layout handled in AppLayout) */}
+                    
+                    {/* CloudEdge Route (Based on AppLayout) */}
                     <Route path="cloud-edge" element={<CloudEdgeDashboardPage />} />
+                    
+                    {/* Email Admin Suite Route */}
+                    <Route path="email-admin-suite" element={<EmailAdminSmtpLogsPage />} />
 
-
-                    <Route path="*" element={<NotFoundPage />} />
                 </Route>
             </Route>
             
+            {/* 404 Route */}
             <Route path="*" element={<NotFoundPage />} />
         </Routes>
     );
 };
 
-
-const App: React.FC = () => {
-  return (
+const MainApp: React.FC = () => (
     <ThemeProvider>
         <AuthProvider>
             <AppRoutes />
         </AuthProvider>
     </ThemeProvider>
-  );
-};
+);
 
-export default App;
+export default MainApp;

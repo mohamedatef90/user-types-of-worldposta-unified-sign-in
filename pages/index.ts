@@ -1,6 +1,3 @@
-
-
-
 export * from './ActionLogsPage';
 export * from './AllNotificationsPage';
 export * from './CloudEdgeLayout';
@@ -10,7 +7,6 @@ export * from './SupportPage';
 
 export * from './admin/AdminRouterPage';
 export * from './admin/StaffManagementPage';
-export * from './admin/SystemSettingsPage';
 export * from './admin/UserManagementPage';
 export * from './admin/AddCustomerPage';
 export * from './admin/CreateTicketPage';
@@ -35,12 +31,12 @@ export * from './dashboard/AdminDashboardPage';
 export * from './dashboard/CloudEdgeDashboardPage';
 export * from './dashboard/DashboardPage';
 export * from './dashboard/ResellerDashboardPage';
+export * from './dashboard/EmailAdminSmtpLogsPage';
 
 export * from './reseller/ResellerCustomersPage';
 export * from './reseller/ResellerProgramPage';
 
 export * from './settings/AccountSettingsPage';
-export * from './settings/NotificationSettingsPage';
 export * from './settings/ProfilePage';
 export * from './settings/SecuritySettingsPage';
 export * from './settings/SettingsRouterPage';

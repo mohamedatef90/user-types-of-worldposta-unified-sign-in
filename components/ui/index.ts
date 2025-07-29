@@ -1,4 +1,3 @@
-
 export * from './AuthLayout';
 export * from './Breadcrumbs';
 export * from './Button';
@@ -23,3 +22,8 @@ export * from './MultiSelectDropdown';
 export * from './PricingCard';
 export * from './FeatureComparison';
 export * from './FaqSection';
+export * from './Chatbot';
+export * from './BarChart';
+export * from './LineChart';
+export * from './MultiSegmentDoughnutChart';
+export * from './StatCard';
