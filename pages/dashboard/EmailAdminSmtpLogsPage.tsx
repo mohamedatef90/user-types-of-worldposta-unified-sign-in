@@ -156,16 +156,21 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose, onApply, onC
 
 
 export const EmailAdminSmtpLogsPage: React.FC = () => {
+    const [activeTab, setActiveTab] = useState('statistics');
     const [filters, setFilters] = useState<Filters>(initialFilters);
     const [logs] = useState<SmtpLogEntry[]>(mockSmtpLogs);
     const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
 
     const handleApplyFilters = (newFilters: Filters) => {
         setFilters(newFilters);
+        setCurrentPage(1);
     };
 
     const clearFilters = () => {
         setFilters(initialFilters);
+        setCurrentPage(1);
     };
 
     const filteredLogs = useMemo(() => {
@@ -186,6 +191,11 @@ export const EmailAdminSmtpLogsPage: React.FC = () => {
             return true;
         }).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     }, [logs, filters]);
+
+    const paginatedLogs = useMemo(() => {
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        return filteredLogs.slice(startIndex, startIndex + rowsPerPage);
+    }, [filteredLogs, currentPage, rowsPerPage]);
     
     const mailFlowData = useMemo(() => ({
         labels: ['Jul 16', 'Jul 17', 'Jul 18', 'Jul 19', 'Jul 20', 'Jul 21', 'Jul 22'],
@@ -225,160 +235,264 @@ export const EmailAdminSmtpLogsPage: React.FC = () => {
             default: return 'bg-blue-100 text-blue-600';
         }
     };
+    
+    const getStatusChipClass = (status: SmtpLogStatus) => {
+        const baseClasses = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full';
+        switch (status) {
+            case 'Passed':
+                return `${baseClasses} bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300`;
+            case 'Archived':
+                return `${baseClasses} bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300`;
+            case 'Rejected (Data)':
+            case 'Rejected (Block)':
+            case 'Spam (Confirmed)':
+            case 'Spam (Scam)':
+                return `${baseClasses} bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300`;
+            case 'Rejected (Suspect)':
+                return `${baseClasses} bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300`;
+            case 'User Invalid':
+                return `${baseClasses} bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300`;
+            default:
+                return baseClasses;
+        }
+    };
 
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-start">
                 <div>
-                    <h1 className="text-2xl font-bold text-[#293c51] dark:text-gray-100">SMTP Logs</h1>
+                    <h1 className="text-2xl font-bold text-[#293c51] dark:text-gray-100">SMTP Security Center</h1>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Comprehensive email security monitoring and analytics</p>
                 </div>
-                <Button onClick={() => setIsFilterPanelOpen(true)} leftIconName="fas fa-filter">
-                    Filter Logs
-                </Button>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-                <StatCard title="Total Emails" metric="127,845" change="+12.5%" changeType="increase" iconName="fas fa-envelope" iconBgColor="bg-indigo-500" />
-                <StatCard title="Security Score" metric="98.2%" change="+2.1%" changeType="increase" iconName="fas fa-shield-alt" iconBgColor="bg-green-500" />
-                <StatCard title="Threats Blocked" metric="2,847" change="-15.3%" changeType="decrease" iconName="fas fa-exclamation-triangle" iconBgColor="bg-yellow-500" />
-                <StatCard title="Legitimate Emails" metric="124,998" change="+14.2%" changeType="increase" iconName="fas fa-check-circle" iconBgColor="bg-green-500" />
-            </div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <Card title="Email Traffic Trends" className="lg:col-span-2">
-                    <p className="text-sm text-gray-500 dark:text-gray-400 -mt-2 mb-4">Daily email volume and security metrics over the past week</p>
-                    <LineChart data={mailFlowData.data} labels={mailFlowData.labels} />
-                </Card>
 
-                <Card title="Email Classification" className="lg:col-span-1">
-                    <p className="text-sm text-gray-500 dark:text-gray-400 -mt-2 mb-4">Distribution of email types processed today</p>
-                    <div className="flex flex-col items-center">
-                        <MultiSegmentDoughnutChart segments={emailClassificationData} showTotal={false} strokeWidth={25} size={200} />
-                        <div className="mt-4 w-full space-y-2 text-sm">
-                            {emailClassificationData.map(segment => (
-                                <div key={segment.label} className="flex items-center justify-between">
-                                    <div className="flex items-center">
-                                        <span className="w-3 h-3 rounded-sm mr-2" style={{ backgroundColor: segment.color }}></span>
-                                        <span className="text-gray-600 dark:text-gray-400">{segment.label}</span>
-                                    </div>
-                                    <span className="font-semibold text-gray-700 dark:text-gray-300">{segment.value.toLocaleString()}</span>
+             <div className="border-b border-gray-200 dark:border-gray-700">
+                <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+                    <button
+                        onClick={() => setActiveTab('statistics')}
+                        className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
+                            activeTab === 'statistics'
+                                ? 'border-[#679a41] text-[#679a41] dark:border-emerald-400 dark:text-emerald-400'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                        }`}
+                    >
+                        Statistics
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('logs')}
+                        className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
+                            activeTab === 'logs'
+                                ? 'border-[#679a41] text-[#679a41] dark:border-emerald-400 dark:text-emerald-400'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                        }`}
+                    >
+                        Logs
+                    </button>
+                </nav>
+            </div>
+            
+            {activeTab === 'statistics' && (
+                <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                        <StatCard title="Total Emails" metric="127,845" change="+12.5%" changeType="increase" iconName="fas fa-envelope" iconBgColor="bg-indigo-500" />
+                        <StatCard title="Security Score" metric="98.2%" change="+2.1%" changeType="increase" iconName="fas fa-shield-alt" iconBgColor="bg-green-500" />
+                        <StatCard title="Threats Blocked" metric="2,847" change="-15.3%" changeType="decrease" iconName="fas fa-exclamation-triangle" iconBgColor="bg-yellow-500" />
+                        <StatCard title="Legitimate Emails" metric="124,998" change="+14.2%" changeType="increase" iconName="fas fa-check-circle" iconBgColor="bg-green-500" />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <Card title="Email Traffic Trends" className="lg:col-span-2">
+                            <p className="text-sm text-gray-500 dark:text-gray-400 -mt-2 mb-4">Daily email volume and security metrics over the past week</p>
+                            <LineChart data={mailFlowData.data} labels={mailFlowData.labels} />
+                        </Card>
+
+                        <Card title="Email Classification" className="lg:col-span-1">
+                            <p className="text-sm text-gray-500 dark:text-gray-400 -mt-2 mb-4">Distribution of email types processed today</p>
+                            <div className="flex flex-col items-center">
+                                <MultiSegmentDoughnutChart segments={emailClassificationData} showTotal={false} strokeWidth={25} size={200} />
+                                <div className="mt-4 w-full space-y-2 text-sm">
+                                    {emailClassificationData.map(segment => (
+                                        <div key={segment.label} className="flex items-center justify-between">
+                                            <div className="flex items-center">
+                                                <span className="w-3 h-3 rounded-sm mr-2" style={{ backgroundColor: segment.color }}></span>
+                                                <span className="text-gray-600 dark:text-gray-400">{segment.label}</span>
+                                            </div>
+                                            <span className="font-semibold text-gray-700 dark:text-gray-300">{segment.value.toLocaleString()}</span>
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
+                            </div>
+                        </Card>
+                        
+                        <Card title="Threat Distribution" className="lg:col-span-1">
+                            <p className="text-sm text-gray-500 dark:text-gray-400 -mt-2 mb-4">{threatDistributionData.reduce((sum, item) => sum + item.value, 0).toLocaleString()} threats detected today</p>
+                            <BarChart data={threatDistributionData} />
+                        </Card>
+
+                        <Card title="Top Threat Sources" className="lg:col-span-2">
+                            <p className="text-sm text-gray-500 dark:text-gray-400 -mt-2 mb-4">Most active suspicious IP addresses</p>
+                            <div className="space-y-2">
+                                {topThreatSources.map((source, index) => (
+                                    <div key={index} className="flex items-center p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50">
+                                        <div className="flex-grow">
+                                            <p className="font-semibold text-[#293c51] dark:text-gray-100">{source.ip}</p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">{source.location} • {source.attempts} attempts</p>
+                                        </div>
+                                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getRiskTagClass(source.risk)}`}>{source.risk}</span>
+                                        <Button size="icon" variant="ghost" onClick={() => alert(`Blocking IP: ${source.ip}`)} title={`Block ${source.ip}`} className="ml-2 text-gray-400 hover:text-red-500 dark:hover:text-red-400">
+                                            <Icon name="fas fa-ban" />
+                                        </Button>
+                                        <span className="ml-2 w-6 text-right font-bold text-gray-400 dark:text-gray-500">{index + 1}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </Card>
+
+                        <Card title="Top Active Users" className="lg:col-span-2">
+                            <p className="text-sm text-gray-500 dark:text-gray-400 -mt-2 mb-4">Most active email users and their activity patterns</p>
+                            <div className="space-y-2">
+                                {topActiveUsers.map((user, index) => (
+                                    <div key={index} className="flex items-center p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50">
+                                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-sm mr-3">{user.initials}</div>
+                                        <div className="flex-grow">
+                                            <p className="font-semibold text-[#293c51] dark:text-gray-100">{user.name}</p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1"><Icon name="fas fa-arrow-up"/> {user.sent} sent <Icon name="fas fa-arrow-down" className="ml-2"/> {user.received} received</p>
+                                        </div>
+                                        <div className="flex items-center gap-2 flex-shrink-0">
+                                            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusTagClass(user.status)}`}>{user.status}</span>
+                                            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getRiskTagClass(user.risk)}`}>{user.risk}</span>
+                                        </div>
+                                        <span className="ml-4 w-6 text-right font-bold text-gray-400 dark:text-gray-500">{index + 1}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </Card>
+
+                        <Card title="Live Activity Feed" className="lg:col-span-1">
+                            <p className="text-sm text-gray-500 dark:text-gray-400 -mt-2 mb-4">Real-time security events and email processing updates</p>
+                            <div className="space-y-3">
+                                {liveActivityFeed.map((item, index) => (
+                                    <div key={index} className="flex items-start p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50">
+                                        <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3 ${getFeedIconClass(item.type)}`}>
+                                            <Icon name={item.icon} />
+                                        </div>
+                                        <div className="flex-grow">
+                                            <p className="font-semibold text-[#293c51] dark:text-gray-100">
+                                                {item.title} 
+                                                <span className={`ml-2 px-2 py-0.5 text-xs font-bold rounded-full ${getRiskTagClass(item.type)} capitalize`}>{item.type}</span>
+                                            </p>
+                                            <p className="text-sm text-gray-600 dark:text-gray-300">{item.description}</p>
+                                            <div className="flex items-center text-xs text-gray-400 dark:text-gray-500 mt-1 gap-4">
+                                                <span><Icon name="far fa-clock" className="mr-1" />{item.time}</span>
+                                                {item.user && <span><Icon name="far fa-user" className="mr-1" />{item.user}</span>}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </Card>
+                    </div>
+                </div>
+            )}
+            
+            {activeTab === 'logs' && (
+                <Card 
+                    title="SMTP Log Explorer"
+                    titleActions={
+                         <Button onClick={() => setIsFilterPanelOpen(true)} leftIconName="fas fa-filter">
+                            Filter Logs
+                        </Button>
+                    }
+                >
+                    <div>
+                        <div className="overflow-x-auto border rounded-lg dark:border-gray-700">
+                            <table className="min-w-full">
+                                <thead className="bg-gray-50 dark:bg-slate-700">
+                                    <tr>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Timestamp</th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">From</th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">To</th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Subject</th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Action</th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                    {paginatedLogs.map(log => {
+                                        return (
+                                            <tr key={log.id}>
+                                                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{new Date(log.timestamp).toLocaleString()}</td>
+                                                <td className="px-4 py-4 whitespace-nowrap text-sm text-[#293c51] dark:text-gray-200">{log.from}</td>
+                                                <td className="px-4 py-4 whitespace-nowrap text-sm text-[#293c51] dark:text-gray-200">{log.to}</td>
+                                                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate">{log.subject}</td>
+                                                <td className="px-4 py-4 whitespace-nowrap text-sm font-semibold">{log.action}</td>
+                                                <td className="px-4 py-4 whitespace-nowrap text-sm">
+                                                    <span className={getStatusChipClass(log.status)}>
+                                                        {log.status}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                    {filteredLogs.length === 0 && (
+                                        <tr>
+                                            <td colSpan={6} className="text-center py-10 text-gray-500 dark:text-gray-400">
+                                                No logs match your filter criteria.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                         <div className="flex items-center justify-between py-3 px-4 border-t dark:border-gray-700">
+                            <div className="flex items-center gap-2">
+                                <label htmlFor="rowsPerPage" className="text-sm text-gray-600 dark:text-gray-400">Rows:</label>
+                                <select
+                                    id="rowsPerPage"
+                                    value={rowsPerPage}
+                                    onChange={(e) => {
+                                        setRowsPerPage(Number(e.target.value));
+                                        setCurrentPage(1);
+                                    }}
+                                    className="bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-md text-sm p-1.5 focus:ring-2 focus:ring-[#679a41] dark:focus:ring-emerald-400"
+                                >
+                                    <option value={10}>10</option>
+                                    <option value={25}>25</option>
+                                    <option value={50}>50</option>
+                                    <option value={100}>100</option>
+                                </select>
+                            </div>
+
+                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                                Showing {filteredLogs.length > 0 ? (currentPage - 1) * rowsPerPage + 1 : 0}-
+                                {Math.min(currentPage * rowsPerPage, filteredLogs.length)} of {filteredLogs.length}
+                            </span>
+
+                            <div className="flex gap-1">
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setCurrentPage(prev => prev - 1)}
+                                    disabled={currentPage === 1}
+                                    leftIconName="fas fa-chevron-left"
+                                >
+                                    Previous
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setCurrentPage(prev => prev + 1)}
+                                    disabled={currentPage * rowsPerPage >= filteredLogs.length}
+                                >
+                                    Next <Icon name="fas fa-chevron-right" className="ml-2"/>
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 </Card>
-                
-                <Card title="Threat Distribution" className="lg:col-span-1">
-                    <p className="text-sm text-gray-500 dark:text-gray-400 -mt-2 mb-4">{threatDistributionData.reduce((sum, item) => sum + item.value, 0).toLocaleString()} threats detected today</p>
-                    <BarChart data={threatDistributionData} />
-                </Card>
-
-                <Card title="Top Threat Sources" className="lg:col-span-2">
-                    <p className="text-sm text-gray-500 dark:text-gray-400 -mt-2 mb-4">Most active suspicious IP addresses</p>
-                    <div className="space-y-2">
-                        {topThreatSources.map((source, index) => (
-                            <div key={index} className="flex items-center p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50">
-                                <div className="flex-grow">
-                                    <p className="font-semibold text-[#293c51] dark:text-gray-100">{source.ip}</p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">{source.location} • {source.attempts} attempts</p>
-                                </div>
-                                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getRiskTagClass(source.risk)}`}>{source.risk}</span>
-                                <Button size="icon" variant="ghost" onClick={() => alert(`Blocking IP: ${source.ip}`)} title={`Block ${source.ip}`} className="ml-2 text-gray-400 hover:text-red-500 dark:hover:text-red-400">
-                                    <Icon name="fas fa-ban" />
-                                </Button>
-                                <span className="ml-2 w-6 text-right font-bold text-gray-400 dark:text-gray-500">{index + 1}</span>
-                            </div>
-                        ))}
-                    </div>
-                </Card>
-
-                <Card title="Top Active Users" className="lg:col-span-2">
-                    <p className="text-sm text-gray-500 dark:text-gray-400 -mt-2 mb-4">Most active email users and their activity patterns</p>
-                     <div className="space-y-2">
-                        {topActiveUsers.map((user, index) => (
-                            <div key={index} className="flex items-center p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50">
-                                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-sm mr-3">{user.initials}</div>
-                                <div className="flex-grow">
-                                    <p className="font-semibold text-[#293c51] dark:text-gray-100">{user.name}</p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1"><Icon name="fas fa-arrow-up"/> {user.sent} sent <Icon name="fas fa-arrow-down" className="ml-2"/> {user.received} received</p>
-                                </div>
-                                <div className="flex items-center gap-2 flex-shrink-0">
-                                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusTagClass(user.status)}`}>{user.status}</span>
-                                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getRiskTagClass(user.risk)}`}>{user.risk}</span>
-                                </div>
-                                <span className="ml-4 w-6 text-right font-bold text-gray-400 dark:text-gray-500">{index + 1}</span>
-                            </div>
-                        ))}
-                    </div>
-                </Card>
-
-                 <Card title="Live Activity Feed" className="lg:col-span-1">
-                    <p className="text-sm text-gray-500 dark:text-gray-400 -mt-2 mb-4">Real-time security events and email processing updates</p>
-                    <div className="space-y-3">
-                        {liveActivityFeed.map((item, index) => (
-                             <div key={index} className="flex items-start p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50">
-                                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3 ${getFeedIconClass(item.type)}`}>
-                                    <Icon name={item.icon} />
-                                </div>
-                                <div className="flex-grow">
-                                    <p className="font-semibold text-[#293c51] dark:text-gray-100">
-                                        {item.title} 
-                                        <span className={`ml-2 px-2 py-0.5 text-xs font-bold rounded-full ${getRiskTagClass(item.type)} capitalize`}>{item.type}</span>
-                                    </p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-300">{item.description}</p>
-                                    <div className="flex items-center text-xs text-gray-400 dark:text-gray-500 mt-1 gap-4">
-                                        <span><Icon name="far fa-clock" className="mr-1" />{item.time}</span>
-                                        {item.user && <span><Icon name="far fa-user" className="mr-1" />{item.user}</span>}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </Card>
-            </div>
-
-            <Card title="SMTP Log Explorer">
-                <div>
-                    <div className="overflow-x-auto border rounded-lg dark:border-gray-700">
-                        <table className="min-w-full">
-                            <thead className="bg-gray-50 dark:bg-slate-700">
-                                <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Timestamp</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">From</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">To</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Subject</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Action</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                {filteredLogs.slice(0, 100).map(log => {
-                                    return (
-                                        <tr key={log.id}>
-                                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{new Date(log.timestamp).toLocaleString()}</td>
-                                            <td className="px-4 py-4 whitespace-nowrap text-sm text-[#293c51] dark:text-gray-200">{log.from}</td>
-                                            <td className="px-4 py-4 whitespace-nowrap text-sm text-[#293c51] dark:text-gray-200">{log.to}</td>
-                                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate">{log.subject}</td>
-                                            <td className="px-4 py-4 whitespace-nowrap text-sm font-semibold">{log.action}</td>
-                                            <td className="px-4 py-4 whitespace-nowrap text-sm">{log.status}</td>
-                                        </tr>
-                                    );
-                                })}
-                                {filteredLogs.length === 0 && (
-                                    <tr>
-                                        <td colSpan={6} className="text-center py-10 text-gray-500 dark:text-gray-400">
-                                            No logs match your filter criteria.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </Card>
+            )}
             
             <FilterPanel 
                 isOpen={isFilterPanelOpen}
