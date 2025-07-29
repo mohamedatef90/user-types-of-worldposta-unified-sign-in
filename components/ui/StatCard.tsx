@@ -15,7 +15,7 @@ export const StatCard: React.FC<StatCardProps> = ({ title, metric, change, iconN
   const isIncrease = changeType === 'increase';
   const isDecrease = changeType === 'decrease';
   const changeColor = isIncrease ? 'text-green-500 dark:text-green-400' : isDecrease ? 'text-red-500 dark:text-red-400' : 'text-gray-500 dark:text-gray-400';
-  const changeIcon = isIncrease ? 'fas fa-arrow-up' : 'fas fa-arrow-down' : '';
+  const changeIcon = isIncrease ? 'fas fa-arrow-up' : isDecrease ? 'fas fa-arrow-down' : '';
   
   return (
     <Card className="p-4 flex items-center">
