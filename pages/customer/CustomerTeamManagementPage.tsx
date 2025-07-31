@@ -436,7 +436,6 @@ export const CustomerTeamManagementPage: React.FC = () => {
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Full Name</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Email</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Group</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Password</th>
                                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Actions</th>
                                         </tr>
                                     </thead>
@@ -446,9 +445,16 @@ export const CustomerTeamManagementPage: React.FC = () => {
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#293c51] dark:text-white">{u.fullName}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{u.email}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{teamGroups.find(g => g.id === u.assignedGroupId)?.name || 'N/A'}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm"><Button size="sm" variant="outline" onClick={() => handleOpenPasswordModal(u.id)}>Change Password</Button></td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                     <div className="flex items-center justify-end space-x-1">
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            onClick={() => handleOpenPasswordModal(u.id)}
+                                                            title="Change Password"
+                                                        >
+                                                            <Icon name="fas fa-key" className="text-gray-500 hover:text-[#679a41] dark:text-gray-400 dark:hover:text-emerald-400" />
+                                                        </Button>
                                                         <Button
                                                             size="icon"
                                                             variant="ghost"
@@ -470,7 +476,7 @@ export const CustomerTeamManagementPage: React.FC = () => {
                                             </tr>
                                     )) : (
                                         <tr>
-                                            <td colSpan={5} className="text-center py-6 text-gray-500 dark:text-gray-400">
+                                            <td colSpan={4} className="text-center py-6 text-gray-500 dark:text-gray-400">
                                                 No team users found for this customer.
                                             </td>
                                         </tr>
