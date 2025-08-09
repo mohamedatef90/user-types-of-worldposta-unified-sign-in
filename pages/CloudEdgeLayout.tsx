@@ -1,10 +1,12 @@
 
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Icon, FormField, Button, ToggleSwitch, DoughnutChart, FloatingAppLauncher } from '@/components/ui';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { Icon, FormField, Button, ToggleSwitch, DoughnutChart, FloatingAppLauncher, FeedbackSystem } from '@/components/ui';
 import { useAuth } from '@/context';
 import type { NavItem, ApplicationCardData } from '@/types';
 import type { User } from '@/types';
+import { getMockUserById } from '@/data';
 
 const getAppLauncherItems = (role: User['role'] | undefined): ApplicationCardData[] => {
     const baseApps: ApplicationCardData[] = [
@@ -245,6 +247,13 @@ const CloudEdgeTopBar: React.FC<{navItems: NavItem[], appItems: ApplicationCardD
 export const CloudEdgeLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { user } = useAuth();
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => localStorage.getItem('cloudEdgeSidebarCollapsed') === 'true');
+    
+    const [searchParams] = useSearchParams();
+    const viewAsUserId = searchParams.get('viewAsUser');
+    const returnToPath = searchParams.get('returnTo');
+    const viewedUser = viewAsUserId ? getMockUserById(viewAsUserId) : null;
+    const isViewAsMode = !!(viewAsUserId && returnToPath && viewedUser && user && (user.role === 'admin' || user.role === 'reseller'));
+    const isCustomerView = useMemo(() => user?.role === 'customer' && !isViewAsMode, [user, isViewAsMode]);
 
     useEffect(() => {
         localStorage.setItem('cloudEdgeSidebarCollapsed', String(isSidebarCollapsed));
@@ -285,6 +294,7 @@ export const CloudEdgeLayout: React.FC<{ children: React.ReactNode }> = ({ child
                     {children}
                 </main>
             </div>
+            {isCustomerView && <FeedbackSystem position="default" />}
         </div>
     );
 };

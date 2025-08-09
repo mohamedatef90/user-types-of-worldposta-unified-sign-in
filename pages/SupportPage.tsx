@@ -1,11 +1,10 @@
 
-
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, Button, Modal, FormField, Icon } from '@/components/ui';
+import { Card, Button, Modal, FormField, Icon, CollapsibleSection, SearchableSelect, Pagination } from '@/components/ui';
 import { useAuth } from '@/context';
-import type { SupportTicket, TicketAttachment, SupportTicketComment, User, SupportTicketProduct, SupportTicketRequestType, SupportTicketPriority, SupportTicketDepartment } from '@/types';
-import { mockSupportTickets } from '@/data';
+import type { SupportTicket, TicketAttachment, SupportTicketComment, User, SupportTicketProduct, SupportTicketRequestType, SupportTicketPriority, SupportTicketDepartment, KnowledgeBaseArticle } from '@/types';
+import { mockSupportTickets, MOCK_KB_ARTICLES, getAllMockCustomers } from '@/data';
 
 interface CreateTicketModalProps {
     isOpen: boolean;
@@ -16,8 +15,8 @@ interface CreateTicketModalProps {
 const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ isOpen, onClose, onSubmit }) => {
     const initialFormState = {
         product: 'General Inquiry' as SupportTicketProduct,
-        requestType: 'Incident' as SupportTicketRequestType,
-        priority: 'Medium' as SupportTicketPriority,
+        requestType: 'Issue' as SupportTicketRequestType,
+        priority: 'Normal' as SupportTicketPriority,
         department: 'Technical Support' as SupportTicketDepartment,
         subject: '',
         description: '',
@@ -406,6 +405,294 @@ const ViewTicketModal: React.FC<ViewTicketModalProps> = ({ isOpen, onClose, tick
     );
 };
 
+const KnowledgeBaseModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    onProceed: () => void;
+}> = ({ isOpen, onClose, onProceed }) => {
+    const [searchTerm, setSearchTerm] = useState('');
+    const articles = MOCK_KB_ARTICLES;
+
+    const filteredArticles = useMemo(() => {
+        if (!searchTerm.trim()) {
+            return articles;
+        }
+        const lowercasedTerm = searchTerm.toLowerCase();
+        return articles.filter(
+            (article) =>
+                article.question.toLowerCase().includes(lowercasedTerm) ||
+                article.answer.toLowerCase().includes(lowercasedTerm) ||
+                article.keywords.some(k => k.toLowerCase().includes(lowercasedTerm))
+        );
+    }, [searchTerm, articles]);
+
+    const groupedArticles = useMemo(() => {
+        return filteredArticles.reduce((acc, article) => {
+            const category = article.category as keyof typeof acc;
+            if (!acc[category]) {
+                acc[category] = [];
+            }
+            acc[category].push(article);
+            return acc;
+        }, {} as Record<KnowledgeBaseArticle['category'], KnowledgeBaseArticle[]>);
+    }, [filteredArticles]);
+
+    return (
+        <Modal isOpen={isOpen} onClose={onClose} title="Find a solution" size="3xl">
+            <div className="space-y-4 max-h-[70vh] flex flex-col">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Before creating a ticket, search our knowledge base for a quick solution.
+                </p>
+                <FormField
+                    id="kb-search"
+                    label=""
+                    placeholder="Search for keywords like 'billing', 'ssh', 'password'..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                <div className="flex-grow overflow-y-auto pr-2 space-y-4 -mr-2">
+                    {Object.keys(groupedArticles).length > 0 ? (
+                        Object.entries(groupedArticles).map(([category, articlesInCategory]) => (
+                            <div key={category}>
+                                <h4 className="font-semibold text-lg mb-2 text-[#293c51] dark:text-gray-200">{category}</h4>
+                                {articlesInCategory.map(article => (
+                                    <CollapsibleSection key={article.id} title={article.question}>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 p-2">{article.answer}</p>
+                                    </CollapsibleSection>
+                                ))}
+                            </div>
+                        ))
+                    ) : (
+                        <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+                            No articles found matching your search.
+                        </p>
+                    )}
+                </div>
+                <div className="pt-4 border-t dark:border-gray-700 flex justify-between items-center">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Can't find an answer?</p>
+                    <Button onClick={onProceed} leftIconName="fas fa-ticket-alt">
+                        Create a Support Ticket
+                    </Button>
+                </div>
+            </div>
+        </Modal>
+    );
+};
+
+interface SupportFilters {
+    customerId: string;
+    ticketId: string;
+    subject: string;
+    status: 'all' | SupportTicket['status'];
+    severity: 'all' | SupportTicketPriority;
+    type: 'all' | SupportTicketRequestType;
+    dateFrom: string;
+    dateTo: string;
+}
+
+interface SupportFilterPanelProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onApply: (filters: SupportFilters) => void;
+    onClear: () => void;
+    currentFilters: SupportFilters;
+    customerOptions: { value: string; label: string; }[];
+}
+
+const SupportFilterPanel: React.FC<SupportFilterPanelProps> = ({ isOpen, onClose, onApply, onClear, currentFilters, customerOptions }) => {
+    const [localFilters, setLocalFilters] = useState<SupportFilters>(currentFilters);
+
+    useEffect(() => {
+        if (isOpen) {
+            setLocalFilters(currentFilters);
+        }
+    }, [isOpen, currentFilters]);
+    
+    const handleLocalChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setLocalFilters(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleCustomerFilterChange = (customerId: string) => {
+        setLocalFilters(prev => ({ ...prev, customerId }));
+    };
+
+    const handleApply = () => {
+        onApply(localFilters);
+        onClose();
+    };
+
+    const handleClear = () => {
+        onClear();
+        onClose();
+    };
+
+    return (
+        <>
+            {isOpen && <div className="fixed inset-0 bg-black/60 z-[59]" onClick={onClose} aria-hidden="true" />}
+            <div
+                className={`fixed top-0 right-0 h-full w-full max-w-sm bg-[#f8f8f8] dark:bg-slate-800 shadow-2xl z-[60] transform transition-transform duration-300 ease-in-out flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="filter-panel-title"
+            >
+                <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-700 flex-shrink-0">
+                    <h2 id="filter-panel-title" className="text-lg font-semibold text-[#293c51] dark:text-gray-100 flex items-center">
+                        <Icon name="fas fa-filter" className="mr-2" />
+                        Filter Support Tickets
+                    </h2>
+                    <button onClick={onClose} className="p-2 rounded-full text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-slate-700" aria-label="Close filters">
+                        <Icon name="fas fa-times" className="text-xl" />
+                    </button>
+                </div>
+
+                <div className="flex-grow overflow-y-auto p-4 space-y-4">
+                    <SearchableSelect
+                        id="customer-filter"
+                        label="Customer"
+                        options={customerOptions}
+                        value={localFilters.customerId}
+                        onChange={handleCustomerFilterChange}
+                        placeholder="All Customers"
+                    />
+                    <FormField id="ticketId-filter" name="ticketId" label="Ticket ID" value={localFilters.ticketId} onChange={handleLocalChange} placeholder="e.g., TKT-58291" />
+                    <FormField id="subject-filter" name="subject" label="Subject" value={localFilters.subject} onChange={handleLocalChange} placeholder="e.g., Cannot access" />
+                    <FormField as="select" id="status-filter" name="status" label="Status" value={localFilters.status} onChange={handleLocalChange}>
+                        <option value="all">All Statuses</option>
+                        <option value="Open">Open</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Resolved">Resolved</option>
+                        <option value="Closed">Closed</option>
+                    </FormField>
+                    <FormField as="select" id="severity-filter" name="severity" label="Severity" value={localFilters.severity} onChange={handleLocalChange}>
+                        <option value="all">All Severities</option>
+                        <option value="Low">Low</option>
+                        <option value="Normal">Normal</option>
+                        <option value="High">High</option>
+                        <option value="Urgent">Urgent</option>
+                    </FormField>
+                    <FormField as="select" id="type-filter" name="type" label="Type" value={localFilters.type} onChange={handleLocalChange}>
+                        <option value="all">All Types</option>
+                        <option value="Inquiry">Inquiry</option>
+                        <option value="Issue">Issue</option>
+                        <option value="Task">Task</option>
+                        <option value="Feature Request">Feature Request</option>
+                    </FormField>
+                    <div className="grid grid-cols-2 gap-4">
+                        <FormField id="dateFrom-filter" name="dateFrom" label="From" type="date" value={localFilters.dateFrom} onChange={handleLocalChange} />
+                        <FormField id="dateTo-filter" name="dateTo" label="To" type="date" value={localFilters.dateTo} onChange={handleLocalChange} />
+                    </div>
+                </div>
+
+                <div className="flex-shrink-0 p-4 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 space-x-2 flex justify-end">
+                    <Button variant="outline" onClick={handleClear}>Clear Filters</Button>
+                    <Button onClick={handleApply}>Apply Filters</Button>
+                </div>
+            </div>
+        </>
+    );
+};
+
+interface CustomerSupportFilters {
+    ticketId: string;
+    subject: string;
+    status: 'all' | SupportTicket['status'];
+    severity: 'all' | SupportTicketPriority;
+    type: 'all' | SupportTicketRequestType;
+    dateFrom: string;
+    dateTo: string;
+}
+
+interface CustomerSupportFilterPanelProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onApply: (filters: CustomerSupportFilters) => void;
+    onClear: () => void;
+    currentFilters: CustomerSupportFilters;
+}
+
+const CustomerSupportFilterPanel: React.FC<CustomerSupportFilterPanelProps> = ({ isOpen, onClose, onApply, onClear, currentFilters }) => {
+    const [localFilters, setLocalFilters] = useState<CustomerSupportFilters>(currentFilters);
+
+    useEffect(() => {
+        if (isOpen) {
+            setLocalFilters(currentFilters);
+        }
+    }, [isOpen, currentFilters]);
+    
+    const handleLocalChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setLocalFilters(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleApply = () => {
+        onApply(localFilters);
+        onClose();
+    };
+
+    const handleClear = () => {
+        onClear();
+        onClose();
+    };
+
+    return (
+        <>
+            {isOpen && <div className="fixed inset-0 bg-black/60 z-[59]" onClick={onClose} aria-hidden="true" />}
+            <div
+                className={`fixed top-0 right-0 h-full w-full max-w-sm bg-[#f8f8f8] dark:bg-slate-800 shadow-2xl z-[60] transform transition-transform duration-300 ease-in-out flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="filter-panel-title"
+            >
+                <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-700 flex-shrink-0">
+                    <h2 id="filter-panel-title" className="text-lg font-semibold text-[#293c51] dark:text-gray-100 flex items-center">
+                        <Icon name="fas fa-filter" className="mr-2" />
+                        Filter Your Tickets
+                    </h2>
+                    <button onClick={onClose} className="p-2 rounded-full text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-slate-700" aria-label="Close filters">
+                        <Icon name="fas fa-times" className="text-xl" />
+                    </button>
+                </div>
+
+                <div className="flex-grow overflow-y-auto p-4 space-y-4">
+                    <FormField id="ticketId-filter" name="ticketId" label="Ticket ID" value={localFilters.ticketId} onChange={handleLocalChange} placeholder="e.g., TKT-58291" />
+                    <FormField id="subject-filter" name="subject" label="Subject" value={localFilters.subject} onChange={handleLocalChange} placeholder="e.g., Cannot access" />
+                    <FormField as="select" id="status-filter" name="status" label="Status" value={localFilters.status} onChange={handleLocalChange}>
+                        <option value="all">All Statuses</option>
+                        <option value="Open">Open</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Resolved">Resolved</option>
+                        <option value="Closed">Closed</option>
+                    </FormField>
+                    <FormField as="select" id="severity-filter" name="severity" label="Severity" value={localFilters.severity} onChange={handleLocalChange}>
+                        <option value="all">All Severities</option>
+                        <option value="Low">Low</option>
+                        <option value="Normal">Normal</option>
+                        <option value="High">High</option>
+                        <option value="Urgent">Urgent</option>
+                    </FormField>
+                    <FormField as="select" id="type-filter" name="type" label="Type" value={localFilters.type} onChange={handleLocalChange}>
+                        <option value="all">All Types</option>
+                        <option value="Inquiry">Inquiry</option>
+                        <option value="Issue">Issue</option>
+                        <option value="Task">Task</option>
+                        <option value="Feature Request">Feature Request</option>
+                    </FormField>
+                    <div className="grid grid-cols-2 gap-4">
+                        <FormField id="dateFrom-filter" name="dateFrom" label="From" type="date" value={localFilters.dateFrom} onChange={handleLocalChange} />
+                        <FormField id="dateTo-filter" name="dateTo" label="To" type="date" value={localFilters.dateTo} onChange={handleLocalChange} />
+                    </div>
+                </div>
+
+                <div className="flex-shrink-0 p-4 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 space-x-2 flex justify-end">
+                    <Button variant="outline" onClick={handleClear}>Clear Filters</Button>
+                    <Button onClick={handleApply}>Apply Filters</Button>
+                </div>
+            </div>
+        </>
+    );
+};
+
 
 export const SupportPage: React.FC = () => {
     const { user } = useAuth();
@@ -414,6 +701,107 @@ export const SupportPage: React.FC = () => {
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isKbModalOpen, setIsKbModalOpen] = useState(false);
+    const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
+    
+    const isAdmin = user?.role === 'admin';
+
+    const [filters, setFilters] = useState<SupportFilters>({
+        customerId: '',
+        ticketId: '',
+        subject: '',
+        status: 'all',
+        severity: 'all',
+        type: 'all',
+        dateFrom: '',
+        dateTo: '',
+    });
+    const [allCustomers] = useState<User[]>(getAllMockCustomers);
+
+    const customerOptions = useMemo(() => 
+        allCustomers.map(c => ({ value: c.id, label: `${c.fullName} (${c.companyName})` })),
+        [allCustomers]
+    );
+
+    const filteredTickets = useMemo(() => {
+        return tickets.filter(ticket => {
+            if (isAdmin && filters.customerId && ticket.customerId !== filters.customerId) {
+                return false;
+            }
+            if (filters.status !== 'all' && ticket.status !== filters.status) {
+                return false;
+            }
+            if (filters.ticketId && !ticket.id.toLowerCase().includes(filters.ticketId.toLowerCase())) {
+                return false;
+            }
+            if (filters.subject && !ticket.subject.toLowerCase().includes(filters.subject.toLowerCase())) {
+                return false;
+            }
+            if (filters.severity !== 'all' && ticket.priority !== filters.severity) {
+                return false;
+            }
+            if (filters.type !== 'all' && ticket.requestType !== filters.type) {
+                return false;
+            }
+            
+            const ticketDate = new Date(ticket.lastUpdate);
+            if (filters.dateFrom && ticketDate < new Date(filters.dateFrom)) {
+                return false;
+            }
+            if (filters.dateTo) {
+                const toDate = new Date(filters.dateTo);
+                toDate.setHours(23, 59, 59, 999);
+                if (ticketDate > toDate) {
+                    return false;
+                }
+            }
+            return true;
+        });
+    }, [tickets, filters, isAdmin]);
+    
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filteredTickets]);
+
+    const paginatedTickets = useMemo(() => {
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        return filteredTickets.slice(startIndex, startIndex + rowsPerPage);
+    }, [filteredTickets, currentPage, rowsPerPage]);
+
+    const activeFilterCount = useMemo(() => {
+        return Object.values(filters).filter(value => {
+            if (typeof value === 'string') return value !== '' && value !== 'all';
+            return false;
+        }).length;
+    }, [filters]);
+
+
+    const handleApplyFilters = (newFilters: SupportFilters) => {
+        setFilters(newFilters);
+    };
+
+    const handleApplyCustomerFilters = (newFilters: CustomerSupportFilters) => {
+        setFilters(prev => ({ 
+            ...prev, 
+            ...newFilters, 
+            customerId: '' // Ensure customerId is cleared for customer view
+        }));
+    };
+
+    const clearFilters = () => {
+        setFilters({
+            customerId: '',
+            ticketId: '',
+            subject: '',
+            status: 'all',
+            severity: 'all',
+            type: 'all',
+            dateFrom: '',
+            dateTo: '',
+        });
+    };
 
     const handleViewTicket = (ticketId: string) => {
         const ticket = tickets.find(t => t.id === ticketId);
@@ -427,7 +815,12 @@ export const SupportPage: React.FC = () => {
         setTickets(prev => prev.map(t => t.id === updatedTicket.id ? updatedTicket : t));
     };
 
-    const handleCreateTicket = () => {
+    const handleOpenKbModal = () => {
+        setIsKbModalOpen(true);
+    };
+
+    const handleProceedToCreateTicket = () => {
+        setIsKbModalOpen(false);
         if (user?.role === 'admin') {
             navigate('/app/admin/support/create');
         } else {
@@ -460,15 +853,33 @@ export const SupportPage: React.FC = () => {
     return (
         <>
             <Card title="Support Center" titleActions={
-                <Button onClick={handleCreateTicket} leftIconName="fas fa-plus-circle">
-                    Create New Ticket
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        onClick={() => setIsFilterPanelOpen(true)}
+                        leftIconName="fas fa-filter"
+                        className="relative"
+                    >
+                        Filters
+                        {activeFilterCount > 0 && (
+                            <span className="absolute -top-1 -right-1 flex justify-center items-center h-4 w-4 rounded-full bg-red-500 text-white text-xs font-semibold">
+                                {activeFilterCount}
+                            </span>
+                        )}
+                    </Button>
+                    <Button onClick={handleOpenKbModal} leftIconName="fas fa-plus-circle">
+                        Create New Ticket
+                    </Button>
+                </div>
             }>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto border dark:border-gray-700 rounded-lg">
                     <table className="min-w-full bg-white dark:bg-slate-800">
                         <thead className="bg-gray-50 dark:bg-slate-700">
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Ticket ID</th>
+                                {isAdmin && (
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Customer Name</th>
+                                )}
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Subject</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Product</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Status</th>
@@ -477,9 +888,12 @@ export const SupportPage: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                            {tickets.map(ticket => (
+                            {paginatedTickets.map(ticket => (
                                 <tr key={ticket.id}>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#293c51] dark:text-white">{ticket.id}</td>
+                                    {isAdmin && (
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{ticket.customerName}</td>
+                                    )}
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{ticket.subject}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{ticket.product}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm"><span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusChipClass(ticket.status)}`}>{ticket.status}</span></td>
@@ -489,10 +903,33 @@ export const SupportPage: React.FC = () => {
                                     </td>
                                 </tr>
                             ))}
+                              {filteredTickets.length === 0 && (
+                                <tr>
+                                    <td colSpan={isAdmin ? 7 : 6} className="text-center py-10 text-gray-500 dark:text-gray-400">
+                                        No tickets found.
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
+                     <Pagination
+                        currentPage={currentPage}
+                        totalItems={filteredTickets.length}
+                        itemsPerPage={rowsPerPage}
+                        onPageChange={setCurrentPage}
+                        onItemsPerPageChange={(value) => {
+                            setRowsPerPage(value);
+                            setCurrentPage(1);
+                        }}
+                    />
                 </div>
             </Card>
+
+            <KnowledgeBaseModal
+                isOpen={isKbModalOpen}
+                onClose={() => setIsKbModalOpen(false)}
+                onProceed={handleProceedToCreateTicket}
+            />
 
             <CreateTicketModal
                 isOpen={isCreateModalOpen}
@@ -507,6 +944,33 @@ export const SupportPage: React.FC = () => {
                 onUpdateTicket={handleUpdateTicket}
                 currentUser={user}
             />
+            
+            {isAdmin ? (
+                <SupportFilterPanel
+                    isOpen={isFilterPanelOpen}
+                    onClose={() => setIsFilterPanelOpen(false)}
+                    onApply={handleApplyFilters}
+                    onClear={clearFilters}
+                    currentFilters={filters}
+                    customerOptions={customerOptions}
+                />
+            ) : (
+                <CustomerSupportFilterPanel
+                    isOpen={isFilterPanelOpen}
+                    onClose={() => setIsFilterPanelOpen(false)}
+                    onApply={handleApplyCustomerFilters}
+                    onClear={clearFilters}
+                    currentFilters={{ 
+                        ticketId: filters.ticketId, 
+                        subject: filters.subject, 
+                        status: filters.status, 
+                        severity: filters.severity, 
+                        type: filters.type, 
+                        dateFrom: filters.dateFrom, 
+                        dateTo: filters.dateTo 
+                    }}
+                />
+            )}
         </>
     );
 };

@@ -61,7 +61,7 @@ interface Contact {
     id: string;
     title: string;
     name: string;
-    details: string;
+    details: string[];
 }
 
 // Modal for adding/editing contacts
@@ -76,7 +76,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, onSave, co
     const [formData, setFormData] = useState({
         title: '',
         name: '',
-        details: ''
+        details: ['']
     });
 
     useEffect(() => {
@@ -84,7 +84,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, onSave, co
             setFormData({
                 title: contact?.title || '',
                 name: contact?.name || '',
-                details: contact?.details || ''
+                details: contact?.details && contact.details.length > 0 ? [...contact.details] : ['']
             });
         }
     }, [contact, isOpen]);
@@ -93,11 +93,28 @@ const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, onSave, co
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    const handleDetailChange = (index: number, value: string) => {
+        const newDetails = [...formData.details];
+        newDetails[index] = value;
+        setFormData(prev => ({ ...prev, details: newDetails }));
+    };
+
+    const handleAddDetailField = () => {
+        setFormData(prev => ({ ...prev, details: [...prev.details, ''] }));
+    };
+
+    const handleRemoveDetailField = (index: number) => {
+        if (formData.details.length > 1) {
+            setFormData(prev => ({ ...prev, details: prev.details.filter((_, i) => i !== index) }));
+        }
+    };
+
     const handleSubmit = () => {
-        if (formData.name && formData.title && formData.details) {
-            onSave(formData);
+        const filledDetails = formData.details.filter(d => d.trim() !== '');
+        if (formData.name && formData.title) {
+            onSave({ ...formData, details: filledDetails });
         } else {
-            alert('Please fill all fields.');
+            alert('Please fill title and name.');
         }
     };
 
@@ -116,7 +133,44 @@ const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, onSave, co
             <div className="space-y-4">
                 <FormField id="title" name="title" label="Title" value={formData.title} onChange={handleChange} required />
                 <FormField id="name" name="name" label="Name" value={formData.name} onChange={handleChange} required />
-                <FormField id="details" name="details" label="Details (Email/Phone)" value={formData.details} onChange={handleChange} required />
+                
+                {formData.details.map((detail, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                        <div className="flex-grow">
+                             <FormField 
+                                id={`details-${index}`} 
+                                name={`details-${index}`} 
+                                label={'Details (Email/Phone)'}
+                                value={detail} 
+                                onChange={(e) => handleDetailChange(index, e.target.value)} 
+                                required={false}
+                                wrapperClassName="mb-0"
+                            />
+                        </div>
+                        {formData.details.length > 1 && (
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleRemoveDetailField(index)}
+                                className="flex-shrink-0 mt-6"
+                                aria-label="Remove detail"
+                            >
+                                <Icon name="fas fa-trash-alt" className="text-red-500" />
+                            </Button>
+                        )}
+                    </div>
+                ))}
+                
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAddDetailField}
+                    leftIconName="fas fa-plus"
+                >
+                    Add Detail
+                </Button>
             </div>
         </Modal>
     );
@@ -125,9 +179,9 @@ const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, onSave, co
 
 const ContactView: React.FC = () => {
     const [contacts, setContacts] = useState<Contact[]>([
-        { id: 'c1', title: 'Billing Contact', name: 'John Doe', details: 'billing@alpha.inc' },
-        { id: 'c2', title: 'Technical Contact', name: 'Jane Smith', details: 'tech@alpha.inc' },
-        { id: 'c3', title: 'Primary Contact', name: 'Demo Customer Alpha', details: 'customer@worldposta.com' }
+        { id: 'c1', title: 'Billing Contact', name: 'John Doe', details: ['billing@alpha.inc'] },
+        { id: 'c2', title: 'Technical Contact', name: 'Jane Smith', details: ['tech@alpha.inc'] },
+        { id: 'c3', title: 'Primary Contact', name: 'Demo Customer Alpha', details: ['customer@worldposta.com'] }
     ]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingContact, setEditingContact] = useState<Contact | null>(null);
@@ -179,7 +233,7 @@ const ContactView: React.FC = () => {
                                 <tr key={contact.id}>
                                     <td className="px-4 py-3 whitespace-nowrap text-sm text-[#293c51] dark:text-gray-200">{contact.title}</td>
                                     <td className="px-4 py-3 whitespace-nowrap text-sm text-[#293c51] dark:text-gray-200">{contact.name}</td>
-                                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{contact.details}</td>
+                                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{contact.details.join(', ')}</td>
                                     <td className="px-4 py-3 whitespace-nowrap text-right text-sm">
                                         <div className="flex items-center justify-end space-x-1">
                                             <Button size="icon" variant="ghost" onClick={() => handleOpenModal(contact)} title="Edit">
@@ -632,6 +686,38 @@ export const DashboardPage: React.FC = () => { // This is the Customer Dashboard
       launchUrl: 'https://tools.worldposta.com/login',
       section: 'product',
     },
+     {
+      id: 'kubernetes',
+      name: 'Kubernetes',
+      description: 'Deploy and orchestrate containerized applications at scale with our managed Kubernetes service.',
+      iconName: 'fas fa-dharmachakra',
+      launchUrl: '/app/kubernetes',
+      section: 'product',
+    },
+    {
+      id: 'networking',
+      name: 'Networking',
+      description: 'Configure load balancers, firewalls, and DNS for your cloud infrastructure.',
+      iconName: 'fas fa-network-wired',
+      launchUrl: '/app/networking',
+      section: 'product',
+    },
+    {
+      id: 'storage',
+      name: 'Storage',
+      description: 'Manage scalable object storage, block storage, and file systems for your applications.',
+      iconName: 'fas fa-hdd',
+      launchUrl: '/app/storage',
+      section: 'product',
+    },
+    {
+      id: 'backup',
+      name: 'Backup & Disaster Recovery',
+      description: 'Automate backups, protect your data, and ensure business continuity.',
+      iconName: 'fas fa-save',
+      launchUrl: '/app/backup',
+      section: 'product',
+    },
     { 
       id: 'billing', 
       name: 'Subscriptions', 
@@ -670,6 +756,14 @@ export const DashboardPage: React.FC = () => { // This is the Customer Dashboard
       description: 'Review a detailed history of all activities and events on your account.',
       iconName: 'fas fa-history',
       launchUrl: '/app/action-logs',
+      section: 'application',
+    },
+     {
+      id: 'monitoring',
+      name: 'Monitoring & Security',
+      description: 'Monitor resources, set alerts, and secure your environment with advanced tools.',
+      iconName: 'fas fa-shield-alt',
+      launchUrl: '/app/monitoring',
       section: 'application',
     },
   ];

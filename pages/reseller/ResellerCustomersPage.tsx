@@ -1,22 +1,27 @@
-
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FormField, Button, Card, Modal, Icon } from '@/components/ui';
+import { FormField, Button, Card, Modal, Icon, Pagination } from '@/components/ui';
 import { getAllMockCustomers, MOCK_USERS } from '@/data';
 import type { User } from '@/types';
 
 const UserListTable: React.FC<{ 
     users: User[], 
-    searchTerm: string, 
     onUserSelect: (userId: string) => void,
     onUserEdit: (userId: string) => void,
     onUserDelete: (userId: string) => void
-}> = ({ users, searchTerm, onUserSelect, onUserEdit, onUserDelete }) => {
-    const filteredUsers = users.filter(user =>
-        user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.companyName.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+}> = ({ users, onUserSelect, onUserEdit, onUserDelete }) => {
+    const [currentPage, setCurrentPage] = useState(1);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
+
+    const paginatedUsers = useMemo(() => {
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        return users.slice(startIndex, startIndex + rowsPerPage);
+    }, [users, currentPage, rowsPerPage]);
+    
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [users]);
+
 
     const getStatusChip = (status: User['status']) => {
         const baseClasses = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full capitalize';
@@ -33,7 +38,7 @@ const UserListTable: React.FC<{
     };
 
     return (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto border dark:border-gray-700 rounded-lg">
             <table className="min-w-full bg-white dark:bg-slate-800">
                 <thead className="bg-gray-50 dark:bg-slate-700">
                     <tr>
@@ -45,7 +50,7 @@ const UserListTable: React.FC<{
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {filteredUsers.length > 0 ? filteredUsers.map(user => (
+                    {paginatedUsers.length > 0 ? paginatedUsers.map(user => (
                         <tr key={user.id}>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#293c51] dark:text-white">{user.fullName}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{user.email}</td>
@@ -82,6 +87,16 @@ const UserListTable: React.FC<{
                     )}
                 </tbody>
             </table>
+            <Pagination
+                currentPage={currentPage}
+                totalItems={users.length}
+                itemsPerPage={rowsPerPage}
+                onPageChange={setCurrentPage}
+                onItemsPerPageChange={(value) => {
+                    setRowsPerPage(value);
+                    setCurrentPage(1);
+                }}
+            />
         </div>
     );
 }
@@ -95,6 +110,13 @@ export const ResellerCustomersPage: React.FC = () => {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [userToDelete, setUserToDelete] = useState<User | null>(null);
     const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
+
+    const filteredUsers = useMemo(() =>
+        customers.filter(user =>
+            user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.companyName.toLowerCase().includes(searchTerm.toLowerCase())
+        ), [customers, searchTerm]);
 
     const handleViewDashboard = (userId: string) => {
         navigate(`/app/dashboard?viewAsUser=${userId}&returnTo=/app/reseller/customers`);
@@ -138,8 +160,7 @@ export const ResellerCustomersPage: React.FC = () => {
                     <Button leftIconName="fas fa-user-plus">Add New User</Button>
                 </div>
                 <UserListTable 
-                    users={customers} 
-                    searchTerm={searchTerm} 
+                    users={filteredUsers} 
                     onUserSelect={handleViewDashboard} 
                     onUserEdit={handleEditUser}
                     onUserDelete={handleOpenDeleteModal}

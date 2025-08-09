@@ -1,9 +1,4 @@
 
-
-
-
-
-
 export interface User {
   id: string;
   fullName: string;
@@ -113,8 +108,8 @@ export interface SupportTicketComment {
     attachments?: TicketAttachment[];
 }
 
-export type SupportTicketRequestType = 'Incident' | 'Question' | 'Problem' | 'Feature Request';
-export type SupportTicketPriority = 'Low' | 'Medium' | 'High' | 'Urgent';
+export type SupportTicketRequestType = 'Inquiry' | 'Issue' | 'Task' | 'Feature Request';
+export type SupportTicketPriority = 'Low' | 'Normal' | 'High' | 'Urgent';
 export type SupportTicketDepartment = 'Technical Support' | 'Billing Department' | 'Sales Inquiry';
 
 export interface SupportTicket {
@@ -132,6 +127,14 @@ export interface SupportTicket {
     priority: SupportTicketPriority;
     department: SupportTicketDepartment;
     requestType: SupportTicketRequestType;
+}
+
+export interface KnowledgeBaseArticle {
+  id: string;
+  category: 'Billing' | 'CloudEdge' | 'Posta Email' | 'General';
+  question: string;
+  answer: string;
+  keywords: string[];
 }
 
 export interface StepperStep {
@@ -300,4 +303,62 @@ export interface SmtpLogEntry {
   action: SmtpLogAction;
   status: SmtpLogStatus;
   details: string; // e.g., Message-ID or reason for rejection
+}
+
+// Kubernetes
+export interface KubernetesCluster {
+  id: string;
+  name: string;
+  version: string;
+  status: 'Running' | 'Stopped' | 'Creating' | 'Error';
+  nodeCount: number;
+  region: string;
+  creationDate: string;
+}
+
+// Networking
+export interface LoadBalancer {
+  id: string;
+  name: string;
+  type: 'L4 Network' | 'L7 Application';
+  status: 'Active' | 'Inactive' | 'Building';
+  ipAddress: string;
+}
+
+export interface FirewallRule {
+  id: string;
+  policyName: string;
+  direction: 'Inbound' | 'Outbound';
+  protocol: 'TCP' | 'UDP' | 'ICMP';
+  portRange: string;
+  source: string;
+  action: 'Allow' | 'Deny';
+}
+
+// Storage
+export interface StorageBucket {
+  id:string;
+  name: string;
+  region: string;
+  sizeGB: number;
+  creationDate: string;
+}
+
+// Monitoring & Security
+export interface SecurityAlert {
+  id: string;
+  severity: 'Critical' | 'High' | 'Medium' | 'Low';
+  description: string;
+  resource: string;
+  timestamp: string;
+}
+
+// Backup & DR
+export interface BackupJob {
+  id: string;
+  name: string;
+  resource: string; // e.g., VM name or Volume ID
+  schedule: string;
+  lastRunStatus: 'Success' | 'Failed' | 'In Progress';
+  lastRunDate: string;
 }

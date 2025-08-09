@@ -1,10 +1,5 @@
 
-
-
-
-
-
-import type { User, UserGroup, Invoice, SupportTicket, LogEntry, SupportTicketProduct, InvoiceLineItem, StaffGroup, SmtpLogEntry } from './types';
+import type { User, UserGroup, Invoice, SupportTicket, LogEntry, SupportTicketProduct, InvoiceLineItem, StaffGroup, SmtpLogEntry, KnowledgeBaseArticle, KubernetesCluster, LoadBalancer, FirewallRule, StorageBucket, SecurityAlert, BackupJob } from './types';
 
 // Mock User Data
 export const MOCK_USERS: { [email: string]: User & { passwordHash: string } } = {
@@ -344,162 +339,101 @@ export const mockInvoices: Invoice[] = [
         amountDue: 0.00,
         paymentDetails: '$150.00 was paid on Jul 3, 2024 by Visa card ending 4242.'
     },
-    { 
-        id: 'INV-2024-002', 
-        date: '2024-06-01', 
-        amount: 145.50, 
-        status: 'Paid', 
-        url: '#',
-        customerId: 'user123',
-        customerName: 'Demo Customer Alpha',
-        customerAddress: ['123 Innovation Drive', 'Tech City, TX 75001', 'United States'],
-        customerEmail: 'customer@worldposta.com',
-        billingPeriod: 'Jun 1, 2024 to Jul 1, 2024',
-        nextBillingDate: 'Jul 1, 2024',
-        subscriptionId: 'sub-posta-std-abc',
-        lineItems: [
-            { description: 'Posta Standard Plan (10 users)', units: 1, amount: 100.00 },
-            { description: 'Advanced Email Archiving', units: 1, amount: 38.30 },
-        ],
-        subTotal: 138.30,
-        tax: { label: 'Tax (5%)', amount: 7.20 },
-        payments: -145.50,
-        amountDue: 0.00,
-        paymentDetails: '$145.50 was paid on Jun 2, 2024 by Visa card ending 4242.'
-    },
-    { 
-        id: 'INV-2024-001', 
-        date: '2024-05-01', 
-        amount: 145.50, 
-        status: 'Paid', 
-        url: '#',
-        customerId: 'user123',
-        customerName: 'Demo Customer Alpha',
-        customerAddress: ['123 Innovation Drive', 'Tech City, TX 75001', 'United States'],
-        customerEmail: 'customer@worldposta.com',
-        billingPeriod: 'May 1, 2024 to Jun 1, 2024',
-        nextBillingDate: 'Jun 1, 2024',
-        subscriptionId: 'sub-posta-std-abc',
-        lineItems: [
-            { description: 'Posta Standard Plan (10 users)', units: 1, amount: 100.00 },
-            { description: 'Advanced Email Archiving', units: 1, amount: 38.30 },
-        ],
-        subTotal: 138.30,
-        tax: { label: 'Tax (5%)', amount: 7.20 },
-        payments: -145.50,
-        amountDue: 0.00,
-        paymentDetails: '$145.50 was paid on May 3, 2024 by Visa card ending 4242.'
-    },
 ];
+
 
 export const mockSupportTickets: SupportTicket[] = [
-    { 
-        id: 'TKT-58291', 
-        subject: 'Cannot access my VM', 
-        product: 'CloudEdge', 
-        status: 'In Progress', 
-        lastUpdate: new Date(Date.now() - 3600000).toISOString(), 
-        description: 'I am trying to SSH into my prod-web-01 VM and the connection is timing out. I have checked my firewall rules and nothing has changed. Please assist.', 
-        customerName: 'Demo Customer Alpha',
+    {
+        id: 'TKT-58291',
+        subject: 'Cannot access my VM',
+        product: 'CloudEdge',
+        status: 'In Progress',
+        lastUpdate: new Date(Date.now() - 3600000).toISOString(),
+        description: 'I am unable to SSH into my production web server (prod-web-01). The connection times out. I have confirmed my firewall rules allow port 22 from my IP. Please investigate.',
         customerId: 'user123',
+        customerName: 'Demo Customer Alpha',
         priority: 'High',
         department: 'Technical Support',
-        requestType: 'Problem',
+        requestType: 'Issue',
         comments: [
-            {
-                author: 'Support Staff',
-                timestamp: new Date(Date.now() - 2 * 3600000).toISOString(),
-                content: 'Hello, we have received your ticket. Can you please confirm you are able to ping the gateway from another machine in the same network?'
-            },
-            {
-                author: 'Demo Customer Alpha',
-                timestamp: new Date(Date.now() - 1 * 3600000).toISOString(),
-                content: 'Yes, I can ping the gateway. The issue seems to be specific to SSH on port 22.'
-            }
-        ],
-        internalComments: [
-            {
-                author: 'Support Staff',
-                timestamp: new Date(Date.now() - 1.5 * 3600000).toISOString(),
-                content: 'Customer seems to have a network issue on their end, but I am checking our firewall logs just in case. No blocks found so far.'
-            },
-            {
-                author: 'Admin User',
-                timestamp: new Date(Date.now() - 1.2 * 3600000).toISOString(),
-                content: 'Good. Keep me updated. Let\'s resolve this quickly.'
-            }
+            { author: 'Demo Customer Alpha', timestamp: new Date(Date.now() - 3600000 * 2).toISOString(), content: 'This is urgent, my website is down.' },
+            { author: 'Support Staff', timestamp: new Date(Date.now() - 3600000 * 1).toISOString(), content: 'We are looking into the issue and will update you shortly.' }
         ]
     },
-    { id: 'TKT-58285', subject: 'Question about email archiving', product: 'Posta Email', status: 'Resolved', lastUpdate: new Date(Date.now() - 48 * 3600000).toISOString(), description: 'How long are emails archived by default on the Posta Premium plan?', customerName: 'Demo Customer Alpha', customerId: 'user123', priority: 'Low', department: 'Technical Support', requestType: 'Question' },
-    { id: 'TKT-58275', subject: 'Invoice Discrepancy', product: 'Subscriptions', status: 'Closed', lastUpdate: new Date(Date.now() - 120 * 3600000).toISOString(), description: 'My last invoice seems higher than expected. Can you please provide a breakdown?', customerName: 'Demo Customer Alpha', customerId: 'user123', priority: 'Medium', department: 'Billing Department', requestType: 'Incident' },
+    {
+        id: 'TKT-58275',
+        subject: 'Invoice Discrepancy',
+        product: 'Subscriptions',
+        status: 'Resolved',
+        lastUpdate: new Date(Date.now() - 86400000 * 2).toISOString(),
+        description: 'My last invoice (INV-2024-003) seems to have an incorrect charge. Can you please review it?',
+        customerId: 'user123',
+        customerName: 'Demo Customer Alpha',
+        priority: 'Normal',
+        department: 'Billing Department',
+        requestType: 'Inquiry'
+    }
 ];
 
-export const mockCloudEdgeLogs: LogEntry[] = [
-    { id: 'ce1', timestamp: new Date(Date.now() - 3600000).toISOString(), action: 'VM Started', resource: 'prod-web-01', performedBy: 'customer@worldposta.com', status: 'Success' },
-    { id: 'ce2', timestamp: new Date(Date.now() - 7200000).toISOString(), action: 'Firewall Rule Updated', resource: 'default-fw', performedBy: 'System', status: 'Success' },
-    { id: 'ce3', timestamp: new Date(Date.now() - 10800000).toISOString(), action: 'Snapshot Creation Failed', resource: 'db-main-vm', performedBy: 'customer@worldposta.com', status: 'Failed' },
-  ];
-export const mockPostaLogs: LogEntry[] = [
-    { id: 'po1', timestamp: new Date(Date.now() - 4000000).toISOString(), action: 'Mailbox Created', resource: 'new.user@alpha.inc', performedBy: 'customer@worldposta.com', status: 'Success' },
-    { id: 'po2', timestamp: new Date(Date.now() - 8000000).toISOString(), action: 'Spam Filter Updated', resource: 'alpha.inc domain', performedBy: 'admin@worldposta.com', status: 'Information' },
-    { id: 'po3', timestamp: new Date(Date.now() - 12000000).toISOString(), action: 'Password Reset', resource: 'user@alpha.inc', performedBy: 'customer@worldposta.com', status: 'Pending User Action' },
-  ];
-  
-export const mockSubscriptionLogs: LogEntry[] = [
-    { id: 'sub1', timestamp: new Date(Date.now() - 2 * 3600000).toISOString(), action: 'Subscription Added', resource: 'Posta Standard Plan (10 users)', performedBy: 'customer@worldposta.com', status: 'Success' },
-    { id: 'sub2', timestamp: new Date(Date.now() - 26 * 3600000).toISOString(), action: 'Payment Method Updated', resource: 'Visa ending in 4242', performedBy: 'customer@worldposta.com', status: 'Information' },
-    { id: 'sub3', timestamp: new Date(Date.now() - 50 * 3600000).toISOString(), action: 'Auto-renewal Failed', resource: 'CloudEdge - Web Server', performedBy: 'System', status: 'Failed' },
-  ];
+export const MOCK_KB_ARTICLES: KnowledgeBaseArticle[] = [
+    { id: 'kb1', category: 'Billing', question: 'How do I update my payment method?', answer: 'You can update your payment method from the Billing Settings page. Navigate to Settings > Billing and you will find an option to add or remove payment methods.', keywords: ['payment', 'credit card', 'billing', 'update'] },
+    { id: 'kb2', category: 'CloudEdge', question: 'How can I reset the root password for my Linux VM?', answer: 'To reset the root password, you will need to boot into single-user mode. Please follow the specific instructions for your distribution (e.g., Ubuntu, CentOS) which can be found in our detailed documentation.', keywords: ['ssh', 'password', 'root', 'reset', 'vm'] },
+    { id: 'kb3', category: 'Posta Email', question: 'How do I set up my email on Outlook?', answer: 'Please use the following server settings: IMAP server: mail.worldposta.com, SMTP server: smtp.worldposta.com. Use your full email address as the username and your password. Detailed guides are available in our support section.', keywords: ['outlook', 'email', 'configuration', 'setup', 'posta'] },
+    { id: 'kb4', category: 'General', question: 'How do I enable Multi-Factor Authentication (MFA)?', answer: 'Navigate to Settings > Security. From there, you can enable MFA and choose your preferred method (Authenticator App or Email). Follow the on-screen instructions to complete the setup.', keywords: ['mfa', 'security', '2fa', 'authentication'] }
+];
 
-export const mockUserManagementLogs: LogEntry[] = [
-    { id: 'um1', timestamp: new Date(Date.now() - 8 * 3600000).toISOString(), action: 'User Invited', resource: 'charlie.new@alpha.inc', performedBy: 'customer@worldposta.com', status: 'Pending User Action' },
-    { id: 'um2', timestamp: new Date(Date.now() - 32 * 3600000).toISOString(), action: 'Group Permissions Updated', resource: 'Team Administrators', performedBy: 'customer@worldposta.com', status: 'Success' },
-    { id: 'um3', timestamp: new Date(Date.now() - 72 * 3600000).toISOString(), action: 'User Removed from Group', resource: 'beta.user@alpha.inc from Viewers', performedBy: 'customer@worldposta.com', status: 'Success' },
-  ];
-
-export const mockSupportLogs: LogEntry[] = [
-    { id: 'sup1', timestamp: new Date(Date.now() - 3 * 3600000).toISOString(), action: 'Ticket Created', resource: 'TKT-58291: Cannot access my VM', performedBy: 'customer@worldposta.com', status: 'Information' },
-    { id: 'sup2', timestamp: new Date(Date.now() - 1 * 3600000).toISOString(), action: 'Support Staff Replied', resource: 'TKT-58291', performedBy: 'Support Staff', status: 'Information' },
-    { id: 'sup3', timestamp: new Date(Date.now() - 100 * 3600000).toISOString(), action: 'Ticket Resolved', resource: 'TKT-58275: Invoice Discrepancy', performedBy: 'Support Staff', status: 'Success' },
-  ];
-
-export const mockInvoiceLogs: LogEntry[] = [
-    { id: 'inv1', timestamp: new Date().toISOString(), action: 'Invoice Downloaded', resource: 'INV-2024-003', performedBy: 'customer@worldposta.com', status: 'Information' },
-    { id: 'inv2', timestamp: new Date(Date.now() - 24 * 3600000).toISOString(), action: 'Payment Succeeded', resource: 'Invoice INV-2024-002', performedBy: 'System', status: 'Success' },
+export const mockSmtpLogs: SmtpLogEntry[] = [
+    { id: 'smtp1', timestamp: new Date().toISOString(), from: 'user@external.com', to: 'sales@alpha.inc', subject: 'Inquiry about your services', action: 'PASS', status: 'Passed', details: 'Message-ID: <123@external.com>' },
+    { id: 'smtp2', timestamp: new Date(Date.now() - 3600000).toISOString(), from: 'spam@spamdomain.com', to: 'info@alpha.inc', subject: '!!! You WON a PRIZE !!!', action: 'REJECT', status: 'Spam (Confirmed)', details: 'High spam score (15.2)' },
+    { id: 'smtp3', timestamp: new Date(Date.now() - 7200000).toISOString(), from: 'marketing@legit.com', to: 'contact@alpha.inc', subject: 'Our latest newsletter', action: 'DELIVER', status: 'Passed', details: 'Message-ID: <abc@legit.com>' },
+    { id: 'smtp4', timestamp: new Date(Date.now() - 10800000).toISOString(), from: 'hr@alpha.inc', to: 'archive@alpha.inc', subject: 'FW: Employee Onboarding', action: 'ARCHIVE', status: 'Archived', details: 'Archived by rule: "Internal HR Comms"' },
 ];
 
 export const mockPostaPackages = [
     { id: 'posta-light', name: 'Posta Light Plan' },
-    { id: 'posta-basic', name: 'Posta Basic Plan' },
     { id: 'posta-business', name: 'Posta Business Plan' },
-    { id: 'posta-standard', name: 'Posta Standard Plan' },
     { id: 'posta-pro', name: 'Posta Pro Plan' },
-    { id: 'posta-premium', name: 'Posta Premium Plan' },
-];
-export const mockCloudEdgePackages = [
-    { id: 'cloudedge-s1', name: 'CloudEdge Small Instance' },
-    { id: 'cloudedge-m1', name: 'CloudEdge Medium Instance' },
-    { id: 'cloudedge-l1', name: 'CloudEdge Large Instance' },
-];
-export const mockOrganizations = [
-    { id: 'org-alpha', name: 'Alpha Inc.' },
-    { id: 'org-beta', name: 'Beta Division' },
-];
-export const mockDomains = [
-    { id: 'dom-alpha', name: 'alpha-inc.com' },
-    { id: 'dom-beta', name: 'betadivision.net' },
-    { id: 'dom-gamma', name: 'gamma-corp.io' },
+    { id: 'posta-enterprise', name: 'Posta Enterprise Plan' },
 ];
 
-export const mockSmtpLogs: SmtpLogEntry[] = [
-    { id: 'smtp1', timestamp: new Date(Date.now() - 3600000 * 0.1).toISOString(), from: 'marketing@example.com', to: 'customer1@worldposta.com', subject: 'Your Weekly Newsletter', action: 'DELIVER', status: 'Passed', details: 'Message-ID: <abc-1@example.com>' },
-    { id: 'smtp2', timestamp: new Date(Date.now() - 3600000 * 0.2).toISOString(), from: 'billing@service.com', to: 'customer2@worldposta.com', subject: 'Invoice #12345 Due', action: 'PASS', status: 'Passed', details: 'Message-ID: <abc-2@service.com>' },
-    { id: 'smtp3', timestamp: new Date(Date.now() - 3600000 * 0.3).toISOString(), from: 'nigerian.prince@scam.net', to: 'customer1@worldposta.com', subject: 'URGENT: Your Inheritance', action: 'REJECT', status: 'Spam (Scam)', details: 'High spam score (9.8)' },
-    { id: 'smtp4', timestamp: new Date(Date.now() - 3600000 * 0.4).toISOString(), from: 'support@legit-but-flagged.com', to: 'customer3@worldposta.com', subject: 'FW: Support Ticket Update', action: 'QUARANTINE', status: 'Rejected (Suspect)', details: 'Contains suspicious link' },
-    { id: 'smtp5', timestamp: new Date(Date.now() - 3600000 * 0.5).toISOString(), from: 'hr@corporate.com', to: 'archive@worldposta.com', subject: 'Internal Memo Q3', action: 'ARCHIVE', status: 'Archived', details: 'Message-ID: <abc-5@corporate.com>' },
-    { id: 'smtp6', timestamp: new Date(Date.now() - 3600000 * 0.6).toISOString(), from: 'bad.actor@malware.com', to: 'customer2@worldposta.com', subject: 'Your account is suspended!', action: 'REJECT', status: 'Spam (Confirmed)', details: 'Known malware signature' },
-    { id: 'smtp7', timestamp: new Date(Date.now() - 3600000 * 0.7).toISOString(), from: 'sales@partner.com', to: 'customer1@worldposta.com', subject: 'Follow up on our meeting', action: 'DELIVER', status: 'Passed', details: 'Message-ID: <abc-7@partner.com>' },
-    { id: 'smtp8', timestamp: new Date(Date.now() - 3600000 * 0.8).toISOString(), from: 'sender@blocked-domain.com', to: 'customer3@worldposta.com', subject: 'You have won!', action: 'REJECT', status: 'Rejected (Block)', details: 'Sender domain on blocklist' },
-    { id: 'smtp9', timestamp: new Date(Date.now() - 3600000 * 0.9).toISOString(), from: 'info@valid.com', to: 'nonexistent-user@worldposta.com', subject: 'Welcome!', action: 'REJECT', status: 'User Invalid', details: 'Recipient address does not exist' },
-    { id: 'smtp10', timestamp: new Date(Date.now() - 3600000 * 1.0).toISOString(), from: 'legal@corporate.com', to: 'archive@worldposta.com', subject: 'Legal Hold Notice #L-554', action: 'ARCHIVE', status: 'Archived', details: 'Message-ID: <abc-10@corporate.com>' },
+
+// --- NEW MOCK DATA for PRODUCTS ---
+export const mockKubernetesClusters: KubernetesCluster[] = [
+  { id: 'k8s-prod-1', name: 'production-cluster', version: '1.28.3', status: 'Running', nodeCount: 5, region: 'US East (N. Virginia)', creationDate: '2024-07-15T10:00:00Z' },
+  { id: 'k8s-dev-1', name: 'development-sandbox', version: '1.27.5', status: 'Running', nodeCount: 2, region: 'EU (Frankfurt)', creationDate: '2024-06-20T14:30:00Z' },
+  { id: 'k8s-staging-1', name: 'staging-cluster', version: '1.28.3', status: 'Creating', nodeCount: 3, region: 'US West (Oregon)', creationDate: new Date().toISOString() },
+  { id: 'k8s-legacy-1', name: 'legacy-app-support', version: '1.25.10', status: 'Stopped', nodeCount: 1, region: 'US East (N. Virginia)', creationDate: '2023-11-01T08:00:00Z' },
+];
+
+export const mockLoadBalancers: LoadBalancer[] = [
+  { id: 'lb-1', name: 'main-web-app-lb', type: 'L7 Application', status: 'Active', ipAddress: '203.0.113.10' },
+  { id: 'lb-2', name: 'internal-services-lb', type: 'L4 Network', status: 'Active', ipAddress: '10.0.5.25' },
+  { id: 'lb-3', name: 'new-api-gateway-lb', type: 'L7 Application', status: 'Building', ipAddress: 'Pending...' },
+];
+
+export const mockFirewallRules: FirewallRule[] = [
+  { id: 'fw-1', policyName: 'allow-https', direction: 'Inbound', protocol: 'TCP', portRange: '443', source: '0.0.0.0/0', action: 'Allow' },
+  { id: 'fw-2', policyName: 'allow-ssh-admin', direction: 'Inbound', protocol: 'TCP', portRange: '22', source: '73.22.19.101/32', action: 'Allow' },
+  { id: 'fw-3', policyName: 'deny-all-outbound', direction: 'Outbound', protocol: 'TCP', portRange: '*', source: '*', action: 'Deny' },
+  { id: 'fw-4', policyName: 'allow-icmp', direction: 'Inbound', protocol: 'ICMP', portRange: 'any', source: '0.0.0.0/0', action: 'Allow' },
+];
+
+export const mockStorageBuckets: StorageBucket[] = [
+  { id: 'sb-1', name: 'app-assets-prod', region: 'US East (N. Virginia)', sizeGB: 1250, creationDate: '2024-01-10T11:00:00Z' },
+  { id: 'sb-2', name: 'user-uploads-staging', region: 'EU (Frankfurt)', sizeGB: 320, creationDate: '2024-05-02T18:45:00Z' },
+  { id: 'sb-3', name: 'database-backups', region: 'US West (Oregon)', sizeGB: 5800, creationDate: '2023-09-15T05:00:00Z' },
+];
+
+export const mockSecurityAlerts: SecurityAlert[] = [
+  { id: 'sa-1', severity: 'Critical', description: 'Potential SQL Injection attempt detected on prod-db-01.', resource: 'prod-db-01', timestamp: new Date(Date.now() - 3600000 * 0.5).toISOString() },
+  { id: 'sa-2', severity: 'High', description: 'Unusual login pattern detected for user admin@alpha.inc.', resource: 'Authentication Service', timestamp: new Date(Date.now() - 3600000 * 2).toISOString() },
+  { id: 'sa-3', severity: 'Medium', description: 'Port scan detected from IP 198.51.100.45.', resource: 'main-web-app-lb', timestamp: new Date(Date.now() - 3600000 * 6).toISOString() },
+  { id: 'sa-4', severity: 'Low', description: 'Legacy TLS version 1.1 used to connect to internal-api.', resource: 'internal-api', timestamp: new Date(Date.now() - 3600000 * 12).toISOString() },
+];
+
+export const mockBackupJobs: BackupJob[] = [
+  { id: 'bj-1', name: 'daily-prod-db-backup', resource: 'prod-db-01', schedule: 'Daily at 2:00 AM UTC', lastRunStatus: 'Success', lastRunDate: new Date(Date.now() - 86400000).toISOString() },
+  { id: 'bj-2', name: 'weekly-web-server-snapshot', resource: 'prod-web-cluster', schedule: 'Weekly on Sunday at 4:00 AM UTC', lastRunStatus: 'Success', lastRunDate: new Date(Date.now() - 86400000 * 3).toISOString() },
+  { id: 'bj-3', name: 'archive-storage-bucket-sync', resource: 'app-assets-prod', schedule: 'Monthly on the 1st', lastRunStatus: 'In Progress', lastRunDate: new Date().toISOString() },
+  { id: 'bj-4', name: 'dev-vm-backup', resource: 'dev-sandbox-vm', schedule: 'Daily at 5:00 AM UTC', lastRunStatus: 'Failed', lastRunDate: new Date(Date.now() - 86400000).toISOString() },
 ];

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Card, FormField, Icon, Button } from '@/components/ui';
+import { Card, FormField, Icon, Button, Pagination } from '@/components/ui';
 import { useAppLayout } from '@/context';
 import type { LogEntry } from '@/types';
 import { MOCK_USERS } from '@/data';
@@ -49,6 +49,18 @@ const logSources = {
 };
 
 const LogTable: React.FC<{ logs: LogEntry[], title?: string }> = ({ logs, title }) => {
+    const [currentPage, setCurrentPage] = useState(1);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
+
+    const paginatedLogs = useMemo(() => {
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        return logs.slice(startIndex, startIndex + rowsPerPage);
+    }, [logs, currentPage, rowsPerPage]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [logs]);
+
     const getStatusChipClass = (status: LogEntry['status']) => {
         switch (status) {
             case 'Success': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
@@ -75,7 +87,7 @@ const LogTable: React.FC<{ logs: LogEntry[], title?: string }> = ({ logs, title 
                         </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-gray-700">
-                        {logs.length > 0 ? logs.map((log) => (
+                        {paginatedLogs.length > 0 ? paginatedLogs.map((log) => (
                             <tr key={log.id}>
                                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{new Date(log.timestamp).toLocaleString()}</td>
                                 <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-[#293c51] dark:text-gray-200">{log.action}</td>
@@ -96,6 +108,16 @@ const LogTable: React.FC<{ logs: LogEntry[], title?: string }> = ({ logs, title 
                         )}
                     </tbody>
                 </table>
+                 <Pagination
+                    currentPage={currentPage}
+                    totalItems={logs.length}
+                    itemsPerPage={rowsPerPage}
+                    onPageChange={setCurrentPage}
+                    onItemsPerPageChange={(value) => {
+                        setRowsPerPage(value);
+                        setCurrentPage(1);
+                    }}
+                />
             </div>
         </div>
     );
@@ -225,7 +247,7 @@ const ActionLogsSearchPanel: React.FC<ActionLogsSearchPanelProps> = ({ isOpen, o
                 </div>
                 
                  <div className="flex-shrink-0 p-4 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 space-x-2 flex justify-end">
-                    <Button variant="outline" onClick={handleClear}>Clear</Button>
+                    <Button variant="outline" onClick={handleClear}>Clear Filters</Button>
                     <Button onClick={handleSearch}>Search</Button>
                 </div>
             </div>
@@ -272,10 +294,14 @@ export const ActionLogsPage: React.FC = () => {
 
     const handleSearch = (filters: any) => {
         setAdvancedFilters(filters);
+        setIsAdvancedSearchPanelOpen(false);
+        setSearchPanelOpen(false);
     };
 
     const handleClear = () => {
         setAdvancedFilters({});
+        setIsAdvancedSearchPanelOpen(false);
+        setSearchPanelOpen(false);
     };
 
     const productLogSources = useMemo(() => Object.values(logSources).filter(source => source.type === 'product'), []);

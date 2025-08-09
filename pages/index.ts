@@ -1,9 +1,12 @@
+
+
 export * from './ActionLogsPage';
 export * from './AllNotificationsPage';
 export * from './CloudEdgeLayout';
 export * from './LandingPage';
 export * from './NotFoundPage';
 export * from './SupportPage';
+export * from './EmailAdminSuiteLayout';
 
 export * from './admin/AdminRouterPage';
 export * from './admin/StaffManagementPage';
@@ -32,6 +35,8 @@ export * from './dashboard/CloudEdgeDashboardPage';
 export * from './dashboard/DashboardPage';
 export * from './dashboard/ResellerDashboardPage';
 export * from './dashboard/EmailAdminSmtpLogsPage';
+export * from './dashboard/EmailAdminSuiteDashboardPage';
+export * from './dashboard/email_admin_suite/PlaceholderPage';
 
 export * from './reseller/ResellerCustomersPage';
 export * from './reseller/ResellerProgramPage';
@@ -42,3 +47,9 @@ export * from './settings/SecuritySettingsPage';
 export * from './settings/SettingsRouterPage';
 
 export * from './pricing/PostaPricingPage';
+
+export * from './products/KubernetesPage';
+export * from './products/NetworkingPage';
+export * from './products/StoragePage';
+export * from './products/MonitoringPage';
+export * from './products/BackupPage';

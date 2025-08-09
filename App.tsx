@@ -1,12 +1,10 @@
 
 
-
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation, Outlet, useSearchParams, Link } from 'react-router-dom';
 import { AuthProvider, ThemeProvider, useAuth, AppLayoutContext } from '@/context';
 import type { User, AuthContextType, NavItem, UserGroup, ApplicationCardData } from '@/types';
-import { Navbar, Sidebar, Spinner, Breadcrumbs, Footer, Icon, Button, Chatbot } from '@/components/ui'; 
+import { Navbar, Sidebar, Spinner, Breadcrumbs, Footer, Icon, Button, Chatbot, FeedbackSystem } from '@/components/ui'; 
 import { getMockUserById } from '@/data';
 import { 
     LandingPage, 
@@ -44,7 +42,15 @@ import {
     CloudEdgeConfigurationsPage,
     PostaPricingPage,
     CreateTicketPage,
-    EmailAdminSmtpLogsPage
+    EmailAdminSmtpLogsPage,
+    EmailAdminSidebar,
+    EmailAdminSuiteDashboardPage,
+    PlaceholderPage,
+    KubernetesPage,
+    NetworkingPage,
+    StoragePage,
+    MonitoringPage,
+    BackupPage
 } from '@/pages';
 
 
@@ -124,8 +130,8 @@ const getAppLauncherItems = (role: User['role'] | undefined): ApplicationCardDat
         },
         { 
             id: 'emailadmin', 
-            name: 'SMTP Logs', 
-            description: 'View and filter SMTP logs for your email services.',
+            name: 'Email Admin Suite', 
+            description: 'Manage mailboxes, security, and settings for your email services.',
             iconName: "https://www.worldposta.com/assets/Posta-Logo.png", 
             launchUrl: '/app/email-admin-suite'
         }
@@ -194,18 +200,25 @@ const AppLayout: React.FC = () => {
     const [searchParams] = useSearchParams();
     const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
     const [isDesktopSidebarCollapsed, setDesktopSidebarCollapsed] = useState(() => {
-        return localStorage.getItem('sidebarCollapsed') === 'true';
+        const isEmailAdmin = location.pathname.startsWith('/app/email-admin-suite');
+        const storageKey = isEmailAdmin ? 'emailAdminSidebarCollapsed' : 'sidebarCollapsed';
+        return localStorage.getItem(storageKey) === 'true';
     });
     const [isSearchPanelOpen, setSearchPanelOpen] = useState(false);
+
+    const isEmailAdminSuite = location.pathname.startsWith('/app/email-admin-suite');
+
+    useEffect(() => {
+        const storageKey = isEmailAdminSuite ? 'emailAdminSidebarCollapsed' : 'sidebarCollapsed';
+        localStorage.setItem(storageKey, String(isDesktopSidebarCollapsed));
+    }, [isDesktopSidebarCollapsed, isEmailAdminSuite]);
 
     const viewAsUserId = searchParams.get('viewAsUser');
     const returnToPath = searchParams.get('returnTo');
     const viewedUser = viewAsUserId ? getMockUserById(viewAsUserId) : null;
     const isViewAsMode = !!(viewAsUserId && returnToPath && viewedUser && user && (user.role === 'admin' || user.role === 'reseller'));
+    const isCustomerView = useMemo(() => user?.role === 'customer' && !isViewAsMode, [user, isViewAsMode]);
 
-    useEffect(() => {
-        localStorage.setItem('sidebarCollapsed', String(isDesktopSidebarCollapsed));
-    }, [isDesktopSidebarCollapsed]);
     
     const navItems = useMemo(() => {
         // Always show the logged-in user's navigation items.
@@ -242,7 +255,12 @@ const AppLayout: React.FC = () => {
             'reseller': 'Reseller',
             'customers': 'My Customers',
             'program': 'My Program',
-            'email-admin-suite': 'SMTP Logs',
+            'email-admin-suite': 'Email Admin Suite',
+            'kubernetes': 'Kubernetes',
+            'networking': 'Networking',
+            'storage': 'Storage',
+            'monitoring': 'Monitoring & Security',
+            'backup': 'Backup & DR',
         };
         
         const getLabel = (value: string) => {
@@ -293,8 +311,9 @@ const AppLayout: React.FC = () => {
         let homePath = '/app/dashboard';
         if (user?.role === 'admin') homePath = '/app/admin-dashboard';
         if (user?.role === 'reseller') homePath = '/app/reseller-dashboard';
+        if (isEmailAdminSuite) homePath = '/app/email-admin-suite';
 
-        const crumbs = [{ label: 'Dashboard', path: homePath }];
+        const crumbs = [{ label: 'Home', path: homePath }];
         
         let segmentsToProcess = pathnames.slice(1);
         if (
@@ -310,7 +329,7 @@ const AppLayout: React.FC = () => {
 
             const to = `/app/${pathnames.slice(1, index + 2).join('/')}`;
             const label = getLabel(value);
-            if (label !== 'Dashboard' && label !== 'App') {
+            if (label !== 'Dashboard' && label !== 'App' && label !== 'Home') {
                  crumbs.push({ label, path: to });
             }
         });
@@ -320,7 +339,7 @@ const AppLayout: React.FC = () => {
         }
 
         return crumbs;
-    }, [location, user, searchParams]);
+    }, [location, user, searchParams, isEmailAdminSuite]);
 
     if (!user) {
         return <Navigate to="/login" replace />;
@@ -342,12 +361,20 @@ const AppLayout: React.FC = () => {
     return (
         <AppLayoutContext.Provider value={appLayoutContextValue}>
             <div className={`flex h-screen bg-gray-100 dark:bg-slate-900 overflow-hidden`}>
-                <Sidebar 
-                    navItems={navItems}
-                    isOpen={isMobileSidebarOpen}
-                    isCollapsed={isDesktopSidebarCollapsed}
-                    onClose={() => setMobileSidebarOpen(false)}
-                />
+                {isEmailAdminSuite ? (
+                    <EmailAdminSidebar 
+                         isCollapsed={isDesktopSidebarCollapsed}
+                         isOpen={isMobileSidebarOpen} 
+                         onClose={() => setMobileSidebarOpen(false)}
+                    />
+                ) : (
+                    <Sidebar 
+                        navItems={navItems}
+                        isOpen={isMobileSidebarOpen}
+                        isCollapsed={isDesktopSidebarCollapsed}
+                        onClose={() => setMobileSidebarOpen(false)}
+                    />
+                )}
                 <div className="flex-1 flex flex-col overflow-hidden">
                     <Navbar
                         user={user}
@@ -362,10 +389,11 @@ const AppLayout: React.FC = () => {
                         returnToPath={returnToPath}
                     />
                     <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8">
-                        {location.pathname !== '/app/admin-dashboard' && <Breadcrumbs items={breadcrumbItems} />}
+                        {location.pathname !== '/app/admin-dashboard' && location.pathname !== '/app/email-admin-suite' && <Breadcrumbs items={breadcrumbItems} />}
                         <Outlet />
                     </main>
                 </div>
+                {isCustomerView && !isEmailAdminSuite && <FeedbackSystem position="raised" />}
                 <Chatbot />
             </div>
         </AppLayoutContext.Provider>
@@ -428,6 +456,13 @@ const AppRoutes: React.FC = () => {
                     </Route>
                     <Route path="support" element={<SupportPage />} />
 
+                    {/* NEW Product Routes */}
+                    <Route path="kubernetes" element={<KubernetesPage />} />
+                    <Route path="networking" element={<NetworkingPage />} />
+                    <Route path="storage" element={<StoragePage />} />
+                    <Route path="monitoring" element={<MonitoringPage />} />
+                    <Route path="backup" element={<BackupPage />} />
+
                     {/* Settings Routes */}
                     <Route path="settings" element={<SettingsRouterPage />}>
                         <Route index element={<Navigate to="account" replace />} />
@@ -459,8 +494,30 @@ const AppRoutes: React.FC = () => {
                     {/* CloudEdge Route (Based on AppLayout) */}
                     <Route path="cloud-edge" element={<CloudEdgeDashboardPage />} />
                     
-                    {/* Email Admin Suite Route */}
-                    <Route path="email-admin-suite" element={<EmailAdminSmtpLogsPage />} />
+                    {/* Email Admin Suite Routes */}
+                    <Route path="email-admin-suite">
+                        <Route index element={<EmailAdminSuiteDashboardPage />} />
+                        <Route path="orgs-and-domains" element={<PlaceholderPage />} />
+                        <Route path="exchange/mailboxes" element={<PlaceholderPage />} />
+                        <Route path="exchange/distribution-lists" element={<PlaceholderPage />} />
+                        <Route path="exchange/shared-contacts" element={<PlaceholderPage />} />
+                        <Route path="exchange/bulk-module" element={<PlaceholderPage />} />
+                        <Route path="exchange/running-tasks" element={<PlaceholderPage />} />
+                        <Route path="exchange/mailbox-plans" element={<PlaceholderPage />} />
+                        <Route path="exchange/smtp-logs" element={<EmailAdminSmtpLogsPage />} />
+                        <Route path="exchange/pst-logs" element={<PlaceholderPage />} />
+                        <Route path="exchange/rules" element={<PlaceholderPage />} />
+                        <Route path="exchange/account-statistics" element={<PlaceholderPage />} />
+                        <Route path="admin/billing" element={<PlaceholderPage />} />
+                        <Route path="admin/users" element={<PlaceholderPage />} />
+                        <Route path="admin/permission-groups" element={<PlaceholderPage />} />
+                        <Route path="admin/background-tasks" element={<PlaceholderPage />} />
+                        <Route path="admin/action-logs" element={<PlaceholderPage />} />
+                        <Route path="admin/lists" element={<PlaceholderPage />} />
+                        <Route path="admin/sister-companies" element={<PlaceholderPage />} />
+                        <Route path="admin/ip-lists" element={<PlaceholderPage />} />
+                        <Route path="migrations" element={<PlaceholderPage />} />
+                    </Route>
 
                 </Route>
             </Route>

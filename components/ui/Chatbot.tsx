@@ -91,10 +91,10 @@ export const Chatbot: React.FC = () => {
                 <Button
                     variant="primary"
                     onClick={() => setIsOpen(true)}
-                    className="rounded-full !p-0 w-16 h-16 shadow-lg hover:scale-110 transform transition-transform hover:shadow-xl"
+                    className="rounded-full !p-0 w-12 h-12 shadow-lg hover:scale-110 transform transition-transform hover:shadow-xl"
                     aria-label="Open chat"
                 >
-                    <Icon name="fas fa-comment-dots" className="text-2xl" />
+                    <Icon name="fas fa-comment-dots" className="text-lg" />
                 </Button>
             </div>
 

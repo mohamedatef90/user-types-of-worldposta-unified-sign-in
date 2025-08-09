@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Card, FormField, Button, Icon, CollapsibleSection, LineChart, BarChart, MultiSegmentDoughnutChart, StatCard } from '@/components/ui';
+import { Card, FormField, Button, Icon, CollapsibleSection, LineChart, BarChart, MultiSegmentDoughnutChart, StatCard, Pagination } from '@/components/ui';
 import { mockSmtpLogs } from '@/data';
 import type { SmtpLogEntry, SmtpLogAction, SmtpLogStatus } from '@/types';
 
@@ -260,13 +260,6 @@ export const EmailAdminSmtpLogsPage: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-start">
-                <div>
-                    <h1 className="text-2xl font-bold text-[#293c51] dark:text-gray-100">SMTP Security Center</h1>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Comprehensive email security monitoring and analytics</p>
-                </div>
-            </div>
-
             <div role="tablist" className="inline-flex space-x-1 p-1 bg-gray-200/50 dark:bg-slate-700/50 rounded-lg">
                 <button
                     role="tab"
@@ -297,10 +290,10 @@ export const EmailAdminSmtpLogsPage: React.FC = () => {
             {activeTab === 'statistics' && (
                 <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-                        <StatCard title="Total Emails" metric="127,845" change="+12.5%" changeType="increase" iconName="fas fa-envelope" iconBgColor="bg-indigo-500" />
-                        <StatCard title="Security Score" metric="98.2%" change="+2.1%" changeType="increase" iconName="fas fa-shield-alt" iconBgColor="bg-green-500" />
-                        <StatCard title="Threats Blocked" metric="2,847" change="-15.3%" changeType="decrease" iconName="fas fa-exclamation-triangle" iconBgColor="bg-yellow-500" />
-                        <StatCard title="Legitimate Emails" metric="124,998" change="+14.2%" changeType="increase" iconName="fas fa-check-circle" iconBgColor="bg-green-500" />
+                        <StatCard title="Total Emails" metric="127,845" change="+12.5%" changeType="increase" iconName="fas fa-envelope" iconColor="text-indigo-500" />
+                        <StatCard title="Security Score" metric="98.2%" change="+2.1%" changeType="increase" iconName="fas fa-shield-alt" iconColor="text-green-500" />
+                        <StatCard title="Threats Blocked" metric="2,847" change="-15.3%" changeType="decrease" iconName="fas fa-exclamation-triangle" iconColor="text-yellow-500" />
+                        <StatCard title="Legitimate Emails" metric="124,998" change="+14.2%" changeType="increase" iconName="fas fa-check-circle" iconColor="text-green-500" />
                     </div>
                     
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -447,50 +440,16 @@ export const EmailAdminSmtpLogsPage: React.FC = () => {
                                     )}
                                 </tbody>
                             </table>
-                        </div>
-                         <div className="flex items-center justify-between py-3 px-4 border-t dark:border-gray-700">
-                            <div className="flex items-center gap-2">
-                                <label htmlFor="rowsPerPage" className="text-sm text-gray-600 dark:text-gray-400">Rows:</label>
-                                <select
-                                    id="rowsPerPage"
-                                    value={rowsPerPage}
-                                    onChange={(e) => {
-                                        setRowsPerPage(Number(e.target.value));
-                                        setCurrentPage(1);
-                                    }}
-                                    className="bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-md text-sm p-1.5 focus:ring-2 focus:ring-[#679a41] dark:focus:ring-emerald-400"
-                                >
-                                    <option value={10}>10</option>
-                                    <option value={25}>25</option>
-                                    <option value={50}>50</option>
-                                    <option value={100}>100</option>
-                                </select>
-                            </div>
-
-                            <span className="text-sm text-gray-600 dark:text-gray-400">
-                                Showing {filteredLogs.length > 0 ? (currentPage - 1) * rowsPerPage + 1 : 0}-
-                                {Math.min(currentPage * rowsPerPage, filteredLogs.length)} of {filteredLogs.length}
-                            </span>
-
-                            <div className="flex gap-1">
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => setCurrentPage(prev => prev - 1)}
-                                    disabled={currentPage === 1}
-                                    leftIconName="fas fa-chevron-left"
-                                >
-                                    Previous
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => setCurrentPage(prev => prev + 1)}
-                                    disabled={currentPage * rowsPerPage >= filteredLogs.length}
-                                >
-                                    Next <Icon name="fas fa-chevron-right" className="ml-2"/>
-                                </Button>
-                            </div>
+                             <Pagination
+                                currentPage={currentPage}
+                                totalItems={filteredLogs.length}
+                                itemsPerPage={rowsPerPage}
+                                onPageChange={setCurrentPage}
+                                onItemsPerPageChange={(value) => {
+                                    setRowsPerPage(value);
+                                    setCurrentPage(1);
+                                }}
+                            />
                         </div>
                     </div>
                 </Card>

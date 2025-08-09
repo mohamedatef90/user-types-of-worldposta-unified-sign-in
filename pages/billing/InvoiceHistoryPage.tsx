@@ -1,12 +1,18 @@
-
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, Button } from '@/components/ui';
+import { Card, Button, Pagination } from '@/components/ui';
 import type { Invoice } from '@/types';
 import { mockInvoices } from '@/data';
 
 export const InvoiceHistoryPage: React.FC = () => {
     const navigate = useNavigate();
+    const [currentPage, setCurrentPage] = useState(1);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
+
+    const paginatedInvoices = useMemo(() => {
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        return mockInvoices.slice(startIndex, startIndex + rowsPerPage);
+    }, [currentPage, rowsPerPage]);
 
     const getInvoiceStatusChipClass = (status: 'Paid' | 'Unpaid') => {
         switch (status) {
@@ -21,7 +27,7 @@ export const InvoiceHistoryPage: React.FC = () => {
 
     return (
         <Card title="Invoice History">
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto border dark:border-gray-700 rounded-lg">
                 <table className="min-w-full bg-white dark:bg-slate-800">
                     <thead className="bg-gray-50 dark:bg-slate-700">
                         <tr>
@@ -33,7 +39,7 @@ export const InvoiceHistoryPage: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                        {mockInvoices.map(invoice => (
+                        {paginatedInvoices.map(invoice => (
                             <tr key={invoice.id}>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#293c51] dark:text-white">{invoice.id}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{new Date(invoice.date).toLocaleDateString()}</td>
@@ -51,6 +57,16 @@ export const InvoiceHistoryPage: React.FC = () => {
                         ))}
                     </tbody>
                 </table>
+                 <Pagination
+                    currentPage={currentPage}
+                    totalItems={mockInvoices.length}
+                    itemsPerPage={rowsPerPage}
+                    onPageChange={setCurrentPage}
+                    onItemsPerPageChange={(value) => {
+                        setRowsPerPage(value);
+                        setCurrentPage(1);
+                    }}
+                />
             </div>
         </Card>
     );

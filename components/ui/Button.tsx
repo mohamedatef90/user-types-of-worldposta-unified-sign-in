@@ -11,7 +11,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   leftIconClassName?: string;
 }
 
-export const Button: React.FC<ButtonProps> = ({ children, variant = 'primary', size = 'md', isLoading = false, fullWidth = false, className, leftIconName, leftIconClassName, ...props }) => {
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ children, variant = 'primary', size = 'md', isLoading = false, fullWidth = false, className, leftIconName, leftIconClassName, ...props }, ref) => {
   const baseStyles = "font-semibold rounded-md focus:outline-none focus:ring-2 focus:ring-offset-1 dark:focus:ring-offset-gray-800 transition-colors duration-150 ease-in-out inline-flex items-center justify-center";
   const variantStyles = {
     primary: "bg-[#679a41] text-white hover:bg-[#588836] focus:ring-[#679a41] dark:bg-emerald-500 dark:hover:bg-emerald-600 dark:focus:ring-emerald-500",
@@ -31,6 +31,7 @@ export const Button: React.FC<ButtonProps> = ({ children, variant = 'primary', s
 
   return (
     <button
+      ref={ref}
       className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${widthStyles} ${isLoading || props.disabled ? 'opacity-75 cursor-not-allowed' : ''} ${className}`}
       disabled={isLoading || props.disabled}
       {...props}
@@ -48,4 +49,4 @@ export const Button: React.FC<ButtonProps> = ({ children, variant = 'primary', s
       )}
     </button>
   );
-};
+});
