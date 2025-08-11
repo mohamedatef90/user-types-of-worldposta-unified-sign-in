@@ -775,7 +775,13 @@ export const DashboardPage: React.FC = () => { // This is the Customer Dashboard
   }
 
   if (userToDisplay?.role === 'customer') {
-    const customerHiddenCardIds: string[] = [];
+    const customerHiddenCardIds: string[] = [
+        'kubernetes',
+        'networking',
+        'storage',
+        'backup',
+        'monitoring',
+    ];
     allPortals = allPortals.filter(p => !customerHiddenCardIds.includes(p.id));
   }
 

@@ -103,11 +103,7 @@ const getNavItems = (role: User['role']): NavItem[] => {
     default:
       return [
         { name: 'Dashboard', path: '/app/dashboard', iconName: 'fas fa-home' },
-        { name: 'Subscriptions', path: '/app/billing', iconName: 'fas fa-wallet' },
-        { name: 'Invoice History', path: '/app/invoices', iconName: 'fas fa-file-invoice' },
         { name: 'Users Management', path: '/app/team-management', iconName: 'fas fa-users-cog' },
-        { name: 'Support Center', path: '/app/support', iconName: 'fas fa-headset' },
-        { name: 'Action Logs', path: '/app/action-logs', iconName: 'fas fa-history' },
       ];
   }
 };
