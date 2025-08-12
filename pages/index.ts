@@ -1,5 +1,11 @@
 
 
+
+
+
+
+
+
 export * from './ActionLogsPage';
 export * from './AllNotificationsPage';
 export * from './CloudEdgeLayout';
@@ -37,6 +43,9 @@ export * from './dashboard/ResellerDashboardPage';
 export * from './dashboard/EmailAdminSmtpLogsPage';
 export * from './dashboard/EmailAdminSuiteDashboardPage';
 export * from './dashboard/email_admin_suite/PlaceholderPage';
+export * from './dashboard/email_admin_suite/MailboxesPage';
+export * from './dashboard/email_admin_suite/DistributionListsPage';
+export * from './dashboard/email_admin_suite/SharedContactsPage';
 
 export * from './reseller/ResellerCustomersPage';
 export * from './reseller/ResellerProgramPage';

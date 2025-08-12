@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation, Link } from 'react-router-dom';
 import { Icon, Modal, Button, FormField } from '@/components/ui';
@@ -180,65 +179,71 @@ export const EmailAdminSidebar: React.FC<EmailAdminSidebarProps> = ({ isCollapse
                     {navItems.map(item => (
                         <li key={item.name}>
                             {'subItems' in item ? (
-                                <>
-                                    <button onClick={() => toggleSection(item.name)} title={isCollapsed ? item.name : undefined} 
-                                        className={`w-full flex items-center py-2.5 rounded-md text-sm font-medium transition-colors duration-150 ease-in-out group ${isCollapsed ? 'px-3 justify-center' : 'px-3 justify-between'} ${openSections.includes(item.name) ? `${activeBgColor} ${activeTextColor}` : `${baseTextColor} ${hoverBgColor} ${hoverTextColor}`}`}
-                                    >
-                                        <div className={`flex items-center`}>
-                                            <Icon name={item.icon} fixedWidth className={`text-lg ${isCollapsed ? '' : 'mr-3'} ${openSections.includes(item.name) ? iconActiveColor : `${iconBaseColor} ${iconHoverColor}`}`} />
-                                            {!isCollapsed && <span>{item.name}</span>}
-                                        </div>
-                                        {!isCollapsed && <Icon name={openSections.includes(item.name) ? 'fas fa-chevron-down' : 'fas fa-chevron-right'} className="w-3 transition-transform" />}
-                                    </button>
-                                    {!isCollapsed && openSections.includes(item.name) && (
-                                        <ul className="pt-1 space-y-1">
-                                            {item.subItems.map(subItem => (
-                                                <li key={subItem.name}>
-                                                    <NavLink to={subItem.path} 
-                                                        className={({isActive}) => `block py-2.5 pr-3 pl-11 text-sm rounded-md ${isActive ? `${activeBgColor} ${activeTextColor}` : `text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-700 ${hoverTextColor}`}`}
-                                                    >
-                                                        {subItem.name}
-                                                    </NavLink>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
-                                </>
-                            ) : (
-                                <NavLink to={item.path} end title={isCollapsed ? item.name : undefined} 
-                                    className={({isActive}) => `flex items-center py-2.5 rounded-md text-sm font-medium transition-colors duration-150 ease-in-out group ${isCollapsed ? 'px-3 justify-center' : 'px-3'} ${isActive ? `${activeBgColor} ${activeTextColor} shadow-inner` : `${baseTextColor} ${hoverBgColor} ${hoverTextColor}`}`}
-                                >
-                                     {({isActive}) => (
+                                (() => {
+                                    const isSectionActive = item.subItems.some(sub => location.pathname.startsWith(sub.path));
+                                    const isSectionOpen = openSections.includes(item.name);
+                                    return (
                                         <>
-                                            <Icon name={item.icon} fixedWidth className={`text-lg ${isCollapsed ? '' : 'mr-3'} ${isActive ? iconActiveColor : `${iconBaseColor} ${iconHoverColor}`}`} />
-                                            {!isCollapsed && <span>{item.name}</span>}
+                                            <button onClick={() => toggleSection(item.name)} title={isCollapsed ? item.name : undefined}
+                                                className={`w-full flex items-center py-2.5 rounded-md text-sm transition-colors duration-150 ease-in-out group ${isCollapsed ? 'px-3 justify-center' : 'px-3 justify-between'} ${isSectionActive ? 'font-bold text-[#293c51] dark:text-gray-100' : `font-medium ${baseTextColor}`} ${hoverBgColor} ${hoverTextColor}`}
+                                            >
+                                                <div className={`flex items-center`}>
+                                                    <Icon name={item.icon} fixedWidth className={`text-lg ${isCollapsed ? '' : 'mr-3'} ${isSectionActive ? iconBaseColor : iconBaseColor} ${!isSectionActive ? iconHoverColor : ''}`} />
+                                                    {!isCollapsed && <span>{item.name}</span>}
+                                                </div>
+                                                {!isCollapsed && <Icon name={isSectionOpen ? 'fas fa-chevron-down' : 'fas fa-chevron-right'} className="w-3 transition-transform" />}
+                                            </button>
+                                            {!isCollapsed && isSectionOpen && (
+                                                <ul className="pt-1 space-y-1">
+                                                    {item.subItems.map(subItem => (
+                                                        <li key={subItem.name}>
+                                                            <NavLink to={subItem.path}
+                                                                className={({isActive}) => `block py-2.5 pr-3 pl-11 text-sm rounded-md ${isActive ? `${activeBgColor} ${activeTextColor}` : `text-gray-600 dark:text-gray-400 ${hoverBgColor} ${hoverTextColor}`}`}
+                                                            >
+                                                                {subItem.name}
+                                                            </NavLink>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            )}
                                         </>
-                                     )}
+                                    );
+                                })()
+                            ) : (
+                                <NavLink to={item.path} title={isCollapsed ? item.name : undefined}
+                                    className={({isActive}) => `flex items-center py-2.5 rounded-md text-sm font-medium transition-colors duration-150 ease-in-out group ${isCollapsed ? 'px-3 justify-center' : 'px-3'} ${isActive ? `${activeBgColor} ${activeTextColor}` : `${baseTextColor} ${hoverBgColor} ${hoverTextColor}`}`}
+                                >
+                                    {({isActive}) => (<>
+                                        <Icon name={item.icon} fixedWidth className={`text-lg ${isCollapsed ? '' : 'mr-3'} ${isActive ? iconActiveColor : iconBaseColor} ${isActive ? '' : iconHoverColor}`} />
+                                        {!isCollapsed && <span>{item.name}</span>}
+                                    </>)}
                                 </NavLink>
                             )}
                         </li>
                     ))}
                 </ul>
             </nav>
-            <div className="px-2 pb-2 pt-0 mt-auto">
-                <hr className={`my-2 border-gray-300 dark:border-slate-600 ${isCollapsed ? 'mx-auto w-10/12' : ''}`} />
-                <button
-                    title={isCollapsed ? "Feedback" : undefined}
-                    className={`w-full flex items-center py-2.5 rounded-md text-sm font-medium transition-colors duration-150 ease-in-out group mb-1 ${baseTextColor} ${hoverBgColor} ${hoverTextColor} ${isCollapsed ? 'px-3 justify-center' : 'px-3'}`}
-                    onClick={handleOpenFeedback}
-                >
-                    <Icon name="fas fa-bullhorn" fixedWidth className={`text-lg ${iconBaseColor} ${iconHoverColor} ${isCollapsed ? '' : 'mr-3'}`} />
-                    {!isCollapsed && <span>Feedback</span>}
-                </button>
+            <div className="flex-shrink-0 mt-auto py-2 px-2">
+                <hr className="my-2 border-gray-300 dark:border-slate-600" />
+                {!isCollapsed && (
+                    <div className="space-y-1">
+                         <button onClick={handleOpenFeedback} className={`w-full text-left flex items-center p-3 rounded-md text-sm font-medium ${baseTextColor} ${hoverBgColor} ${hoverTextColor}`}>
+                            <Icon name="fas fa-bullhorn" fixedWidth className={`mr-3 text-lg ${iconBaseColor}`} />
+                            Give Feedback
+                        </button>
+                        <Link to="/app/dashboard" className={`w-full text-left flex items-center p-3 rounded-md text-sm font-medium ${baseTextColor} ${hoverBgColor} ${hoverTextColor}`}>
+                            <Icon name="fas fa-sign-out-alt" fixedWidth className={`mr-3 text-lg ${iconBaseColor}`} />
+                            Exit Suite
+                        </Link>
+                    </div>
+                )}
             </div>
         </aside>
-
         <Modal isOpen={isFeedbackModalOpen} onClose={handleCloseFeedback} title={submitted ? "Thank You!" : "Share Your Feedback"} size="lg">
             {submitted ? (
                 <div className="text-center py-8">
                     <Icon name="fas fa-check-circle" className="text-5xl text-green-500 mb-4" />
                     <p className="text-lg text-gray-700 dark:text-gray-200">Your feedback has been submitted successfully.</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">We appreciate you taking the time to help us improve.</p>
                 </div>
             ) : (
                 <form onSubmit={handleSubmitFeedback}>
@@ -247,33 +252,16 @@ export const EmailAdminSidebar: React.FC<EmailAdminSidebarProps> = ({ isCollapse
                             <label className="block text-sm font-medium text-center text-[#293c51] dark:text-gray-300 mb-2">How was your experience?</label>
                             <StarRating />
                         </div>
-                        <FormField
-                            id="feedback-category"
-                            name="category"
-                            label="Feedback Category"
-                            as="select"
-                            value={category}
-                            onChange={(e) => setCategory(e.target.value)}
-                        >
+                        <FormField id="feedback-category" name="category" label="Feedback Category" as="select" value={category} onChange={(e) => setCategory(e.target.value)}>
                             <option>General Feedback</option>
                             <option>Bug Report</option>
                             <option>Feature Request</option>
-                            <option>UI/UX Suggestion</option>
                         </FormField>
-                        <FormField
-                            id="feedback-comments"
-                            name="comments"
-                            label="Comments"
-                            as="textarea"
-                            rows={5}
-                            value={comments}
-                            onChange={(e) => setComments(e.target.value)}
-                            placeholder="Tell us more about your experience or suggestions..."
-                        />
+                        <FormField id="feedback-comments" name="comments" label="Comments" as="textarea" rows={5} value={comments} onChange={(e) => setComments(e.target.value)} placeholder="Tell us more..." />
                     </div>
                     <div className="mt-6 flex justify-end space-x-2">
                         <Button type="button" variant="ghost" onClick={handleCloseFeedback}>Cancel</Button>
-                        <Button type="submit" isLoading={isLoading} disabled={rating === 0 || isLoading}>Submit Feedback</Button>
+                        <Button type="submit" isLoading={isLoading} disabled={rating === 0 || isLoading}>Submit</Button>
                     </div>
                 </form>
             )}

@@ -113,7 +113,7 @@ export const FormField: React.FC<FormFieldProps> = ({
   }
 
   return (
-    <div className="mb-4">
+    <div className={`mb-4 ${wrapperClassName || ''}`}>
       <label htmlFor={id} className={`${baseLabelClasses} ${labelClassName || ''}`}>
         {label} {required && <span className="text-red-500 dark:text-red-400">*</span>}
       </label>

@@ -1,7 +1,16 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Card, FormField, Button, Icon, CollapsibleSection, LineChart, BarChart, MultiSegmentDoughnutChart, StatCard, Pagination } from '@/components/ui';
+import { Card, FormField, Button, Icon, CollapsibleSection, LineChart, BarChart, MultiSegmentDoughnutChart, StatCard, Pagination, Modal, Spinner } from '@/components/ui';
 import { mockSmtpLogs } from '@/data';
-import type { SmtpLogEntry, SmtpLogAction, SmtpLogStatus } from '@/types';
+import type { SmtpLogEntry, SmtpLogAction, SmtpLogStatus, AIAnalysisResult } from '@/types';
+import { GoogleGenAI, Type } from "@google/genai";
+
+let ai: GoogleGenAI | null = null;
+try {
+  ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+} catch (e) {
+  console.error("Gemini API key not found. AI features will be disabled.", e);
+}
+
 
 const SMTP_ACTIONS: SmtpLogAction[] = ['PASS', 'DELIVER', 'ARCHIVE', 'QUARANTINE', 'REJECT'];
 const SMTP_STATUSES: SmtpLogStatus[] = ['Passed', 'Archived', 'Rejected (Data)', 'Rejected (Block)', 'Spam (Confirmed)', 'Spam (Scam)', 'Rejected (Suspect)', 'User Invalid'];
@@ -162,6 +171,10 @@ export const EmailAdminSmtpLogsPage: React.FC = () => {
     const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [analysisResult, setAnalysisResult] = useState<AIAnalysisResult | null>(null);
+    const [analysisError, setAnalysisError] = useState<string | null>(null);
 
     const handleApplyFilters = (newFilters: Filters) => {
         setFilters(newFilters);
@@ -256,6 +269,117 @@ export const EmailAdminSmtpLogsPage: React.FC = () => {
                 return baseClasses;
         }
     };
+
+    const handleAnalyzeLogs = async () => {
+        if (!ai) {
+            alert("AI features are not available. Please check your API key.");
+            return;
+        }
+        setIsAnalysisModalOpen(true);
+        setIsAnalyzing(true);
+        setAnalysisResult(null);
+        setAnalysisError(null);
+
+        try {
+            const logsToAnalyze = filteredLogs.slice(0, 30);
+            const logsString = logsToAnalyze.map(log => 
+                `Time: ${log.timestamp}, From: ${log.from}, To: ${log.to}, Subject: ${log.subject}, Action: ${log.action}, Status: ${log.status}, Details: ${log.details}`
+            ).join('\n');
+
+            if (logsString.trim() === '') {
+                setAnalysisResult({
+                    summary: "There are no logs in the current view to analyze.",
+                    trends: [],
+                    securityEvents: [],
+                    recommendations: ["Try adjusting your filters to see some data."]
+                });
+                setIsAnalyzing(false);
+                return;
+            }
+
+            const prompt = `As a senior email security analyst, analyze the following SMTP log data. Provide a concise summary, identify key trends, point out notable security events, and give actionable recommendations. The data is:\n\n${logsString}`;
+            
+            const response = await ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                            summary: { type: Type.STRING, description: "A brief, high-level summary of the log data." },
+                            trends: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Observable patterns or trends, like repeated senders or high volume from an IP." },
+                            securityEvents: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Specific, noteworthy security-related events like blocked phishing attempts." },
+                            recommendations: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Actionable steps an administrator should consider based on the analysis." }
+                        }
+                    }
+                }
+            });
+
+            const resultText = response.text.trim();
+            const resultJson = JSON.parse(resultText);
+            setAnalysisResult(resultJson);
+
+        } catch (error) {
+            console.error("Error analyzing logs with Gemini:", error);
+            setAnalysisError("Failed to analyze logs. The AI service may be unavailable. Please try again later.");
+        } finally {
+            setIsAnalyzing(false);
+        }
+    };
+
+    const AnalysisModalContent = () => {
+        if (isAnalyzing) {
+            return (
+                <div className="text-center py-10">
+                    <Spinner size="lg" />
+                    <p className="mt-4 text-lg font-semibold text-[#293c51] dark:text-gray-200">Analyzing Logs...</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">The AI is identifying patterns and anomalies.</p>
+                </div>
+            );
+        }
+
+        if (analysisError) {
+            return (
+                <div className="text-center py-10">
+                     <Icon name="fas fa-exclamation-triangle" className="text-4xl text-red-500 mb-4" />
+                    <p className="mt-4 text-lg font-semibold text-red-600 dark:text-red-400">Analysis Failed</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{analysisError}</p>
+                    <Button onClick={handleAnalyzeLogs}>Try Again</Button>
+                </div>
+            );
+        }
+
+        if (analysisResult) {
+            return (
+                <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+                    <div>
+                        <h4 className="font-semibold text-lg flex items-center gap-2 text-[#293c51] dark:text-gray-100"><Icon name="fas fa-file-alt" /> Executive Summary</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-300 pl-6">{analysisResult.summary}</p>
+                    </div>
+                    {analysisResult.trends.length > 0 && <div>
+                        <h4 className="font-semibold text-lg flex items-center gap-2 text-[#293c51] dark:text-gray-100"><Icon name="fas fa-chart-line" /> Key Trends</h4>
+                        <ul className="list-disc list-inside pl-6 space-y-1 text-sm text-gray-600 dark:text-gray-300">
+                            {analysisResult.trends.map((item, i) => <li key={`trend-${i}`}>{item}</li>)}
+                        </ul>
+                    </div>}
+                     {analysisResult.securityEvents.length > 0 && <div>
+                        <h4 className="font-semibold text-lg flex items-center gap-2 text-[#293c51] dark:text-gray-100"><Icon name="fas fa-shield-alt" /> Notable Security Events</h4>
+                        <ul className="list-disc list-inside pl-6 space-y-1 text-sm text-gray-600 dark:text-gray-300">
+                            {analysisResult.securityEvents.map((item, i) => <li key={`event-${i}`}>{item}</li>)}
+                        </ul>
+                    </div>}
+                     {analysisResult.recommendations.length > 0 && <div>
+                        <h4 className="font-semibold text-lg flex items-center gap-2 text-[#293c51] dark:text-gray-100"><Icon name="fas fa-lightbulb" /> Recommendations</h4>
+                        <ul className="list-disc list-inside pl-6 space-y-1 text-sm text-gray-600 dark:text-gray-300">
+                            {analysisResult.recommendations.map((item, i) => <li key={`rec-${i}`}>{item}</li>)}
+                        </ul>
+                    </div>}
+                </div>
+            )
+        }
+        return null;
+    }
 
 
     return (
@@ -396,9 +520,19 @@ export const EmailAdminSmtpLogsPage: React.FC = () => {
                 <Card 
                     title="SMTP Log Explorer"
                     titleActions={
-                         <Button onClick={() => setIsFilterPanelOpen(true)} leftIconName="fas fa-filter">
-                            Filter Logs
-                        </Button>
+                         <div className="flex items-center gap-2">
+                             <Button onClick={() => setIsFilterPanelOpen(true)} leftIconName="fas fa-filter" variant="outline">
+                                Filter Logs
+                            </Button>
+                            <Button
+                                onClick={handleAnalyzeLogs}
+                                leftIconName="fas fa-wand-magic-sparkles"
+                                disabled={isAnalyzing || !ai}
+                                className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white border-transparent hover:shadow-lg hover:shadow-purple-500/50 transform hover:-translate-y-0.5 transition-all duration-300 ease-in-out"
+                            >
+                                Analyze with AI
+                            </Button>
+                         </div>
                     }
                 >
                     <div>
@@ -462,6 +596,16 @@ export const EmailAdminSmtpLogsPage: React.FC = () => {
                 onClear={clearFilters}
                 currentFilters={filters}
             />
+
+            <Modal
+                isOpen={isAnalysisModalOpen}
+                onClose={() => setIsAnalysisModalOpen(false)}
+                title="AI Log Analysis"
+                size="2xl"
+                footer={<Button variant="ghost" onClick={() => setIsAnalysisModalOpen(false)}>Close</Button>}
+            >
+                <AnalysisModalContent />
+            </Modal>
         </div>
     );
 };

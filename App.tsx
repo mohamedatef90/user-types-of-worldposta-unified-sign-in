@@ -1,5 +1,11 @@
 
 
+
+
+
+
+
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation, Outlet, useSearchParams, Link } from 'react-router-dom';
 import { AuthProvider, ThemeProvider, useAuth, AppLayoutContext } from '@/context';
@@ -46,6 +52,9 @@ import {
     EmailAdminSidebar,
     EmailAdminSuiteDashboardPage,
     PlaceholderPage,
+    MailboxesPage,
+    DistributionListsPage,
+    SharedContactsPage,
     KubernetesPage,
     NetworkingPage,
     StoragePage,
@@ -257,6 +266,9 @@ const AppLayout: React.FC = () => {
             'storage': 'Storage',
             'monitoring': 'Monitoring & Security',
             'backup': 'Backup & DR',
+            'mailboxes': 'Mailboxes',
+            'distribution-lists': 'Distribution Lists',
+            'shared-contacts': 'Shared Contacts',
         };
         
         const getLabel = (value: string) => {
@@ -322,6 +334,11 @@ const AppLayout: React.FC = () => {
 
         segmentsToProcess.forEach((value, index) => {
             if (value === 'admin' || value.endsWith('-dashboard')) return;
+
+            // When in email admin suite, if a view is selected, remove the container tab.
+            if (isEmailAdminSuite && (value === 'exchange' || value === 'admin') && index < segmentsToProcess.length - 1) {
+                return;
+            }
 
             const to = `/app/${pathnames.slice(1, index + 2).join('/')}`;
             const label = getLabel(value);
@@ -494,9 +511,9 @@ const AppRoutes: React.FC = () => {
                     <Route path="email-admin-suite">
                         <Route index element={<EmailAdminSuiteDashboardPage />} />
                         <Route path="orgs-and-domains" element={<PlaceholderPage />} />
-                        <Route path="exchange/mailboxes" element={<PlaceholderPage />} />
-                        <Route path="exchange/distribution-lists" element={<PlaceholderPage />} />
-                        <Route path="exchange/shared-contacts" element={<PlaceholderPage />} />
+                        <Route path="exchange/mailboxes" element={<MailboxesPage />} />
+                        <Route path="exchange/distribution-lists" element={<DistributionListsPage />} />
+                        <Route path="exchange/shared-contacts" element={<SharedContactsPage />} />
                         <Route path="exchange/bulk-module" element={<PlaceholderPage />} />
                         <Route path="exchange/running-tasks" element={<PlaceholderPage />} />
                         <Route path="exchange/mailbox-plans" element={<PlaceholderPage />} />

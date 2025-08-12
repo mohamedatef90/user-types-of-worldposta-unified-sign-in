@@ -1,4 +1,6 @@
 
+
+
 export interface User {
   id: string;
   fullName: string;
@@ -361,4 +363,44 @@ export interface BackupJob {
   schedule: string;
   lastRunStatus: 'Success' | 'Failed' | 'In Progress';
   lastRunDate: string;
+}
+
+// Email Admin Suite -> Mailboxes
+export type MailboxPlan = 'Posta Light' | 'Posta Business' | 'Posta Pro' | 'Posta Enterprise';
+
+export interface Mailbox {
+  id: string;
+  displayName: string;
+  login: string;
+  mailboxPlan: MailboxPlan;
+  creationDate: string;
+  driveQuota: {
+    usedGB: number;
+    totalGB: number;
+  };
+  level: 'User' | 'Admin';
+  status: 'active' | 'suspended';
+  mfaEnabled?: boolean;
+}
+
+export interface DistributionList {
+  id: string;
+  displayName: string;
+  primaryEmail: string;
+  creationDate: string;
+  managerEmail?: string;
+}
+
+export interface SharedContact {
+  id: string;
+  displayName: string;
+  email: string;
+  creationDate: string;
+}
+
+export interface AIAnalysisResult {
+  summary: string;
+  trends: string[];
+  securityEvents: string[];
+  recommendations: string[];
 }

@@ -1,5 +1,7 @@
 
-import type { User, UserGroup, Invoice, SupportTicket, LogEntry, SupportTicketProduct, InvoiceLineItem, StaffGroup, SmtpLogEntry, KnowledgeBaseArticle, KubernetesCluster, LoadBalancer, FirewallRule, StorageBucket, SecurityAlert, BackupJob } from './types';
+
+
+import type { User, UserGroup, Invoice, SupportTicket, LogEntry, SupportTicketProduct, InvoiceLineItem, StaffGroup, SmtpLogEntry, KnowledgeBaseArticle, KubernetesCluster, LoadBalancer, FirewallRule, StorageBucket, SecurityAlert, BackupJob, Mailbox, MailboxPlan, DistributionList, SharedContact } from './types';
 
 // Mock User Data
 export const MOCK_USERS: { [email: string]: User & { passwordHash: string } } = {
@@ -394,6 +396,46 @@ export const mockPostaPackages = [
     { id: 'posta-business', name: 'Posta Business Plan' },
     { id: 'posta-pro', name: 'Posta Pro Plan' },
     { id: 'posta-enterprise', name: 'Posta Enterprise Plan' },
+];
+
+// --- MOCK DATA for MAILBOXES ---
+export const mockMailboxPlans: MailboxPlan[] = ['Posta Light', 'Posta Business', 'Posta Pro', 'Posta Enterprise'];
+export const mockMailboxDomains = ['alpha-inc.com', 'betadivision.net', 'gamma-corp.io'];
+export const mockMailboxes: Mailbox[] = [
+  { id: 'mbx_001', displayName: 'Johnathan Doe', login: 'john.doe@alpha-inc.com', mailboxPlan: 'Posta Pro', creationDate: '2023-01-15T10:00:00Z', driveQuota: { usedGB: 15.5, totalGB: 200 }, level: 'User', status: 'active' },
+  { id: 'mbx_002', displayName: 'Jane Smith', login: 'jane.smith@alpha-inc.com', mailboxPlan: 'Posta Pro', creationDate: '2023-02-20T11:30:00Z', driveQuota: { usedGB: 185.2, totalGB: 200 }, level: 'Admin', status: 'active' },
+  { id: 'mbx_003', displayName: 'Peter Jones', login: 'peter.jones@betadivision.net', mailboxPlan: 'Posta Business', creationDate: '2023-03-05T08:45:00Z', driveQuota: { usedGB: 80, totalGB: 100 }, level: 'User', status: 'active' },
+  { id: 'mbx_004', displayName: 'Mary Williams', login: 'mary.w@alpha-inc.com', mailboxPlan: 'Posta Enterprise', creationDate: '2023-05-10T14:48:00Z', driveQuota: { usedGB: 512, totalGB: 1024 }, level: 'User', status: 'suspended' },
+  { id: 'mbx_005', displayName: 'David Brown', login: 'david.brown@gamma-corp.io', mailboxPlan: 'Posta Light', creationDate: '2023-06-15T09:20:00Z', driveQuota: { usedGB: 2.1, totalGB: 10 }, level: 'User', status: 'active' },
+  { id: 'mbx_006', displayName: 'Support Team', login: 'support@alpha-inc.com', mailboxPlan: 'Posta Business', creationDate: '2023-07-01T11:00:00Z', driveQuota: { usedGB: 5, totalGB: 100 }, level: 'User', status: 'active' },
+  { id: 'mbx_007', displayName: 'Sales Department', login: 'sales@betadivision.net', mailboxPlan: 'Posta Business', creationDate: '2024-01-20T18:00:00Z', driveQuota: { usedGB: 95.8, totalGB: 100 }, level: 'User', status: 'active' },
+  { id: 'mbx_008', displayName: 'Info Desk', login: 'info@gamma-corp.io', mailboxPlan: 'Posta Light', creationDate: '2024-02-11T12:30:00Z', driveQuota: { usedGB: 9.9, totalGB: 10 }, level: 'User', status: 'active' },
+  { id: 'mbx_009', displayName: 'Tech Alerts', login: 'alerts@alpha-inc.com', mailboxPlan: 'Posta Light', creationDate: '2024-03-05T08:45:00Z', driveQuota: { usedGB: 1, totalGB: 10 }, level: 'User', status: 'suspended' },
+  { id: 'mbx_010', displayName: 'Marketing Team', login: 'marketing@betadivision.net', mailboxPlan: 'Posta Pro', creationDate: '2024-04-10T16:00:00Z', driveQuota: { usedGB: 190, totalGB: 200 }, level: 'User', status: 'active' },
+  { id: 'mbx_011', displayName: 'HR Department', login: 'hr@alpha-inc.com', mailboxPlan: 'Posta Enterprise', creationDate: '2024-05-15T09:00:00Z', driveQuota: { usedGB: 750, totalGB: 1024 }, level: 'Admin', status: 'active' },
+  { id: 'mbx_012', displayName: 'CEO Office', login: 'ceo@alpha-inc.com', mailboxPlan: 'Posta Enterprise', creationDate: '2022-12-01T08:00:00Z', driveQuota: { usedGB: 25, totalGB: 1024 }, level: 'Admin', status: 'active' },
+];
+
+// --- MOCK DATA for DISTRIBUTION LISTS ---
+export const mockDistributionLists: DistributionList[] = [
+  { id: 'dl_001', displayName: 'All Employees', primaryEmail: 'all@alpha-inc.com', creationDate: '2023-02-01T10:00:00Z', managerEmail: 'admin@alpha-inc.com' },
+  { id: 'dl_002', displayName: 'Marketing Department', primaryEmail: 'marketing@alpha-inc.com', creationDate: '2023-03-15T11:30:00Z', managerEmail: 'jane.smith@alpha-inc.com' },
+  { id: 'dl_003', displayName: 'Sales Team US', primaryEmail: 'sales.us@betadivision.net', creationDate: '2023-05-20T08:45:00Z', managerEmail: 'sales.lead@betadivision.net' },
+  { id: 'dl_004', displayName: 'Project Titan Members', primaryEmail: 'project.titan@alpha-inc.com', creationDate: '2023-08-10T14:48:00Z', managerEmail: 'project.manager@alpha-inc.com' },
+  { id: 'dl_005', displayName: 'Executive Team', primaryEmail: 'exec@gamma-corp.io', creationDate: '2023-09-01T09:20:00Z', managerEmail: 'ceo@gamma-corp.io' },
+  { id: 'dl_006', displayName: 'IT Support', primaryEmail: 'it.support@alpha-inc.com', creationDate: '2024-01-11T11:00:00Z', managerEmail: 'it.director@alpha-inc.com' },
+  { id: 'dl_007', displayName: 'Announcements', primaryEmail: 'announce@betadivision.net', creationDate: '2024-02-22T18:00:00Z', managerEmail: 'hr@betadivision.net' },
+];
+
+// --- MOCK DATA for SHARED CONTACTS ---
+export const mockSharedContacts: SharedContact[] = [
+    { id: 'sc_001', displayName: 'External Auditor', email: 'auditor@externalfirm.com', creationDate: '2023-04-10T10:00:00Z' },
+    { id: 'sc_002', displayName: 'Legal Counsel', email: 'legal@lawoffice.com', creationDate: '2023-05-22T11:30:00Z' },
+    { id: 'sc_003', displayName: 'Catering Service', email: 'orders@bestcatering.net', creationDate: '2023-06-15T08:45:00Z' },
+    { id: 'sc_004', displayName: 'Building Security', email: 'security@buildingmgmt.com', creationDate: '2023-08-01T14:48:00Z' },
+    { id: 'sc_005', displayName: 'IT Support (Vendor)', email: 'support@itvendor.io', creationDate: '2024-01-05T09:20:00Z' },
+    { id: 'sc_006', displayName: 'Office Supplies', email: 'supplies@officeshop.com', creationDate: '2024-02-11T12:30:00Z' },
+    { id: 'sc_007', displayName: 'Travel Agency', email: 'bookings@globaltravel.co', creationDate: '2024-03-20T18:00:00Z' },
 ];
 
 
