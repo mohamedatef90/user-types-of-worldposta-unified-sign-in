@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation, Link } from 'react-router-dom';
 import { Icon, Modal, Button, FormField } from '@/components/ui';
@@ -60,14 +61,10 @@ export const EmailAdminSidebar: React.FC<EmailAdminSidebarProps> = ({ isCollapse
             ]
         },
         {
-            name: 'Admin & Billing',
+            name: 'Administration',
             icon: 'fas fa-cogs',
             subItems: [
-                { name: 'Billing', path: '/app/email-admin-suite/admin/billing' },
-                { name: 'Users', path: '/app/email-admin-suite/admin/users' },
-                { name: 'Permissions Groups', path: '/app/email-admin-suite/admin/permission-groups' },
                 { name: 'Background Tasks', path: '/app/email-admin-suite/admin/background-tasks' },
-                { name: 'Action Logs', path: '/app/email-admin-suite/admin/action-logs' },
                 { name: 'White & Black Lists', path: '/app/email-admin-suite/admin/lists' },
                 { name: 'Sister Companies', path: '/app/email-admin-suite/admin/sister-companies' },
                 { name: 'White & Black IP', path: '/app/email-admin-suite/admin/ip-lists' },

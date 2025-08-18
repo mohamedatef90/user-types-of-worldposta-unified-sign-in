@@ -1,9 +1,10 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Card, Button, FormField, Icon, Pagination, Modal, Tooltip, ToggleSwitch, CollapsibleSection } from '@/components/ui';
 import type { Mailbox, MailboxPlan, MailboxLevel, MailboxType } from '@/types';
 import { mockMailboxes, mockMailboxPlans, mockMailboxDomains } from '@/data';
 import { v4 as uuidv4 } from 'uuid';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 // --- MAILBOX VIEW ---
 
@@ -302,6 +303,7 @@ const MailboxFilterPanel: React.FC<{
 
 const MailboxesView: React.FC = () => {
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [mailboxes, setMailboxes] = useState<Mailbox[]>(mockMailboxes);
     const [filters, setFilters] = useState<MailboxFilters>(initialMailboxFilters);
     const [currentPage, setCurrentPage] = useState(1);
@@ -319,6 +321,15 @@ const MailboxesView: React.FC = () => {
     const [isBulkStatusModalOpen, setIsBulkStatusModalOpen] = useState<{ open: boolean; action: 'suspend' | 'activate' }>({ open: false, action: 'suspend' });
     const [isBulkPlanModalOpen, setIsBulkPlanModalOpen] = useState(false);
     const [newBulkPlan, setNewBulkPlan] = useState<MailboxPlan>('Posta Business');
+
+    useEffect(() => {
+        if (searchParams.get('action') === 'add') {
+            setIsAddPanelOpen(true);
+            // Clean up URL parameter
+            searchParams.delete('action');
+            setSearchParams(searchParams, { replace: true });
+        }
+    }, [searchParams, setSearchParams]);
 
     const handleRefresh = () => {
         setIsRefreshing(true);

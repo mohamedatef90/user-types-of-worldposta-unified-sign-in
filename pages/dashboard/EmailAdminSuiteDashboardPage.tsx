@@ -1,10 +1,7 @@
 
-
-
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Card, StatCard, LineChart, Button, Icon, MultiSegmentDoughnutChart, Modal, FloatingActionMenu, FormField, DashboardCustomizationMenu } from '@/components/ui';
-import { useNavigate, NavigateFunction, useSearchParams } from 'react-router-dom';
-import { useAuth } from '@/context';
+import { Card, StatCard, LineChart, Button, Icon, MultiSegmentDoughnutChart, Modal, FormField, DashboardCustomizationMenu, FloatingActionMenu } from '@/components/ui';
+import { useNavigate } from 'react-router-dom';
 
 const topThreatSources = [
     { ip: '192.168.1.100', location: 'Unknown', attempts: 45, risk: 'High' },
@@ -311,8 +308,6 @@ const ALL_DASHBOARD_CARDS: DashboardCardInfo[] = [
 ];
 
 export const EmailAdminSuiteDashboardPage: React.FC = () => {
-    const navigate = useNavigate();
-    
     const [cardVisibility, setCardVisibility] = useState<{ [key: string]: boolean }>(() => {
         try {
             const storedVisibility = localStorage.getItem('emailAdminDashboardVisibility');
@@ -328,6 +323,7 @@ export const EmailAdminSuiteDashboardPage: React.FC = () => {
             return acc;
         }, {});
     });
+    const navigate = useNavigate();
 
     useEffect(() => {
         localStorage.setItem('emailAdminDashboardVisibility', JSON.stringify(cardVisibility));
@@ -336,13 +332,29 @@ export const EmailAdminSuiteDashboardPage: React.FC = () => {
     const visibleCards = useMemo(() => {
         return ALL_DASHBOARD_CARDS.filter(card => cardVisibility[card.id]);
     }, [cardVisibility]);
-
-    const quickActions = useMemo(() => [
-        { label: 'Create Mailbox', icon: 'fas fa-plus-circle', onClick: () => navigate('/app/email-admin-suite/exchange/mailboxes') },
-        { label: 'Add Migration', icon: 'fas fa-exchange-alt', onClick: () => navigate('/app/email-admin-suite/migrations') },
-        { label: 'Run Bulk Task', icon: 'fas fa-tasks', onClick: () => navigate('/app/email-admin-suite/exchange/bulk-module') },
-        { label: 'Add New Group', icon: 'fas fa-users-cog', onClick: () => navigate('/app/email-admin-suite/admin/permission-groups') },
-    ], [navigate]);
+    
+    const quickActions = [
+        { 
+            label: 'Create Mailbox', 
+            icon: 'fas fa-plus-circle', 
+            onClick: () => navigate('/app/email-admin-suite/exchange/mailboxes?action=add') 
+        },
+        { 
+            label: 'Add Migration', 
+            icon: 'fas fa-exchange-alt', 
+            onClick: () => navigate('/app/email-admin-suite/migrations') 
+        },
+        { 
+            label: 'Run Bulk Task', 
+            icon: 'fas fa-tasks', 
+            onClick: () => navigate('/app/email-admin-suite/exchange/bulk-module') 
+        },
+        { 
+            label: 'Add New Rule', 
+            icon: 'fas fa-gavel', 
+            onClick: () => navigate('/app/email-admin-suite/exchange/rules/add') 
+        },
+    ];
 
     return (
         <div className="relative">
@@ -370,7 +382,7 @@ export const EmailAdminSuiteDashboardPage: React.FC = () => {
                             <div className="flex items-center gap-2">
                                 <Button
                                     variant="secondary"
-                                    onClick={() => navigate('/app/email-admin-suite/orgs-and-domains')}
+                                    onClick={() => {}}
                                     leftIconName="fas fa-cog"
                                 >
                                     Manage Organization
@@ -414,7 +426,7 @@ export const EmailAdminSuiteDashboardPage: React.FC = () => {
                     })}
                 </div>
             </div>
-             <FloatingActionMenu actions={quickActions} />
+            <FloatingActionMenu actions={quickActions} />
         </div>
     );
 };
