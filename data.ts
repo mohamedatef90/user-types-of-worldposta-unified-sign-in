@@ -1,7 +1,6 @@
 
 
-
-import type { User, UserGroup, Invoice, SupportTicket, LogEntry, SupportTicketProduct, InvoiceLineItem, StaffGroup, SmtpLogEntry, KnowledgeBaseArticle, KubernetesCluster, LoadBalancer, FirewallRule, StorageBucket, SecurityAlert, BackupJob, Mailbox, MailboxPlan, DistributionList, SharedContact } from './types';
+import type { User, UserGroup, Invoice, SupportTicket, LogEntry, SupportTicketProduct, InvoiceLineItem, StaffGroup, SmtpLogEntry, KnowledgeBaseArticle, KubernetesCluster, LoadBalancer, FirewallRule, StorageBucket, SecurityAlert, BackupJob, Mailbox, MailboxPlan, DistributionList, SharedContact, Rule, PstLogEntry, RunningTask } from './types';
 
 // Mock User Data
 export const MOCK_USERS: { [email: string]: User & { passwordHash: string } } = {
@@ -402,16 +401,16 @@ export const mockPostaPackages = [
 export const mockMailboxPlans: MailboxPlan[] = ['Posta Light', 'Posta Business', 'Posta Pro', 'Posta Enterprise'];
 export const mockMailboxDomains = ['alpha-inc.com', 'betadivision.net', 'gamma-corp.io'];
 export const mockMailboxes: Mailbox[] = [
-  { id: 'mbx_001', displayName: 'Johnathan Doe', login: 'john.doe@alpha-inc.com', mailboxPlan: 'Posta Pro', creationDate: '2023-01-15T10:00:00Z', driveQuota: { usedGB: 15.5, totalGB: 200 }, level: 'User', status: 'active' },
+  { id: 'mbx_001', displayName: 'Johnathan Doe', login: 'john.doe@alpha-inc.com', mailboxPlan: 'Posta Pro', creationDate: '2023-01-15T10:00:00Z', driveQuota: { usedGB: 15.5, totalGB: 200 }, level: 'Normal', status: 'active' },
   { id: 'mbx_002', displayName: 'Jane Smith', login: 'jane.smith@alpha-inc.com', mailboxPlan: 'Posta Pro', creationDate: '2023-02-20T11:30:00Z', driveQuota: { usedGB: 185.2, totalGB: 200 }, level: 'Admin', status: 'active' },
-  { id: 'mbx_003', displayName: 'Peter Jones', login: 'peter.jones@betadivision.net', mailboxPlan: 'Posta Business', creationDate: '2023-03-05T08:45:00Z', driveQuota: { usedGB: 80, totalGB: 100 }, level: 'User', status: 'active' },
-  { id: 'mbx_004', displayName: 'Mary Williams', login: 'mary.w@alpha-inc.com', mailboxPlan: 'Posta Enterprise', creationDate: '2023-05-10T14:48:00Z', driveQuota: { usedGB: 512, totalGB: 1024 }, level: 'User', status: 'suspended' },
-  { id: 'mbx_005', displayName: 'David Brown', login: 'david.brown@gamma-corp.io', mailboxPlan: 'Posta Light', creationDate: '2023-06-15T09:20:00Z', driveQuota: { usedGB: 2.1, totalGB: 10 }, level: 'User', status: 'active' },
-  { id: 'mbx_006', displayName: 'Support Team', login: 'support@alpha-inc.com', mailboxPlan: 'Posta Business', creationDate: '2023-07-01T11:00:00Z', driveQuota: { usedGB: 5, totalGB: 100 }, level: 'User', status: 'active' },
-  { id: 'mbx_007', displayName: 'Sales Department', login: 'sales@betadivision.net', mailboxPlan: 'Posta Business', creationDate: '2024-01-20T18:00:00Z', driveQuota: { usedGB: 95.8, totalGB: 100 }, level: 'User', status: 'active' },
-  { id: 'mbx_008', displayName: 'Info Desk', login: 'info@gamma-corp.io', mailboxPlan: 'Posta Light', creationDate: '2024-02-11T12:30:00Z', driveQuota: { usedGB: 9.9, totalGB: 10 }, level: 'User', status: 'active' },
-  { id: 'mbx_009', displayName: 'Tech Alerts', login: 'alerts@alpha-inc.com', mailboxPlan: 'Posta Light', creationDate: '2024-03-05T08:45:00Z', driveQuota: { usedGB: 1, totalGB: 10 }, level: 'User', status: 'suspended' },
-  { id: 'mbx_010', displayName: 'Marketing Team', login: 'marketing@betadivision.net', mailboxPlan: 'Posta Pro', creationDate: '2024-04-10T16:00:00Z', driveQuota: { usedGB: 190, totalGB: 200 }, level: 'User', status: 'active' },
+  { id: 'mbx_003', displayName: 'Peter Jones', login: 'peter.jones@betadivision.net', mailboxPlan: 'Posta Business', creationDate: '2023-03-05T08:45:00Z', driveQuota: { usedGB: 80, totalGB: 100 }, level: 'Normal', status: 'active' },
+  { id: 'mbx_004', displayName: 'Mary Williams', login: 'mary.w@alpha-inc.com', mailboxPlan: 'Posta Enterprise', creationDate: '2023-05-10T14:48:00Z', driveQuota: { usedGB: 512, totalGB: 1024 }, level: 'Normal', status: 'suspended' },
+  { id: 'mbx_005', displayName: 'David Brown', login: 'david.brown@gamma-corp.io', mailboxPlan: 'Posta Light', creationDate: '2023-06-15T09:20:00Z', driveQuota: { usedGB: 2.1, totalGB: 10 }, level: 'Normal', status: 'active' },
+  { id: 'mbx_006', displayName: 'Support Team', login: 'support@alpha-inc.com', mailboxPlan: 'Posta Business', creationDate: '2023-07-01T11:00:00Z', driveQuota: { usedGB: 5, totalGB: 100 }, level: 'Normal', status: 'active' },
+  { id: 'mbx_007', displayName: 'Sales Department', login: 'sales@betadivision.net', mailboxPlan: 'Posta Business', creationDate: '2024-01-20T18:00:00Z', driveQuota: { usedGB: 95.8, totalGB: 100 }, level: 'Normal', status: 'active' },
+  { id: 'mbx_008', displayName: 'Info Desk', login: 'info@gamma-corp.io', mailboxPlan: 'Posta Light', creationDate: '2024-02-11T12:30:00Z', driveQuota: { usedGB: 9.9, totalGB: 10 }, level: 'Normal', status: 'active' },
+  { id: 'mbx_009', displayName: 'Tech Alerts', login: 'alerts@alpha-inc.com', mailboxPlan: 'Posta Light', creationDate: '2024-03-05T08:45:00Z', driveQuota: { usedGB: 1, totalGB: 10 }, level: 'Normal', status: 'suspended' },
+  { id: 'mbx_010', displayName: 'Marketing Team', login: 'marketing@betadivision.net', mailboxPlan: 'Posta Pro', creationDate: '2024-04-10T16:00:00Z', driveQuota: { usedGB: 190, totalGB: 200 }, level: 'Normal', status: 'active' },
   { id: 'mbx_011', displayName: 'HR Department', login: 'hr@alpha-inc.com', mailboxPlan: 'Posta Enterprise', creationDate: '2024-05-15T09:00:00Z', driveQuota: { usedGB: 750, totalGB: 1024 }, level: 'Admin', status: 'active' },
   { id: 'mbx_012', displayName: 'CEO Office', login: 'ceo@alpha-inc.com', mailboxPlan: 'Posta Enterprise', creationDate: '2022-12-01T08:00:00Z', driveQuota: { usedGB: 25, totalGB: 1024 }, level: 'Admin', status: 'active' },
 ];
@@ -438,6 +437,59 @@ export const mockSharedContacts: SharedContact[] = [
     { id: 'sc_007', displayName: 'Travel Agency', email: 'bookings@globaltravel.co', creationDate: '2024-03-20T18:00:00Z' },
 ];
 
+// --- MOCK DATA FOR RULES ---
+export const mockRules: Rule[] = [
+  { id: 'rule1', name: 'anameischanged:frtt', description: 'Forward all incoming mail from user@domain.com to admin@domain.com.', status: 'enabled', creationDate: '2023-01-15T10:00:00Z', lastModified: '2023-01-15T10:00:00Z' },
+  { id: 'rule2', name: 'anameischanged:test rule', description: 'Reject emails with "spam" in the subject line.', status: 'enabled', creationDate: '2023-02-20T11:30:00Z', lastModified: '2023-05-10T14:48:00Z' },
+  { id: 'rule3', name: 'anameischanged:aign', description: 'Quarantine attachments with .exe or .zip extensions.', status: 'disabled', creationDate: '2023-03-05T08:45:00Z', lastModified: '2023-06-15T09:20:00Z' },
+  { id: 'rule4', name: 'anameischanged:test', description: 'Add a prefix "[EXTERNAL]" to all emails from outside the organization.', status: 'enabled', creationDate: '2023-03-10T11:00:00Z', lastModified: '2023-07-01T11:00:00Z' },
+  { id: 'rule5', name: 'anameischanged:foward', description: 'Redirect emails for "sales@domain.com" to the sales team distribution list.', status: 'enabled', creationDate: '2023-04-01T12:00:00Z', lastModified: '2023-04-01T12:00:00Z' },
+  { id: 'rule6', name: 'anameischanged:re', description: 'Block emails from a specific competitor domain.', status: 'disabled', creationDate: '2023-05-20T18:00:00Z', lastModified: '2023-08-10T16:00:00Z' },
+];
+
+export const mockPstLogs: PstLogEntry[] = [
+  { id: 'pst1', email: 'Update Mailbox', createdBy: 'anameischanged', createdAt: '2025-08-07T13:03:00Z', type: 'Export', status: 'Completed' },
+  { id: 'pst2', email: 'anameischanged.info', createdBy: 'Ola Aldaoshy', createdAt: '2025-08-06T11:27:00Z', type: 'Export', status: 'Completed' },
+  { id: 'pst3', email: 'anameischanged.info', createdBy: 'anameischanged', createdAt: '2025-05-12T12:02:00Z', type: 'Import', status: 'Completed' },
+  { id: 'pst4', email: 'Update Mailbox', createdBy: 'szidane@roaya.co', createdAt: '2025-04-09T14:09:00Z', type: 'Export', status: 'Failed' },
+  { id: 'pst5', email: 'Update Mailbox', createdBy: 'anameischanged', createdAt: '2025-03-19T09:01:00Z', type: 'Export', status: 'In Progress' },
+  { id: 'pst6', email: 'update mail box', createdBy: 'anameischanged', createdAt: '2025-02-23T13:48:00Z', type: 'Export', status: 'Completed' },
+  { id: 'pst7', email: 'anameischanged.info', createdBy: 'test@res.coma4dbe237-8f9d-4de2-968f-24006b36d890', createdAt: '2025-02-17T12:26:00Z', type: 'Export', status: 'Completed' },
+  { id: 'pst8', email: 'anameischanged.info', createdBy: 'mali', createdAt: '2025-02-10T15:21:00Z', type: 'Export', status: 'Completed' },
+  { id: 'pst9', email: 'anameischanged.info', createdBy: 'anameischanged', createdAt: '2025-02-04T13:20:00Z', type: 'Import', status: 'Completed' },
+  { id: 'pst10', email: 'anameischanged.info', createdBy: 'anameischanged', createdAt: '2025-01-12T08:50:00Z', type: 'Export', status: 'Completed' },
+  { id: 'pst11', email: 'anameischanged.info', createdBy: 'anameischanged', createdAt: '2025-01-12T08:47:00Z', type: 'Export', status: 'Completed' },
+  { id: 'pst12', email: 'anameischanged.info', createdBy: 'anameischanged', createdAt: '2024-12-23T13:22:00Z', type: 'Export', status: 'Pending' },
+  { id: 'pst13', email: 'anameischanged.info', createdBy: 'anameischanged', createdAt: '2024-10-24T15:33:00Z', type: 'Export', status: 'Completed' },
+  { id: 'pst14', email: 'anameischanged.info', createdBy: 'anameischanged', createdAt: '2024-09-25T12:42:00Z', type: 'Export', status: 'Completed' },
+  { id: 'pst15', email: 'anameischanged.info', createdBy: 'mali', createdAt: '2024-09-24T14:21:00Z', type: 'Export', status: 'Completed' },
+  { id: 'pst16', email: 'update mail box', createdBy: 'mali', createdAt: '2024-09-24T12:28:00Z', type: 'Export', status: 'Completed' },
+  { id: 'pst17', email: 'anameischanged.info', createdBy: 'mali', createdAt: '2024-09-23T11:36:00Z', type: 'Export', status: 'Completed' },
+];
+
+export const mockRunningTasks: RunningTask[] = [
+    { id: 'rt1', status: 'Finish', type: 'Bulk reset Passwords', total: 2, failed: 0, done: 2, createdBy: 'Mohamed Ali', createdAt: '2025-06-11T00:00:00Z' },
+    { id: 'rt2', status: 'Finish', type: 'Bulk Update Mailboxes Alias', total: 2, failed: 0, done: 2, createdBy: 'Mohamed Ali', createdAt: '2025-05-05T00:00:00Z' },
+    { id: 'rt3', status: 'Finish', type: 'Bulk Update Mailboxes Alias', total: 2, failed: 0, done: 2, createdBy: 'Mohamed Ali', createdAt: '2025-05-05T00:00:00Z' },
+    { id: 'rt4', status: 'Finish', type: 'Create Mailbox', total: 2, failed: 2, done: 0, createdBy: 'Sara Khalil', createdAt: '2024-12-02T00:00:00Z' },
+    { id: 'rt5', status: 'New', type: 'Update Mailbox', total: 1, failed: 0, done: 0, createdBy: 'Developer Admin', createdAt: '2023-10-14T00:00:00Z' },
+    { id: 'rt6', status: 'New', type: 'Update Mailbox', total: 1, failed: 0, done: 0, createdBy: 'wp wp', createdAt: '2023-10-14T00:00:00Z' },
+    { id: 'rt7', status: 'Finish', type: 'Add Bulk Member', total: 1, failed: 0, done: 1, createdBy: 'Admin User', createdAt: '2023-03-19T00:00:00Z' },
+    { id: 'rt8', status: 'In Progress', type: 'Add Bulk Member', total: 1, failed: 0, done: 17, createdBy: 'Admin User', createdAt: '2023-03-19T00:00:00Z' },
+    { id: 'rt9', status: 'In Progress', type: 'Add Bulk Member', total: 1, failed: 0, done: 6, createdBy: 'Admin User', createdAt: '2023-03-19T00:00:00Z' },
+    { id: 'rt10', status: 'Finish', type: 'Create Mailbox', total: 2, failed: 1, done: 1, createdBy: 'Admin User', createdAt: '2023-01-28T00:00:00Z' },
+    { id: 'rt11', status: 'In Progress', type: 'Create Mailbox', total: 2, failed: 0, done: 1, createdBy: 'Admin User', createdAt: '2023-01-28T00:00:00Z' },
+    { id: 'rt12', status: 'Finish', type: 'Create Mailbox', total: 2, failed: 0, done: 2, createdBy: 'Admin User', createdAt: '2022-04-10T00:00:00Z' },
+    { id: 'rt13', status: 'Finish', type: 'Create Mailbox', total: 1, failed: 1, done: 0, createdBy: 'Admin User', createdAt: '2021-01-14T00:00:00Z' },
+    { id: 'rt14', status: 'Finish', type: 'Create Mailbox', total: 1, failed: 0, done: 1, createdBy: 'Admin User', createdAt: '2021-01-14T00:00:00Z' },
+    { id: 'rt15', status: 'Finish', type: 'Create Mailbox', total: 3, failed: 1, done: 2, createdBy: 'wp wp', createdAt: '2019-12-16T00:00:00Z' },
+    { id: 'rt16', status: 'In Progress', type: 'Create Mailbox', total: 3, failed: 0, done: 1, createdBy: 'Admin User', createdAt: '2023-01-28T00:00:00Z' },
+    { id: 'rt17', status: 'New', type: 'Bulk reset Passwords', total: 10, failed: 0, done: 0, createdBy: 'Mohamed Ali', createdAt: '2025-07-01T00:00:00Z' },
+    { id: 'rt18', status: 'Finish', type: 'Add Bulk Member', total: 5, failed: 0, done: 5, createdBy: 'Admin User', createdAt: '2023-04-01T00:00:00Z' },
+    { id: 'rt19', status: 'In Progress', type: 'Update Mailbox', total: 50, failed: 2, done: 25, createdBy: 'Sara Khalil', createdAt: '2024-11-15T00:00:00Z' },
+    { id: 'rt20', status: 'Finish', type: 'Create Mailbox', total: 100, failed: 5, done: 95, createdBy: 'Developer Admin', createdAt: '2023-09-01T00:00:00Z' },
+    { id: 'rt21', status: 'New', type: 'Bulk Update Mailboxes Alias', total: 20, failed: 0, done: 0, createdBy: 'wp wp', createdAt: '2023-11-20T00:00:00Z' },
+];
 
 // --- NEW MOCK DATA for PRODUCTS ---
 export const mockKubernetesClusters: KubernetesCluster[] = [

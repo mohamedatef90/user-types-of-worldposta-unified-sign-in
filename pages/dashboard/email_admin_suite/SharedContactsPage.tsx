@@ -1,8 +1,10 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Card, Button, FormField, Icon, Pagination, Modal } from '@/components/ui';
 import type { SharedContact } from '@/types';
 import { mockSharedContacts } from '@/data';
 import { v4 as uuidv4 } from 'uuid';
+import { useNavigate } from 'react-router-dom';
 
 // --- SHARED CONTACTS VIEW ---
 
@@ -56,25 +58,20 @@ const FilterPanel: React.FC<{
     );
 };
 
-// Add/Edit Panel Component
-const AddEditContactPanel: React.FC<{
+// Add Contact Panel Component
+const AddContactPanel: React.FC<{
     isOpen: boolean;
     onClose: () => void;
     onSave: (contact: SharedContact) => void;
-    contactToEdit: SharedContact | null;
-}> = ({ isOpen, onClose, onSave, contactToEdit }) => {
+}> = ({ isOpen, onClose, onSave }) => {
     const initialForm = { displayName: '', email: '' };
     const [form, setForm] = useState(initialForm);
 
     useEffect(() => {
         if (isOpen) {
-            if (contactToEdit) {
-                setForm({ displayName: contactToEdit.displayName, email: contactToEdit.email });
-            } else {
-                setForm(initialForm);
-            }
+            setForm(initialForm);
         }
-    }, [contactToEdit, isOpen]);
+    }, [isOpen]);
 
     const handleSubmit = () => {
         if (!form.displayName || !form.email) {
@@ -82,10 +79,10 @@ const AddEditContactPanel: React.FC<{
             return;
         }
         const newContact: SharedContact = {
-            id: contactToEdit?.id || uuidv4(),
+            id: uuidv4(),
             displayName: form.displayName,
             email: form.email,
-            creationDate: contactToEdit?.creationDate || new Date().toISOString(),
+            creationDate: new Date().toISOString(),
         };
         onSave(newContact);
     };
@@ -95,7 +92,7 @@ const AddEditContactPanel: React.FC<{
             {isOpen && <div className="fixed inset-0 bg-black/60 z-[59]" onClick={onClose} aria-hidden="true" />}
             <div className={`fixed top-0 right-0 h-full w-full max-w-lg bg-[#f8f8f8] dark:bg-slate-800 border-l border-gray-200 dark:border-slate-700 z-[60] transform transition-transform duration-300 ease-in-out flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
                 <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-700">
-                    <h2 className="text-lg font-semibold">{contactToEdit ? 'Edit' : 'Add'} Shared Contact</h2>
+                    <h2 className="text-lg font-semibold">Add Shared Contact</h2>
                     <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-slate-700"><Icon name="fas fa-times" /></button>
                 </div>
                 <div className="flex-grow p-6 space-y-4">
@@ -111,15 +108,51 @@ const AddEditContactPanel: React.FC<{
     );
 };
 
+const ContactsTableView: React.FC<{ contacts: SharedContact[]; onEdit: (c: SharedContact) => void; onDelete: (c: SharedContact) => void; }> = ({ contacts, onEdit, onDelete }) => (
+    <div className="overflow-x-auto border rounded-lg dark:border-gray-700">
+        <table className="min-w-full">
+            <thead className="bg-gray-50 dark:bg-slate-700">
+                <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Display Name</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Email</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Actions</th>
+                </tr>
+            </thead>
+            <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {contacts.map(contact => (
+                    <tr key={contact.id}>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">{contact.displayName}</td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm">{contact.email}</td>
+                        <td className="px-4 py-4 whitespace-nowrap text-right text-sm">
+                            <div className="flex justify-end items-center space-x-1">
+                                <Button size="icon" variant="ghost" title="Edit" onClick={() => onEdit(contact)}><Icon name="fas fa-pencil-alt" /></Button>
+                                <Button size="icon" variant="ghost" title="Delete" onClick={() => onDelete(contact)}><Icon name="fas fa-trash-alt" className="text-red-500" /></Button>
+                            </div>
+                        </td>
+                    </tr>
+                ))}
+                {contacts.length === 0 && (
+                    <tr>
+                        <td colSpan={3} className="text-center py-6 text-gray-500 dark:text-gray-400">
+                            No shared contacts found.
+                        </td>
+                    </tr>
+                )}
+            </tbody>
+        </table>
+    </div>
+);
+
+
 // Main Page Component
 export const SharedContactsPage: React.FC = () => {
+    const navigate = useNavigate();
     const [contacts, setContacts] = useState<SharedContact[]>(mockSharedContacts);
     const [filters, setFilters] = useState<ContactFilters>(initialFilters);
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
     const [isAddPanelOpen, setIsAddPanelOpen] = useState(false);
-    const [editingContact, setEditingContact] = useState<SharedContact | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [contactToDelete, setContactToDelete] = useState<SharedContact | null>(null);
 
@@ -147,21 +180,16 @@ export const SharedContactsPage: React.FC = () => {
     useEffect(() => { setCurrentPage(1); }, [filters, rowsPerPage]);
 
     const handleOpenAddPanel = () => {
-        setEditingContact(null);
         setIsAddPanelOpen(true);
     };
 
-    const handleOpenEditPanel = (contact: SharedContact) => {
-        setEditingContact(contact);
-        setIsAddPanelOpen(true);
+    const handleOpenEditPage = (contact: SharedContact) => {
+        navigate(`/app/email-admin-suite/exchange/shared-contacts/edit/${contact.id}`);
     };
 
     const handleSaveContact = (contact: SharedContact) => {
-        if (editingContact) {
-            setContacts(prev => prev.map(c => c.id === contact.id ? contact : c));
-        } else {
-            setContacts(prev => [contact, ...prev]);
-        }
+        // This only handles ADDING now
+        setContacts(prev => [contact, ...prev]);
         setIsAddPanelOpen(false);
     };
 
@@ -197,48 +225,21 @@ export const SharedContactsPage: React.FC = () => {
         URL.revokeObjectURL(url);
     };
 
+    const titleActions = (
+        <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setIsFilterPanelOpen(true)} leftIconName="fas fa-filter">Filters & Search</Button>
+            <Button variant="outline" onClick={handleExport} leftIconName="fas fa-download">Download</Button>
+            <Button leftIconName="fas fa-plus-circle" onClick={handleOpenAddPanel}>Add Contact</Button>
+        </div>
+    );
+
     return (
         <>
-            <Card title="Shared Contacts" titleActions={
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" onClick={() => setIsFilterPanelOpen(true)} leftIconName="fas fa-filter">Filters & Search</Button>
-                    <Button variant="outline" onClick={handleExport} leftIconName="fas fa-download">Download</Button>
-                    <Button leftIconName="fas fa-plus-circle" onClick={handleOpenAddPanel}>Add Contact</Button>
+            <Card title="Shared Contacts" titleActions={titleActions}>
+                <div className="mt-4">
+                    <ContactsTableView contacts={paginatedContacts} onEdit={handleOpenEditPage} onDelete={handleOpenDeleteModal} />
                 </div>
-            }>
-                <div className="overflow-x-auto border rounded-lg dark:border-gray-700">
-                    <table className="min-w-full">
-                        <thead className="bg-gray-50 dark:bg-slate-700">
-                            <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Display Name</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Email</th>
-                                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-gray-700">
-                            {paginatedContacts.map(contact => (
-                                <tr key={contact.id}>
-                                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">{contact.displayName}</td>
-                                    <td className="px-4 py-4 whitespace-nowrap text-sm">{contact.email}</td>
-                                    <td className="px-4 py-4 whitespace-nowrap text-right text-sm">
-                                        <div className="flex justify-end items-center space-x-1">
-                                            <Button size="icon" variant="ghost" title="Edit" onClick={() => handleOpenEditPanel(contact)}><Icon name="fas fa-pencil-alt" /></Button>
-                                            <Button size="icon" variant="ghost" title="Delete" onClick={() => handleOpenDeleteModal(contact)}><Icon name="fas fa-trash-alt" className="text-red-500" /></Button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                             {paginatedContacts.length === 0 && (
-                                <tr>
-                                    <td colSpan={3} className="text-center py-6 text-gray-500 dark:text-gray-400">
-                                        No shared contacts found.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                    <Pagination currentPage={currentPage} totalItems={filteredContacts.length} itemsPerPage={rowsPerPage} onPageChange={setCurrentPage} onItemsPerPageChange={setRowsPerPage} />
-                </div>
+                 <Pagination currentPage={currentPage} totalItems={filteredContacts.length} itemsPerPage={rowsPerPage} onPageChange={setCurrentPage} onItemsPerPageChange={setRowsPerPage} />
             </Card>
 
             <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Delete Contact" footer={<><Button variant="danger" onClick={handleConfirmDelete}>Delete</Button><Button variant="ghost" onClick={() => setIsDeleteModalOpen(false)}>Cancel</Button></>}>
@@ -246,7 +247,7 @@ export const SharedContactsPage: React.FC = () => {
             </Modal>
             
             <FilterPanel isOpen={isFilterPanelOpen} onClose={() => setIsFilterPanelOpen(false)} onApply={setFilters} onClear={() => setFilters(initialFilters)} currentFilters={filters} />
-            <AddEditContactPanel isOpen={isAddPanelOpen} onClose={() => setIsAddPanelOpen(false)} onSave={handleSaveContact} contactToEdit={editingContact} />
+            <AddContactPanel isOpen={isAddPanelOpen} onClose={() => setIsAddPanelOpen(false)} onSave={handleSaveContact} />
         </>
     );
 };

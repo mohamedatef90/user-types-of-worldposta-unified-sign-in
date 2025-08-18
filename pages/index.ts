@@ -3,9 +3,6 @@
 
 
 
-
-
-
 export * from './ActionLogsPage';
 export * from './AllNotificationsPage';
 export * from './CloudEdgeLayout';
@@ -44,8 +41,16 @@ export * from './dashboard/EmailAdminSmtpLogsPage';
 export * from './dashboard/EmailAdminSuiteDashboardPage';
 export * from './dashboard/email_admin_suite/PlaceholderPage';
 export * from './dashboard/email_admin_suite/MailboxesPage';
+export * from './dashboard/email_admin_suite/EditMailboxPage';
 export * from './dashboard/email_admin_suite/DistributionListsPage';
 export * from './dashboard/email_admin_suite/SharedContactsPage';
+export * from './dashboard/email_admin_suite/EditSharedContactPage';
+export * from './dashboard/email_admin_suite/RulesPage';
+export * from './dashboard/email_admin_suite/RuleDetailsPage';
+export * from './dashboard/email_admin_suite/AccountStatisticsPage';
+export * from './dashboard/email_admin_suite/PstLogsPage';
+export * from './dashboard/email_admin_suite/BulkModulePage';
+export * from './dashboard/email_admin_suite/RunningTasksPage';
 
 export * from './reseller/ResellerCustomersPage';
 export * from './reseller/ResellerProgramPage';

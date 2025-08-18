@@ -1,6 +1,8 @@
 
 
 
+
+
 export interface User {
   id: string;
   fullName: string;
@@ -367,6 +369,9 @@ export interface BackupJob {
 
 // Email Admin Suite -> Mailboxes
 export type MailboxPlan = 'Posta Light' | 'Posta Business' | 'Posta Pro' | 'Posta Enterprise';
+export type MailboxLevel = 'Normal' | 'VIP' | 'Admin';
+export type MailboxType = 'User' | 'Room' | 'Equipment' | 'Shared';
+export type MailboxStatus = 'active' | 'suspended' | 'blocked';
 
 export interface Mailbox {
   id: string;
@@ -378,9 +383,14 @@ export interface Mailbox {
     usedGB: number;
     totalGB: number;
   };
-  level: 'User' | 'Admin';
-  status: 'active' | 'suspended';
+  level: MailboxLevel;
+  status: MailboxStatus;
   mfaEnabled?: boolean;
+  mailboxType?: MailboxType;
+  firstName?: string;
+  lastName?: string;
+  initials?: string;
+  note?: string;
 }
 
 export interface DistributionList {
@@ -398,9 +408,40 @@ export interface SharedContact {
   creationDate: string;
 }
 
+export interface Rule {
+  id: string;
+  name: string;
+  description: string;
+  status: 'enabled' | 'disabled';
+  creationDate: string;
+  lastModified: string;
+}
+
 export interface AIAnalysisResult {
   summary: string;
   trends: string[];
   securityEvents: string[];
   recommendations: string[];
+}
+
+export interface PstLogEntry {
+  id: string;
+  email: string;
+  createdBy: string;
+  createdAt: string;
+  type: 'Export' | 'Import';
+  status: 'Completed' | 'In Progress' | 'Failed' | 'Pending';
+}
+
+export type RunningTaskStatus = 'Finish' | 'New' | 'In Progress';
+
+export interface RunningTask {
+  id: string;
+  status: RunningTaskStatus;
+  type: string;
+  total: number;
+  failed: number;
+  done: number;
+  createdBy: string;
+  createdAt: string;
 }

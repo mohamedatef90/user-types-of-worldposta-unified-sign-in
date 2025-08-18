@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Card, Button, FormField, Icon, Pagination, Modal, Tooltip, ToggleSwitch } from '@/components/ui';
-import type { Mailbox, MailboxPlan } from '@/types';
+import { Card, Button, FormField, Icon, Pagination, Modal, Tooltip, ToggleSwitch, CollapsibleSection } from '@/components/ui';
+import type { Mailbox, MailboxPlan, MailboxLevel, MailboxType } from '@/types';
 import { mockMailboxes, mockMailboxPlans, mockMailboxDomains } from '@/data';
 import { v4 as uuidv4 } from 'uuid';
+import { useNavigate } from 'react-router-dom';
 
 // --- MAILBOX VIEW ---
 
@@ -22,12 +23,11 @@ const initialMailboxFilters: MailboxFilters = {
     dateTo: '',
 };
 
-const MailboxFormPanel: React.FC<{
+const AddMailboxPanel: React.FC<{
     isOpen: boolean;
     onClose: () => void;
     onSave: (mailboxData: Mailbox) => void;
-    mailboxToEdit: Mailbox | null;
-}> = ({ isOpen, onClose, onSave, mailboxToEdit }) => {
+}> = ({ isOpen, onClose, onSave }) => {
     const initialFormState = {
         firstName: '',
         initials: '',
@@ -38,58 +38,25 @@ const MailboxFormPanel: React.FC<{
         emailDomain: mockMailboxDomains[0],
         password: '',
         confirmPassword: '',
-        mailboxType: 'User Mailbox',
-        sendInstructions: false,
+        mailboxType: 'User' as MailboxType,
+        sendInstructions: true,
         additionalEmail: '',
-        level: 'User' as 'User' | 'Admin',
+        level: 'Normal' as MailboxLevel,
         mfaEnabled: false,
+        mustChangePasswordAtNextLogon: false,
+        note: '',
     };
     const [form, setForm] = useState(initialFormState);
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
-    const [activeTab, setActiveTab] = useState('general');
-
-    const tabs = [
-        { id: 'general', label: 'General' },
-        { id: 'settings', label: 'Settings' },
-        { id: 'emailAddress', label: 'E-mail Address' },
-        { id: 'mailFlow', label: 'Mail Flow Settings' },
-        { id: 'permissions', label: 'Permissions' },
-        { id: 'mobile', label: 'Mobile Devices' },
-        { id: 'dlMemberships', label: 'DL Memberships' },
-        { id: 'features', label: 'Features' },
-    ];
 
     useEffect(() => {
         if (isOpen) {
-            setActiveTab('general'); // Reset to first tab on open
-            if (mailboxToEdit) {
-                 const [emailUser, emailDomain] = mailboxToEdit.login.split('@');
-                setForm({
-                    firstName: '',
-                    initials: '',
-                    lastName: '',
-                    displayName: mailboxToEdit.displayName,
-                    mailboxPlan: mailboxToEdit.mailboxPlan,
-                    emailUser: emailUser,
-                    emailDomain: emailDomain,
-                    password: '',
-                    confirmPassword: '',
-                    mailboxType: 'User Mailbox',
-                    sendInstructions: false,
-                    additionalEmail: '',
-                    level: mailboxToEdit.level,
-                    mfaEnabled: !!mailboxToEdit.mfaEnabled,
-                });
-            } else {
-                setForm(initialFormState);
-            }
+            setForm(initialFormState);
             setErrors({});
         }
-    }, [isOpen, mailboxToEdit]);
+    }, [isOpen]);
 
     useEffect(() => {
-        if (mailboxToEdit) return; // Don't auto-fill if editing
-
         const { firstName, lastName } = form;
         if (firstName || lastName) {
             const newDisplayName = `${firstName} ${lastName}`.trim();
@@ -100,7 +67,7 @@ const MailboxFormPanel: React.FC<{
                 emailUser: f.emailUser ? f.emailUser : newEmailUser
             }));
         }
-    }, [form.firstName, form.lastName, mailboxToEdit]);
+    }, [form.firstName, form.lastName]);
 
 
     const generatePassword = () => {
@@ -117,13 +84,7 @@ const MailboxFormPanel: React.FC<{
         const newErrors: { [key: string]: string } = {};
         if (!form.displayName) newErrors.displayName = "Display Name is required.";
         if (!form.emailUser) newErrors.emailUser = "Email address is required.";
-        
-        if (!mailboxToEdit) { // New mailbox requires a password
-            if (form.password.length < 8) newErrors.password = "Complex password with minimum 8 characters required.";
-        } else if (form.password && form.password.length < 8) { // If changing password, it must be valid
-            newErrors.password = "Complex password with minimum 8 characters required.";
-        }
-
+        if (form.password.length < 8) newErrors.password = "Complex password with minimum 8 characters required.";
         if (form.password !== form.confirmPassword) newErrors.confirmPassword = "Passwords do not match.";
         
         setErrors(newErrors);
@@ -142,104 +103,95 @@ const MailboxFormPanel: React.FC<{
 
     const handleSubmit = () => {
         if (!validateForm()) return;
-
-        const newOrUpdatedMailbox: Mailbox = {
-            id: mailboxToEdit?.id || uuidv4(),
+        
+        const newMailbox: Mailbox = {
+            id: uuidv4(),
             displayName: form.displayName,
             login: `${form.emailUser}@${form.emailDomain}`,
             mailboxPlan: form.mailboxPlan,
-            creationDate: mailboxToEdit?.creationDate || new Date().toISOString(),
-            driveQuota: mailboxToEdit?.driveQuota || getQuotaForPlan(form.mailboxPlan),
+            creationDate: new Date().toISOString(),
+            driveQuota: getQuotaForPlan(form.mailboxPlan),
             level: form.level,
-            status: mailboxToEdit?.status || 'active',
+            status: 'active',
             mfaEnabled: form.mfaEnabled,
+            mailboxType: form.mailboxType,
+            firstName: form.firstName,
+            lastName: form.lastName,
+            initials: form.initials,
+            note: form.note,
         };
 
         if (form.password) {
-            console.log(`Password for ${newOrUpdatedMailbox.login} was set/changed.`);
+            console.log(`Password for ${newMailbox.login} was set.`);
         }
 
-        onSave(newOrUpdatedMailbox);
+        onSave(newMailbox);
     };
     
-    const mailboxTypeOptions = ['User Mailbox', 'Room Mailbox', 'Equipment Mailbox', 'Shared Mailbox'];
+    const mailboxTypeOptions: MailboxType[] = ['User', 'Room', 'Equipment', 'Shared'];
 
-    const PlaceholderContent: React.FC<{ title: string }> = ({ title }) => (
-        <div className="p-10 text-center text-gray-500 dark:text-gray-400">
-            <Icon name="fas fa-tools" className="text-3xl mb-4" />
-            <p className="font-semibold">{title} settings will be displayed here.</p>
-            <p className="text-sm">This feature is currently under development.</p>
-        </div>
-    );
-    
-    const generalFormContent = (
-        <div>
-            {!mailboxToEdit && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <FormField id="firstName" name="firstName" label="First Name" value={form.firstName} onChange={(e) => setForm({...form, firstName: e.target.value})} placeholder="Enter first name" wrapperClassName="!mb-0" />
-                    <FormField id="initials" name="initials" label="Initials" value={form.initials} onChange={(e) => setForm({...form, initials: e.target.value})} placeholder="Enter initials" wrapperClassName="!mb-0" />
-                    <FormField id="lastName" name="lastName" label="Last Name" value={form.lastName} onChange={(e) => setForm({...form, lastName: e.target.value})} placeholder="Enter last name" wrapperClassName="!mb-0" />
-                </div>
-            )}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <FormField id="displayName" name="displayName" label="Display Name" value={form.displayName} onChange={(e) => setForm({...form, displayName: e.target.value})} required error={errors.displayName} wrapperClassName="!mb-0" />
-                <FormField as="select" id="mailboxPlan" name="mailboxPlan" label="Mailbox Plan" value={form.mailboxPlan} onChange={(e) => setForm({...form, mailboxPlan: e.target.value as MailboxPlan})} wrapperClassName="!mb-0">
-                    {mockMailboxPlans.map(plan => <option key={plan} value={plan}>{plan}</option>)}
-                </FormField>
-            </div>
-
-            <div className="mb-4">
-                <label htmlFor="emailUser" className="block text-sm font-medium mb-1 text-[#293c51] dark:text-gray-300">Email <span className="text-red-500 dark:text-red-400">*</span></label>
-                <div className="flex items-center">
-                    <input id="emailUser" name="emailUser" type="text" value={form.emailUser} onChange={(e) => setForm({...form, emailUser: e.target.value})} disabled={!!mailboxToEdit} className={`w-full px-3 py-2 border rounded-l-md focus:outline-none focus:ring-2 focus:ring-[#679a41] dark:focus:ring-emerald-400 focus:border-[#679a41] dark:focus:border-emerald-400 ${errors.emailUser ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 dark:text-white placeholder-gray-400 dark:placeholder-gray-500`} />
-                    <span className="inline-flex items-center px-3 border-t border-b border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-sm">@</span>
-                    <select name="emailDomain" value={form.emailDomain} onChange={(e) => setForm({...form, emailDomain: e.target.value})} disabled={!!mailboxToEdit} className="px-3 py-2 border rounded-r-md focus:outline-none focus:ring-2 focus:ring-[#679a41] dark:focus:ring-emerald-400 focus:border-[#679a41] dark:focus:border-emerald-400 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white">
-                        {mockMailboxDomains.map(d => <option key={d} value={d}>{d}</option>)}
-                    </select>
-                </div>
-                {errors.emailUser && <p className="mt-1 text-xs text-red-500">{errors.emailUser}</p>}
-            </div>
-
-            <FormField as="select" id="level" name="level" label="Level" value={form.level} onChange={(e) => setForm({...form, level: e.target.value as 'User' | 'Admin'})}>
-                <option value="User">Normal</option>
-                <option value="Admin">Admin</option>
-            </FormField>
-            
-            <div className="mb-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField id="password" name="password" label={mailboxToEdit ? "New Password" : "Password"} type="password" value={form.password} onChange={(e) => setForm({...form, password: e.target.value})} required={!mailboxToEdit} showPasswordToggle error={errors.password} hint={mailboxToEdit ? "Leave blank to keep current password" : "Complex password with minimum 8 characters required"} wrapperClassName="!mb-0" />
-                    <FormField id="confirmPassword" name="confirmPassword" label="Confirm Password" type="password" value={form.confirmPassword} onChange={(e) => setForm({...form, confirmPassword: e.target.value})} required={!mailboxToEdit || !!form.password} showPasswordToggle error={errors.confirmPassword} wrapperClassName="!mb-0" />
-                </div>
-                <div className="flex justify-end mt-2">
-                    <Button type="button" variant="outline" size="sm" onClick={generatePassword}>Generate Password</Button>
-                </div>
-            </div>
-            
-            <div className="mb-4">
-                <label className="block text-sm font-medium mb-2 text-[#293c51] dark:text-gray-300">Choose Mailbox Type</label>
-                <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
-                    <div className="flex items-center flex-wrap gap-x-6 gap-y-2">
-                        {mailboxTypeOptions.map(type => (
-                            <label key={type} className="flex items-center cursor-pointer">
-                                <input type="radio" name="mailboxType" value={type} checked={form.mailboxType === type} onChange={(e) => setForm({...form, mailboxType: e.target.value})} className="h-4 w-4 text-[#679a41] focus:ring-[#679a41] border-gray-300" />
-                                <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">{type}</span>
-                            </label>
-                        ))}
+    const formContent = (
+        <>
+            <CollapsibleSection title="Basic Information" initialOpen={true}>
+                <div className="p-2 space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <FormField id="firstName" name="firstName" label="First Name" value={form.firstName} onChange={(e) => setForm({...form, firstName: e.target.value})} placeholder="Enter first name" />
+                        <FormField id="initials" name="initials" label="Initials" value={form.initials} onChange={(e) => setForm({...form, initials: e.target.value})} placeholder="M." />
+                        <FormField id="lastName" name="lastName" label="Last Name" value={form.lastName} onChange={(e) => setForm({...form, lastName: e.target.value})} placeholder="Enter last name" />
                     </div>
-                    <ToggleSwitch
-                        id="mfaEnabled"
-                        label="Enable Multi-Factor Authentication (MFA)"
-                        checked={form.mfaEnabled}
-                        onChange={(checked) => setForm(f => ({...f, mfaEnabled: checked}))}
-                    />
+                    <FormField id="displayName" name="displayName" label="Display Name" value={form.displayName} onChange={(e) => setForm({...form, displayName: e.target.value})} required error={errors.displayName} />
+                    <div className="mb-4">
+                        <label htmlFor="emailUser" className="block text-sm font-medium mb-1 text-[#293c51] dark:text-gray-300">Email <span className="text-red-500 dark:text-red-400">*</span></label>
+                        <div className="flex items-center">
+                            <input id="emailUser" name="emailUser" type="text" value={form.emailUser} onChange={(e) => setForm({...form, emailUser: e.target.value})} className={`w-full px-3 py-2 border rounded-l-md focus:outline-none focus:ring-2 focus:ring-[#679a41] dark:focus:ring-emerald-400 focus:border-[#679a41] dark:focus:border-emerald-400 ${errors.emailUser ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 dark:text-white placeholder-gray-400 dark:placeholder-gray-500`} />
+                            <span className="inline-flex items-center px-3 border-t border-b border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-sm">@</span>
+                            <select name="emailDomain" value={form.emailDomain} onChange={(e) => setForm({...form, emailDomain: e.target.value})} className="px-3 py-2 border rounded-r-md focus:outline-none focus:ring-2 focus:ring-[#679a41] dark:focus:ring-emerald-400 focus:border-[#679a41] dark:focus:border-emerald-400 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white">
+                                {mockMailboxDomains.map(d => <option key={d} value={d}>{d}</option>)}
+                            </select>
+                        </div>
+                        {errors.emailUser && <p className="mt-1 text-xs text-red-500">{errors.emailUser}</p>}
+                    </div>
+                     <div className="mb-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField id="password" name="password" label="Password" type="password" value={form.password} onChange={(e) => setForm({...form, password: e.target.value})} required showPasswordToggle error={errors.password} hint="Complex password with minimum 8 characters required" wrapperClassName="!mb-0" />
+                            <FormField id="confirmPassword" name="confirmPassword" label="Confirm Password" type="password" value={form.confirmPassword} onChange={(e) => setForm({...form, confirmPassword: e.target.value})} required showPasswordToggle error={errors.confirmPassword} wrapperClassName="!mb-0" />
+                        </div>
+                        <div className="flex justify-end mt-2">
+                            <Button type="button" variant="outline" size="sm" onClick={generatePassword}>Generate Password</Button>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            
-            {!mailboxToEdit && (
-                <FormField type="checkbox" id="sendInstructions" name="sendInstructions" label="Send Setup Instructions" checked={form.sendInstructions} onChange={(e) => setForm({...form, sendInstructions: (e.target as HTMLInputElement).checked})}/>
-            )}
-            {form.sendInstructions && !mailboxToEdit && <FormField id="additionalEmail" name="additionalEmail" label="Additional Setup Instructions Email" value={form.additionalEmail} onChange={(e) => setForm({...form, additionalEmail: e.target.value})} placeholder="another.email@example.com"/>}
-        </div>
+            </CollapsibleSection>
+            <CollapsibleSection title="Mailbox Configuration" initialOpen={true}>
+                 <div className="p-2 space-y-4">
+                    <FormField as="select" id="mailboxPlan" name="mailboxPlan" label="Mailbox Plan" value={form.mailboxPlan} onChange={(e) => setForm({...form, mailboxPlan: e.target.value as MailboxPlan})}>
+                        {mockMailboxPlans.map(plan => <option key={plan} value={plan}>{plan}</option>)}
+                    </FormField>
+                     <div className="mb-4">
+                        <label className="block text-sm font-medium mb-2 text-[#293c51] dark:text-gray-300">Mailbox Type</label>
+                        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                            {mailboxTypeOptions.map(type => (
+                                <label key={type} className="flex items-center cursor-pointer">
+                                    <input type="radio" name="mailboxType" value={type} checked={form.mailboxType === type} onChange={(e) => setForm({...form, mailboxType: e.target.value as MailboxType})} className="h-4 w-4 text-[#679a41] focus:ring-[#679a41] border-gray-300" />
+                                    <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">{type}</span>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+                    <FormField as="select" id="level" name="level" label="Level" value={form.level} onChange={(e) => setForm({...form, level: e.target.value as MailboxLevel})}>
+                        <option value="Normal">Normal</option>
+                        <option value="VIP">VIP</option>
+                        <option value="Admin">Admin</option>
+                    </FormField>
+                    <FormField type="checkbox" id="sendInstructions" name="sendInstructions" label="Send Setup Instructions" checked={form.sendInstructions} onChange={(e) => setForm({...form, sendInstructions: (e.target as HTMLInputElement).checked})}/>
+                    {form.sendInstructions && <FormField id="additionalEmail" name="additionalEmail" label="Additional Setup Instructions Email" value={form.additionalEmail} onChange={(e) => setForm({...form, additionalEmail: e.target.value})} placeholder="another.email@example.com"/>}
+                    <div className="flex justify-between items-center pt-2">
+                        <label htmlFor="mfaEnabled-add" className="text-sm font-medium text-gray-700 dark:text-gray-300">Enable MFA</label>
+                        <ToggleSwitch id="mfaEnabled-add" checked={form.mfaEnabled} onChange={(checked) => setForm(f => ({...f, mfaEnabled: checked}))} />
+                    </div>
+                 </div>
+            </CollapsibleSection>
+        </>
     );
 
     return (
@@ -253,7 +205,7 @@ const MailboxFormPanel: React.FC<{
             >
                 <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-700 flex-shrink-0">
                     <h2 id="mailbox-panel-title" className="text-lg font-semibold text-[#293c51] dark:text-gray-100">
-                        {mailboxToEdit ? `Edit Mailbox: ${mailboxToEdit.displayName}` : 'Add New Mailbox'}
+                        Add New Mailbox
                     </h2>
                     <button onClick={onClose} className="p-2 rounded-full text-gray-500 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-slate-700" aria-label="Close panel">
                         <Icon name="fas fa-times" className="text-xl" />
@@ -261,40 +213,7 @@ const MailboxFormPanel: React.FC<{
                 </div>
                 
                 <div className="flex-grow overflow-y-auto p-8">
-                    {mailboxToEdit ? (
-                        <>
-                            <div className="border-b border-gray-200 dark:border-slate-700">
-                                <nav className="-mb-px flex space-x-6 overflow-x-auto" aria-label="Tabs">
-                                    {tabs.map(tab => (
-                                        <button
-                                            key={tab.id}
-                                            onClick={() => setActiveTab(tab.id)}
-                                            className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm focus:outline-none ${
-                                                activeTab === tab.id
-                                                    ? 'border-[#679a41] text-[#679a41] dark:border-emerald-400 dark:text-emerald-400'
-                                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:border-gray-500'
-                                            }`}
-                                        >
-                                            {tab.label}
-                                        </button>
-                                    ))}
-                                </nav>
-                            </div>
-
-                            <div className="pt-6">
-                                {activeTab === 'general' && generalFormContent}
-                                {activeTab === 'settings' && <PlaceholderContent title="Settings"/>}
-                                {activeTab === 'emailAddress' && <PlaceholderContent title="E-mail Address"/>}
-                                {activeTab === 'mailFlow' && <PlaceholderContent title="Mail Flow Settings"/>}
-                                {activeTab === 'permissions' && <PlaceholderContent title="Permissions"/>}
-                                {activeTab === 'mobile' && <PlaceholderContent title="Mobile Devices"/>}
-                                {activeTab === 'dlMemberships' && <PlaceholderContent title="DL Memberships"/>}
-                                {activeTab === 'features' && <PlaceholderContent title="Features"/>}
-                            </div>
-                        </>
-                    ) : (
-                        generalFormContent
-                    )}
+                    {formContent}
                 </div>
                  <div className="flex-shrink-0 p-4 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 space-x-2 flex justify-end">
                     <Button variant="ghost" onClick={onClose}>Cancel</Button>
@@ -382,14 +301,14 @@ const MailboxFilterPanel: React.FC<{
 };
 
 const MailboxesView: React.FC = () => {
+    const navigate = useNavigate();
     const [mailboxes, setMailboxes] = useState<Mailbox[]>(mockMailboxes);
     const [filters, setFilters] = useState<MailboxFilters>(initialMailboxFilters);
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
     const [editingCell, setEditingCell] = useState<{ mailboxId: string; column: 'plan' | 'level' } | null>(null);
-    const [isFormPanelOpen, setIsFormPanelOpen] = useState(false);
-    const [editingMailbox, setEditingMailbox] = useState<Mailbox | null>(null);
+    const [isAddPanelOpen, setIsAddPanelOpen] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [mailboxToDelete, setMailboxToDelete] = useState<Mailbox | null>(null);
@@ -437,24 +356,14 @@ const MailboxesView: React.FC = () => {
         }, 0);
     }, [filters]);
     
-    const handleMailboxUpdate = (mailboxId: string, field: 'mailboxPlan' | 'level', value: MailboxPlan | 'User' | 'Admin') => {
+    const handleMailboxUpdate = (mailboxId: string, field: 'mailboxPlan' | 'level', value: MailboxPlan | MailboxLevel) => {
         setMailboxes(prev => prev.map(mbx => mbx.id === mailboxId ? { ...mbx, [field]: value } : mbx));
         setEditingCell(null);
     };
-    
-    const handleOpenFormPanel = (mailbox: Mailbox | null) => {
-        setEditingMailbox(mailbox);
-        setIsFormPanelOpen(true);
-    };
 
     const handleSaveMailbox = (mailboxData: Mailbox) => {
-        if (editingMailbox) {
-            setMailboxes(prev => prev.map(m => m.id === mailboxData.id ? mailboxData : m));
-        } else {
-            setMailboxes(prev => [mailboxData, ...prev]);
-        }
-        setIsFormPanelOpen(false);
-        setEditingMailbox(null);
+        setMailboxes(prev => [mailboxData, ...prev]);
+        setIsAddPanelOpen(false);
     };
 
     const handleOpenDeleteModal = (mailbox: Mailbox) => {
@@ -559,7 +468,7 @@ const MailboxesView: React.FC = () => {
                 <Icon name={`fas fa-sync-alt ${isRefreshing ? 'fa-spin' : ''}`} className="mr-2" /> Refresh
             </Button>
             <Button variant="outline" onClick={handleExport} leftIconName="fas fa-file-export">Export all mailboxes</Button>
-            <Button leftIconName="fas fa-plus-circle" onClick={() => handleOpenFormPanel(null)}>Add Mailbox</Button>
+            <Button leftIconName="fas fa-plus-circle" onClick={() => setIsAddPanelOpen(true)}>Add Mailbox</Button>
         </div>
     );
 
@@ -625,7 +534,7 @@ const MailboxesView: React.FC = () => {
                                 <td className="px-4 py-4 whitespace-nowrap text-right text-sm">
                                     <div className="flex justify-end items-center">
                                         <Tooltip text="Edit Mailbox">
-                                            <Button size="icon" variant="ghost" onClick={() => handleOpenFormPanel(mailbox)}>
+                                            <Button size="icon" variant="ghost" onClick={() => navigate(`/app/email-admin-suite/exchange/mailboxes/edit/${mailbox.id}`)}>
                                                 <Icon name="fas fa-pencil-alt" />
                                             </Button>
                                         </Tooltip>
@@ -677,7 +586,7 @@ const MailboxesView: React.FC = () => {
         </Modal>
 
         <MailboxFilterPanel isOpen={isFilterPanelOpen} onClose={() => setIsFilterPanelOpen(false)} onApply={handleApplyFilters} onClear={clearFilters} currentFilters={filters} />
-        <MailboxFormPanel isOpen={isFormPanelOpen} onClose={() => { setIsFormPanelOpen(false); setEditingMailbox(null); }} onSave={handleSaveMailbox} mailboxToEdit={editingMailbox} />
+        <AddMailboxPanel isOpen={isAddPanelOpen} onClose={() => setIsAddPanelOpen(false) } onSave={handleSaveMailbox} />
         </>
     );
 };

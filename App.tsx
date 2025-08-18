@@ -3,9 +3,6 @@
 
 
 
-
-
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation, Outlet, useSearchParams, Link } from 'react-router-dom';
 import { AuthProvider, ThemeProvider, useAuth, AppLayoutContext } from '@/context';
@@ -53,8 +50,16 @@ import {
     EmailAdminSuiteDashboardPage,
     PlaceholderPage,
     MailboxesPage,
+    EditMailboxPage,
     DistributionListsPage,
     SharedContactsPage,
+    EditSharedContactPage,
+    RulesPage,
+    RuleDetailsPage,
+    AccountStatisticsPage,
+    PstLogsPage,
+    BulkModulePage,
+    RunningTasksPage,
     KubernetesPage,
     NetworkingPage,
     StoragePage,
@@ -269,6 +274,8 @@ const AppLayout: React.FC = () => {
             'mailboxes': 'Mailboxes',
             'distribution-lists': 'Distribution Lists',
             'shared-contacts': 'Shared Contacts',
+            'rules': 'Rules',
+            'bulk-module': 'Bulk Module',
         };
         
         const getLabel = (value: string) => {
@@ -325,11 +332,13 @@ const AppLayout: React.FC = () => {
         
         let segmentsToProcess = pathnames.slice(1);
         if (
-            segmentsToProcess.length === 3 &&
+            (segmentsToProcess.length === 3 &&
             segmentsToProcess[0] === 'team-management' &&
-            segmentsToProcess[1] === 'edit'
+            segmentsToProcess[1] === 'edit') ||
+            (segmentsToProcess.length === 5 && segmentsToProcess[3] === 'edit') ||
+             (segmentsToProcess.length > 2 && segmentsToProcess[segmentsToProcess.length - 2] === 'edit')
         ) {
-            segmentsToProcess = segmentsToProcess.slice(0, 2);
+            segmentsToProcess = segmentsToProcess.slice(0, -1);
         }
 
         segmentsToProcess.forEach((value, index) => {
@@ -512,15 +521,19 @@ const AppRoutes: React.FC = () => {
                         <Route index element={<EmailAdminSuiteDashboardPage />} />
                         <Route path="orgs-and-domains" element={<PlaceholderPage />} />
                         <Route path="exchange/mailboxes" element={<MailboxesPage />} />
+                        <Route path="exchange/mailboxes/edit/:mailboxId" element={<EditMailboxPage />} />
                         <Route path="exchange/distribution-lists" element={<DistributionListsPage />} />
                         <Route path="exchange/shared-contacts" element={<SharedContactsPage />} />
-                        <Route path="exchange/bulk-module" element={<PlaceholderPage />} />
-                        <Route path="exchange/running-tasks" element={<PlaceholderPage />} />
+                        <Route path="exchange/shared-contacts/edit/:contactId" element={<EditSharedContactPage />} />
+                        <Route path="exchange/bulk-module" element={<BulkModulePage />} />
+                        <Route path="exchange/running-tasks" element={<RunningTasksPage />} />
                         <Route path="exchange/mailbox-plans" element={<PlaceholderPage />} />
                         <Route path="exchange/smtp-logs" element={<EmailAdminSmtpLogsPage />} />
-                        <Route path="exchange/pst-logs" element={<PlaceholderPage />} />
-                        <Route path="exchange/rules" element={<PlaceholderPage />} />
-                        <Route path="exchange/account-statistics" element={<PlaceholderPage />} />
+                        <Route path="exchange/pst-logs" element={<PstLogsPage />} />
+                        <Route path="exchange/rules" element={<RulesPage />} />
+                        <Route path="exchange/rules/add" element={<RuleDetailsPage />} />
+                        <Route path="exchange/rules/edit/:ruleId" element={<RuleDetailsPage />} />
+                        <Route path="exchange/account-statistics" element={<AccountStatisticsPage />} />
                         <Route path="admin/billing" element={<PlaceholderPage />} />
                         <Route path="admin/users" element={<PlaceholderPage />} />
                         <Route path="admin/permission-groups" element={<PlaceholderPage />} />
