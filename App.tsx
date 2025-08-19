@@ -3,6 +3,7 @@
 
 
 
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation, Outlet, useSearchParams, Link } from 'react-router-dom';
 import { AuthProvider, ThemeProvider, useAuth, AppLayoutContext } from '@/context';
@@ -60,6 +61,7 @@ import {
     PstLogsPage,
     BulkModulePage,
     RunningTasksPage,
+    OldVersionPage,
     KubernetesPage,
     NetworkingPage,
     StoragePage,
@@ -543,6 +545,10 @@ const AppRoutes: React.FC = () => {
                         <Route path="admin/sister-companies" element={<PlaceholderPage />} />
                         <Route path="admin/ip-lists" element={<PlaceholderPage />} />
                         <Route path="migrations" element={<PlaceholderPage />} />
+                        <Route path="migrations/add" element={<PlaceholderPage />} />
+                        <Route path="old-version" element={<OldVersionPage />} />
+                        <Route path="tickets" element={<PlaceholderPage />} />
+                        <Route path="tickets/new" element={<PlaceholderPage />} />
                     </Route>
 
                 </Route>

@@ -3,6 +3,7 @@
 
 
 
+
 export * from './ActionLogsPage';
 export * from './AllNotificationsPage';
 export * from './CloudEdgeLayout';
@@ -51,6 +52,7 @@ export * from './dashboard/email_admin_suite/AccountStatisticsPage';
 export * from './dashboard/email_admin_suite/PstLogsPage';
 export * from './dashboard/email_admin_suite/BulkModulePage';
 export * from './dashboard/email_admin_suite/RunningTasksPage';
+export * from './dashboard/email_admin_suite/OldVersionPage';
 
 export * from './reseller/ResellerCustomersPage';
 export * from './reseller/ResellerProgramPage';

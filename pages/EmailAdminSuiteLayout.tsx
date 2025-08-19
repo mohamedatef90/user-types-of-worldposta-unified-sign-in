@@ -1,7 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { NavLink, useLocation, Link } from 'react-router-dom';
 import { Icon, Modal, Button, FormField } from '@/components/ui';
+import { useAuth } from '@/context';
 
 interface NavSubItem {
   name: string;
@@ -21,6 +22,7 @@ interface EmailAdminSidebarProps {
 }
 
 export const EmailAdminSidebar: React.FC<EmailAdminSidebarProps> = ({ isCollapsed, isOpen, onClose }) => {
+    const { user } = useAuth();
     const location = useLocation();
     const [openSections, setOpenSections] = useState<string[]>([]);
     const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
@@ -41,37 +43,45 @@ export const EmailAdminSidebar: React.FC<EmailAdminSidebarProps> = ({ isCollapse
     const iconActiveColor = "text-white dark:text-white"; 
     const iconHoverColor = "group-hover:text-[#588836] dark:group-hover:text-emerald-500";
     
-    const navItems: (NavSubItem & { icon: string } | NavItemWithSubItems)[] = [
-        { name: 'Dashboard', path: '/app/email-admin-suite', icon: 'fas fa-tachometer-alt' },
-        { name: 'Organizations and domains', path: '/app/email-admin-suite/orgs-and-domains', icon: 'fas fa-sitemap' },
-        {
-            name: 'Exchange Email',
-            icon: 'fas fa-envelope',
-            subItems: [
-                { name: 'Mailboxes', path: '/app/email-admin-suite/exchange/mailboxes' },
-                { name: 'Distribution Lists', path: '/app/email-admin-suite/exchange/distribution-lists' },
-                { name: 'Shared Contacts', path: '/app/email-admin-suite/exchange/shared-contacts' },
-                { name: 'Bulk Module', path: '/app/email-admin-suite/exchange/bulk-module' },
-                { name: 'Running Tasks', path: '/app/email-admin-suite/exchange/running-tasks' },
-                { name: 'Mailbox Plans', path: '/app/email-admin-suite/exchange/mailbox-plans' },
-                { name: 'SMTP Logs', path: '/app/email-admin-suite/exchange/smtp-logs' },
-                { name: 'PST Logs', path: '/app/email-admin-suite/exchange/pst-logs' },
-                { name: 'Rules', path: '/app/email-admin-suite/exchange/rules' },
-                { name: 'Account Statistics', path: '/app/email-admin-suite/exchange/account-statistics' },
-            ]
-        },
-        {
-            name: 'Administration',
-            icon: 'fas fa-cogs',
-            subItems: [
-                { name: 'Background Tasks', path: '/app/email-admin-suite/admin/background-tasks' },
-                { name: 'White & Black Lists', path: '/app/email-admin-suite/admin/lists' },
-                { name: 'Sister Companies', path: '/app/email-admin-suite/admin/sister-companies' },
-                { name: 'White & Black IP', path: '/app/email-admin-suite/admin/ip-lists' },
-            ]
-        },
-        { name: 'Migrations', path: '/app/email-admin-suite/migrations', icon: 'fas fa-exchange-alt' },
-    ];
+    const navItems = useMemo(() => {
+        const baseItems: (NavSubItem & { icon: string } | NavItemWithSubItems)[] = [
+            { name: 'Dashboard', path: '/app/email-admin-suite', icon: 'fas fa-tachometer-alt' },
+            { name: 'Organizations and domains', path: '/app/email-admin-suite/orgs-and-domains', icon: 'fas fa-sitemap' },
+            {
+                name: 'Exchange Email',
+                icon: 'fas fa-envelope',
+                subItems: [
+                    { name: 'Mailboxes', path: '/app/email-admin-suite/exchange/mailboxes' },
+                    { name: 'Distribution Lists', path: '/app/email-admin-suite/exchange/distribution-lists' },
+                    { name: 'Shared Contacts', path: '/app/email-admin-suite/exchange/shared-contacts' },
+                    { name: 'Bulk Module', path: '/app/email-admin-suite/exchange/bulk-module' },
+                    { name: 'Running Tasks', path: '/app/email-admin-suite/exchange/running-tasks' },
+                    { name: 'Mailbox Plans', path: '/app/email-admin-suite/exchange/mailbox-plans' },
+                    { name: 'SMTP Logs', path: '/app/email-admin-suite/exchange/smtp-logs' },
+                    { name: 'PST Logs', path: '/app/email-admin-suite/exchange/pst-logs' },
+                    { name: 'Rules', path: '/app/email-admin-suite/exchange/rules' },
+                    { name: 'Account Statistics', path: '/app/email-admin-suite/exchange/account-statistics' },
+                ]
+            },
+            {
+                name: 'Administration',
+                icon: 'fas fa-cogs',
+                subItems: [
+                    { name: 'Background Tasks', path: '/app/email-admin-suite/admin/background-tasks' },
+                    { name: 'White & Black Lists', path: '/app/email-admin-suite/admin/lists' },
+                    { name: 'Sister Companies', path: '/app/email-admin-suite/admin/sister-companies' },
+                    { name: 'White & Black IP', path: '/app/email-admin-suite/admin/ip-lists' },
+                ]
+            },
+            { name: 'Migrations', path: '/app/email-admin-suite/migrations', icon: 'fas fa-exchange-alt' },
+        ];
+
+        if (user?.email === 'admin@worldposta.com') {
+            baseItems.push({ name: 'Old Version', path: '/app/email-admin-suite/old-version', icon: 'fas fa-history' });
+        }
+
+        return baseItems;
+    }, [user]);
     
     useEffect(() => {
         const currentPath = location.pathname;
@@ -85,7 +95,7 @@ export const EmailAdminSidebar: React.FC<EmailAdminSidebarProps> = ({ isCollapse
                 }
             }
         }
-    }, [location.pathname]);
+    }, [location.pathname, navItems, openSections]);
 
     const toggleSection = (sectionName: string) => {
         setOpenSections(prev => 
