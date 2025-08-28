@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Card, Button, FormField, Icon, Modal } from '@/components/ui';
+// Fix: Import `mockRules` from data.ts
 import { mockRules } from '@/data';
 import type { Rule } from '@/types';
 import { v4 as uuidv4 } from 'uuid';

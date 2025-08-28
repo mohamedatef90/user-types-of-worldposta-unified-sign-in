@@ -1,7 +1,13 @@
 import React from 'react';
 import { Card, Button } from '@/components/ui';
+import { useAppLayout, useAuth } from '@/context';
 
 export const BulkModulePage: React.FC = () => {
+  const { isDomainVerifiedForDemo } = useAppLayout();
+  const { user } = useAuth();
+  const isNewDemoUser = user?.email === 'new.user@worldposta.com';
+  const isDisabled = isNewDemoUser && !isDomainVerifiedForDemo;
+
   const sections = [
     {
       title: 'Create Bulk Mailboxes',
@@ -38,8 +44,8 @@ export const BulkModulePage: React.FC = () => {
                 <div key={index} className="border-b dark:border-slate-700 pb-6 last:border-b-0 last:pb-0">
                     <h2 className="text-xl font-semibold text-[#293c51] dark:text-gray-100 mb-4">{section.title}</h2>
                     <div className="flex items-center gap-4">
-                        <Button variant="outline" onClick={() => handleDownload(section.title)} leftIconName="fas fa-download">Download</Button>
-                        <Button variant="outline" onClick={() => handleUpload(section.title)} leftIconName="fas fa-upload">Upload</Button>
+                        <Button variant="outline" onClick={() => handleDownload(section.title)} leftIconName="fas fa-download" disabled={isDisabled}>Download</Button>
+                        <Button variant="outline" onClick={() => handleUpload(section.title)} leftIconName="fas fa-upload" disabled={isDisabled}>Upload</Button>
                     </div>
                     {section.description && (
                         <p className="mt-3 text-sm text-red-600 dark:text-red-400">{section.description}</p>

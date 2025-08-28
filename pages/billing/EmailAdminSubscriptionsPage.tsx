@@ -1,10 +1,12 @@
 
 
+
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, Card, FormField, CollapsibleSection, Stepper, Icon, Spinner } from '@/components/ui'; 
 import type { EmailPlan, EmailPlanDuration } from '@/types';
 import { PLANS } from '../pricing/constants';
+import { useAuth } from '@/context';
 
 const emailPlans: EmailPlan[] = PLANS.map(p => ({
   id: p.id,
@@ -300,7 +302,7 @@ const ConfirmationStep: React.FC<ConfirmationStepProps> = ({ onManageSubscriptio
             <p className="mt-4 text-sm text-gray-500 dark:text-gray-500">Order ID: <span className="font-mono text-gray-700 dark:text-gray-300">{orderId}</span></p>
             <div className="mt-8 flex justify-center gap-4">
                 <Button onClick={onManageSubscriptions} variant="outline">View Subscriptions</Button>
-                <Button onClick={onConfigureEmail}>Configure Email</Button>
+                <Button onClick={onConfigureEmail}>Go to Email Dashboard</Button>
             </div>
         </Card>
     );
@@ -309,6 +311,8 @@ const ConfirmationStep: React.FC<ConfirmationStepProps> = ({ onManageSubscriptio
 
 export const EmailAdminSubscriptionsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isNewDemoUser = user?.email === 'new.user@worldposta.com';
   const [searchParams] = useSearchParams();
   const [currentStep, setCurrentStep] = useState(0);
 
@@ -370,7 +374,10 @@ export const EmailAdminSubscriptionsPage: React.FC = () => {
   };
 
   const handleConfigureEmail = () => {
-    navigate('/app/billing/email-configurations');
+    if (isNewDemoUser) {
+        sessionStorage.setItem('demoUserPlanSelected', 'true');
+    }
+    navigate('/app/email-admin-suite');
   };
   
   const isOrderProceedDisabled = activeOrderConfiguration.length === 0;

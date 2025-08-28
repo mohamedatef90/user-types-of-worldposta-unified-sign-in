@@ -1,9 +1,5 @@
 
 
-
-
-
-
 export * from './ActionLogsPage';
 export * from './AllNotificationsPage';
 export * from './CloudEdgeLayout';
@@ -41,6 +37,7 @@ export * from './dashboard/ResellerDashboardPage';
 export * from './dashboard/EmailAdminSmtpLogsPage';
 export * from './dashboard/EmailAdminSuiteDashboardPage';
 export * from './dashboard/email_admin_suite/PlaceholderPage';
+export * from './dashboard/email_admin_suite/OrgsAndDomainsPage';
 export * from './dashboard/email_admin_suite/MailboxesPage';
 export * from './dashboard/email_admin_suite/EditMailboxPage';
 export * from './dashboard/email_admin_suite/DistributionListsPage';
@@ -53,6 +50,8 @@ export * from './dashboard/email_admin_suite/PstLogsPage';
 export * from './dashboard/email_admin_suite/BulkModulePage';
 export * from './dashboard/email_admin_suite/RunningTasksPage';
 export * from './dashboard/email_admin_suite/OldVersionPage';
+export * from './dashboard/email_admin_suite/DemoPlanSelectionPage';
+export * from './dashboard/email_admin_suite/DemoBillingPage';
 
 export * from './reseller/ResellerCustomersPage';
 export * from './reseller/ResellerProgramPage';

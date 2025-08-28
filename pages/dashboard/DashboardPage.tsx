@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context';
 import { getMockUserById } from '@/data';
@@ -669,128 +670,133 @@ export const DashboardPage: React.FC = () => { // This is the Customer Dashboard
     }
   }, [viewAsUserId]);
   
-  let allPortals: (ApplicationCardData & { section: 'product' | 'application' })[] = [
-    { 
-      id: 'cloudedge', 
-      name: 'CloudEdge', 
-      description: 'Manage your cloud infrastructure, VMs, and network resources efficiently.', 
-      iconName: "https://console.worldposta.com/assets/loginImgs/edgeLogo.png", 
-      launchUrl: '/app/cloud-edge',
-      section: 'product',
-    },
-    { 
-      id: 'emailadmin', 
-      name: 'Email Admin Suite', 
-      description: 'Administer your email services, mailboxes, users, and domains with ease.', 
-      iconName: "https://www.worldposta.com/assets/Posta-Logo.png", 
-      launchUrl: 'https://tools.worldposta.com/login',
-      section: 'product',
-    },
-     {
-      id: 'kubernetes',
-      name: 'Kubernetes',
-      description: 'Deploy and orchestrate containerized applications at scale with our managed Kubernetes service.',
-      iconName: 'fas fa-dharmachakra',
-      launchUrl: '/app/kubernetes',
-      section: 'product',
-    },
-    {
-      id: 'networking',
-      name: 'Networking',
-      description: 'Configure load balancers, firewalls, and DNS for your cloud infrastructure.',
-      iconName: 'fas fa-network-wired',
-      launchUrl: '/app/networking',
-      section: 'product',
-    },
-    {
-      id: 'storage',
-      name: 'Storage',
-      description: 'Manage scalable object storage, block storage, and file systems for your applications.',
-      iconName: 'fas fa-hdd',
-      launchUrl: '/app/storage',
-      section: 'product',
-    },
-    {
-      id: 'backup',
-      name: 'Backup & Disaster Recovery',
-      description: 'Automate backups, protect your data, and ensure business continuity.',
-      iconName: 'fas fa-save',
-      launchUrl: '/app/backup',
-      section: 'product',
-    },
-    { 
-      id: 'billing', 
-      name: 'Subscriptions', 
-      description: 'Oversee your subscriptions and add new services.', 
-      iconName: 'fas fa-wallet', 
-      launchUrl: '/app/billing',
-      section: 'application',
-    },
-    { 
-      id: 'invoices', 
-      name: 'Invoice History', 
-      description: 'View and download past invoices for your records.', 
-      iconName: 'fas fa-file-invoice', 
-      launchUrl: '/app/invoices',
-      section: 'application',
-    },
-    {
-      id: 'user-management',
-      name: 'Users Management',
-      description: 'Manage team members, user groups, and their permissions.',
-      iconName: 'fas fa-users-cog',
-      launchUrl: '/app/team-management',
-      section: 'application',
-    },
-    {
-      id: 'support',
-      name: 'Support Center',
-      description: 'Access knowledge base or create support tickets with our team.',
-      iconName: 'fas fa-headset',
-      launchUrl: '/app/support',
-      section: 'application',
-    },
-    {
-      id: 'action-logs',
-      name: 'Action Logs',
-      description: 'Review a detailed history of all activities and events on your account.',
-      iconName: 'fas fa-history',
-      launchUrl: '/app/action-logs',
-      section: 'application',
-    },
-     {
-      id: 'monitoring',
-      name: 'Monitoring & Security',
-      description: 'Monitor resources, set alerts, and secure your environment with advanced tools.',
-      iconName: 'fas fa-shield-alt',
-      launchUrl: '/app/monitoring',
-      section: 'application',
-    },
-  ];
-
   const userToDisplay = viewAsUserId ? targetUser : loggedInUser;
+  const isNewDemoUser = userToDisplay?.email === 'new.user@worldposta.com';
 
-  if (loggedInUser?.role === 'reseller' && viewAsUserId) {
-    allPortals = allPortals.filter(p => p.id !== 'billing' && p.id !== 'invoices');
-  }
+  const allPortals = useMemo(() => {
+    let portals: (ApplicationCardData & { section: 'product' | 'application' })[] = [
+        { 
+          id: 'cloudedge', 
+          name: 'CloudEdge', 
+          description: 'Manage your cloud infrastructure, VMs, and network resources efficiently.', 
+          iconName: "https://console.worldposta.com/assets/loginImgs/edgeLogo.png", 
+          launchUrl: '/app/cloud-edge',
+          section: 'product',
+        },
+        { 
+          id: 'emailadmin', 
+          name: 'Email Admin Suite', 
+          description: 'Administer your email services, mailboxes, users, and domains with ease.', 
+          iconName: "https://www.worldposta.com/assets/Posta-Logo.png", 
+          launchUrl: isNewDemoUser ? '/app/email-admin-suite' : 'https://tools.worldposta.com/login',
+          section: 'product',
+        },
+         {
+          id: 'kubernetes',
+          name: 'Kubernetes',
+          description: 'Deploy and orchestrate containerized applications at scale with our managed Kubernetes service.',
+          iconName: 'fas fa-dharmachakra',
+          launchUrl: '/app/kubernetes',
+          section: 'product',
+        },
+        {
+          id: 'networking',
+          name: 'Networking',
+          description: 'Configure load balancers, firewalls, and DNS for your cloud infrastructure.',
+          iconName: 'fas fa-network-wired',
+          launchUrl: '/app/networking',
+          section: 'product',
+        },
+        {
+          id: 'storage',
+          name: 'Storage',
+          description: 'Manage scalable object storage, block storage, and file systems for your applications.',
+          iconName: 'fas fa-hdd',
+          launchUrl: '/app/storage',
+          section: 'product',
+        },
+        {
+          id: 'backup',
+          name: 'Backup & Disaster Recovery',
+          description: 'Automate backups, protect your data, and ensure business continuity.',
+          iconName: 'fas fa-save',
+          launchUrl: '/app/backup',
+          section: 'product',
+        },
+        { 
+          id: 'billing', 
+          name: 'Subscriptions', 
+          description: 'Oversee your subscriptions and add new services.', 
+          iconName: 'fas fa-wallet', 
+          launchUrl: '/app/billing',
+          section: 'application',
+        },
+        { 
+          id: 'invoices', 
+          name: 'Invoice History', 
+          description: 'View and download past invoices for your records.', 
+          iconName: 'fas fa-file-invoice', 
+          launchUrl: '/app/invoices',
+          section: 'application',
+        },
+        {
+          id: 'user-management',
+          name: 'Users Management',
+          description: 'Manage team members, user groups, and their permissions.',
+          iconName: 'fas fa-users-cog',
+          launchUrl: '/app/team-management',
+          section: 'application',
+        },
+        {
+          id: 'support',
+          name: 'Support Center',
+          description: 'Access knowledge base or create support tickets with our team.',
+          iconName: 'fas fa-headset',
+          launchUrl: '/app/support',
+          section: 'application',
+        },
+        {
+          id: 'action-logs',
+          name: 'Action Logs',
+          description: 'Review a detailed history of all activities and events on your account.',
+          iconName: 'fas fa-history',
+          launchUrl: '/app/action-logs',
+          section: 'application',
+        },
+         {
+          id: 'monitoring',
+          name: 'Monitoring & Security',
+          description: 'Monitor resources, set alerts, and secure your environment with advanced tools.',
+          iconName: 'fas fa-shield-alt',
+          launchUrl: '/app/monitoring',
+          section: 'application',
+        },
+      ];
 
-  if (userToDisplay?.role === 'customer') {
-    const customerHiddenCardIds: string[] = [
-        'kubernetes',
-        'networking',
-        'storage',
-        'backup',
-        'monitoring',
-    ];
-    allPortals = allPortals.filter(p => !customerHiddenCardIds.includes(p.id));
-  }
+    if (loggedInUser?.role === 'reseller' && viewAsUserId) {
+        portals = portals.filter(p => p.id !== 'billing' && p.id !== 'invoices');
+    }
 
-  if (userToDisplay?.role !== 'customer') {
-      allPortals = allPortals.filter(p => p.id !== 'user-management');
-  }
+    if (userToDisplay?.role === 'customer') {
+        const customerHiddenCardIds: string[] = [
+            'kubernetes',
+            'networking',
+            'storage',
+            'backup',
+            'monitoring',
+        ];
+        portals = portals.filter(p => !customerHiddenCardIds.includes(p.id));
+    }
+
+    if (userToDisplay?.role !== 'customer') {
+        portals = portals.filter(p => p.id !== 'user-management');
+    }
+    
+    return portals;
+  }, [isNewDemoUser, loggedInUser, viewAsUserId, userToDisplay]);
 
   const productPortals = allPortals.filter(p => p.section === 'product');
-  const applicationPortals = allPortals.filter(p => p.section === 'application');
+  const applicationPortals = isNewDemoUser ? [] : allPortals.filter(p => p.section === 'application');
 
   const isAdminViewAs = viewAsUserId && loggedInUser?.role === 'admin';
   

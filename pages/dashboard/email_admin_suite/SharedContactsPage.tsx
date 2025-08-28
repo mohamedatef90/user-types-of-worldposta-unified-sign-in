@@ -1,10 +1,11 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Card, Button, FormField, Icon, Pagination, Modal } from '@/components/ui';
 import type { SharedContact } from '@/types';
+// Fix: Import `mockSharedContacts` from data.ts
 import { mockSharedContacts } from '@/data';
 import { v4 as uuidv4 } from 'uuid';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAppLayout, useAuth } from '@/context';
 
 // --- SHARED CONTACTS VIEW ---
 
@@ -108,7 +109,22 @@ const AddContactPanel: React.FC<{
     );
 };
 
-const ContactsTableView: React.FC<{ contacts: SharedContact[]; onEdit: (c: SharedContact) => void; onDelete: (c: SharedContact) => void; }> = ({ contacts, onEdit, onDelete }) => (
+const VerificationRequiredRow: React.FC<{ colSpan: number }> = ({ colSpan }) => (
+    <tr>
+        <td colSpan={colSpan} className="text-center py-10">
+            <Icon name="fas fa-lock" className="text-3xl text-yellow-500 mb-3" />
+            <p className="font-semibold text-lg text-[#293c51] dark:text-gray-200">Domain Verification Required</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Please verify your domain to access this feature.
+                <Link to="/app/email-admin-suite/orgs-and-domains" className="ml-2 font-semibold text-[#679a41] dark:text-emerald-400 hover:underline">
+                    Verify Now
+                </Link>
+            </p>
+        </td>
+    </tr>
+);
+
+const ContactsTableView: React.FC<{ contacts: SharedContact[]; onEdit: (c: SharedContact) => void; onDelete: (c: SharedContact) => void; isDisabled: boolean; }> = ({ contacts, onEdit, onDelete, isDisabled }) => (
     <div className="overflow-x-auto border rounded-lg dark:border-gray-700">
         <table className="min-w-full">
             <thead className="bg-gray-50 dark:bg-slate-700">
@@ -119,19 +135,21 @@ const ContactsTableView: React.FC<{ contacts: SharedContact[]; onEdit: (c: Share
                 </tr>
             </thead>
             <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {contacts.map(contact => (
+                {isDisabled ? (
+                    <VerificationRequiredRow colSpan={3} />
+                ) : contacts.map(contact => (
                     <tr key={contact.id}>
                         <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">{contact.displayName}</td>
                         <td className="px-4 py-4 whitespace-nowrap text-sm">{contact.email}</td>
                         <td className="px-4 py-4 whitespace-nowrap text-right text-sm">
                             <div className="flex justify-end items-center space-x-1">
-                                <Button size="icon" variant="ghost" title="Edit" onClick={() => onEdit(contact)}><Icon name="fas fa-pencil-alt" /></Button>
-                                <Button size="icon" variant="ghost" title="Delete" onClick={() => onDelete(contact)}><Icon name="fas fa-trash-alt" className="text-red-500" /></Button>
+                                <Button size="icon" variant="ghost" title="Edit" onClick={() => onEdit(contact)} disabled={isDisabled}><Icon name="fas fa-pencil-alt" /></Button>
+                                <Button size="icon" variant="ghost" title="Delete" onClick={() => onDelete(contact)} disabled={isDisabled}><Icon name="fas fa-trash-alt" className="text-red-500" /></Button>
                             </div>
                         </td>
                     </tr>
                 ))}
-                {contacts.length === 0 && (
+                {!isDisabled && contacts.length === 0 && (
                     <tr>
                         <td colSpan={3} className="text-center py-6 text-gray-500 dark:text-gray-400">
                             No shared contacts found.
@@ -146,6 +164,11 @@ const ContactsTableView: React.FC<{ contacts: SharedContact[]; onEdit: (c: Share
 
 // Main Page Component
 export const SharedContactsPage: React.FC = () => {
+    const { isDomainVerifiedForDemo } = useAppLayout();
+    const { user } = useAuth();
+    const isNewDemoUser = user?.email === 'new.user@worldposta.com';
+    const isDisabled = isNewDemoUser && !isDomainVerifiedForDemo;
+
     const navigate = useNavigate();
     const [contacts, setContacts] = useState<SharedContact[]>(mockSharedContacts);
     const [filters, setFilters] = useState<ContactFilters>(initialFilters);
@@ -227,9 +250,9 @@ export const SharedContactsPage: React.FC = () => {
 
     const titleActions = (
         <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => setIsFilterPanelOpen(true)} leftIconName="fas fa-filter">Filters & Search</Button>
-            <Button variant="outline" onClick={handleExport} leftIconName="fas fa-download">Download</Button>
-            <Button leftIconName="fas fa-plus-circle" onClick={handleOpenAddPanel}>Add Contact</Button>
+            <Button variant="outline" onClick={() => setIsFilterPanelOpen(true)} leftIconName="fas fa-filter" disabled={isDisabled}>Filters & Search</Button>
+            <Button variant="outline" onClick={handleExport} leftIconName="fas fa-download" disabled={isDisabled}>Download</Button>
+            <Button leftIconName="fas fa-plus-circle" onClick={handleOpenAddPanel} disabled={isDisabled}>Add Contact</Button>
         </div>
     );
 
@@ -237,9 +260,9 @@ export const SharedContactsPage: React.FC = () => {
         <>
             <Card title="Shared Contacts" titleActions={titleActions}>
                 <div className="mt-4">
-                    <ContactsTableView contacts={paginatedContacts} onEdit={handleOpenEditPage} onDelete={handleOpenDeleteModal} />
+                    <ContactsTableView contacts={paginatedContacts} onEdit={handleOpenEditPage} onDelete={handleOpenDeleteModal} isDisabled={isDisabled} />
                 </div>
-                 <Pagination currentPage={currentPage} totalItems={filteredContacts.length} itemsPerPage={rowsPerPage} onPageChange={setCurrentPage} onItemsPerPageChange={setRowsPerPage} />
+                 {!isDisabled && <Pagination currentPage={currentPage} totalItems={filteredContacts.length} itemsPerPage={rowsPerPage} onPageChange={setCurrentPage} onItemsPerPageChange={setRowsPerPage} />}
             </Card>
 
             <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Delete Contact" footer={<><Button variant="danger" onClick={handleConfirmDelete}>Delete</Button><Button variant="ghost" onClick={() => setIsDeleteModalOpen(false)}>Cancel</Button></>}>

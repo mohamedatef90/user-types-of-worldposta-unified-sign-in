@@ -1,6 +1,8 @@
 
+
 import React from 'react';
 import { Card, Button, Icon } from '@/components/ui';
+// Fix: Import `mockStorageBuckets` from data.ts
 import { mockStorageBuckets } from '@/data';
 
 export const StoragePage: React.FC = () => {

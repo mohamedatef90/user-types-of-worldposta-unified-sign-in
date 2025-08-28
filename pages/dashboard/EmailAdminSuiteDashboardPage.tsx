@@ -1,7 +1,14 @@
 
+
+
+
+
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Card, StatCard, LineChart, Button, Icon, MultiSegmentDoughnutChart, Modal, FormField, DashboardCustomizationMenu, FloatingActionMenu } from '@/components/ui';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context';
+import { OldVersionPage } from './email_admin_suite/OldVersionPage';
+import { DemoPlanSelectionPage } from './email_admin_suite/DemoPlanSelectionPage';
 
 const topThreatSources = [
     { ip: '192.168.1.100', location: 'Unknown', attempts: 45, risk: 'High' },
@@ -308,6 +315,16 @@ const ALL_DASHBOARD_CARDS: DashboardCardInfo[] = [
 ];
 
 export const EmailAdminSuiteDashboardPage: React.FC = () => {
+    const { user } = useAuth();
+    const isNewDemoUser = user?.email === 'new.user@worldposta.com';
+
+    const [planSelectedForDemo, setPlanSelectedForDemo] = useState(() => {
+        if (isNewDemoUser) {
+            return sessionStorage.getItem('demoUserPlanSelected') === 'true';
+        }
+        return true;
+    });
+
     const [cardVisibility, setCardVisibility] = useState<{ [key: string]: boolean }>(() => {
         try {
             const storedVisibility = localStorage.getItem('emailAdminDashboardVisibility');
@@ -355,6 +372,20 @@ export const EmailAdminSuiteDashboardPage: React.FC = () => {
             onClick: () => navigate('/app/email-admin-suite/exchange/rules/add') 
         },
     ];
+
+    const handlePlanSelect = (planId: string) => {
+        sessionStorage.setItem('demoUserPlanSelected', 'true');
+        sessionStorage.setItem('demoUserPlanId', planId);
+        window.dispatchEvent(new CustomEvent('planSelectedForDemo'));
+        setPlanSelectedForDemo(true);
+    };
+
+    if (isNewDemoUser) {
+        if (!planSelectedForDemo) {
+            return <DemoPlanSelectionPage onPlanSelect={handlePlanSelect} />;
+        }
+        return <OldVersionPage />;
+    }
 
     return (
         <div className="relative">

@@ -1,10 +1,11 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Card, Button, FormField, Icon, Pagination, Modal, Tooltip, ToggleSwitch, CollapsibleSection } from '@/components/ui';
 import type { Mailbox, MailboxPlan, MailboxLevel, MailboxType } from '@/types';
+// Fix: Import `mockMailboxes` from data.ts, which now has the correct export.
 import { mockMailboxes, mockMailboxPlans, mockMailboxDomains } from '@/data';
 import { v4 as uuidv4 } from 'uuid';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useAppLayout, useAuth } from '@/context';
 
 // --- MAILBOX VIEW ---
 
@@ -315,6 +316,10 @@ const MailboxesView: React.FC = () => {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [mailboxToDelete, setMailboxToDelete] = useState<Mailbox | null>(null);
 
+    const { isDomainVerifiedForDemo } = useAppLayout();
+    const { user } = useAuth();
+    const isNewDemoUser = user?.email === 'new.user@worldposta.com';
+
     // State for selections and bulk actions
     const [selectedMailboxes, setSelectedMailboxes] = useState<string[]>([]);
     const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
@@ -479,7 +484,11 @@ const MailboxesView: React.FC = () => {
                 <Icon name={`fas fa-sync-alt ${isRefreshing ? 'fa-spin' : ''}`} className="mr-2" /> Refresh
             </Button>
             <Button variant="outline" onClick={handleExport} leftIconName="fas fa-file-export">Export all mailboxes</Button>
-            <Button leftIconName="fas fa-plus-circle" onClick={() => setIsAddPanelOpen(true)}>Add Mailbox</Button>
+            <Tooltip text={isNewDemoUser && !isDomainVerifiedForDemo ? "You must verify a domain first" : "Add a new mailbox"}>
+                 <div className="inline-block">
+                    <Button leftIconName="fas fa-plus-circle" onClick={() => setIsAddPanelOpen(true)} disabled={isNewDemoUser && !isDomainVerifiedForDemo}>Add Mailbox</Button>
+                </div>
+            </Tooltip>
         </div>
     );
 
@@ -521,7 +530,20 @@ const MailboxesView: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-gray-700">
-                        {paginatedMailboxes.map(mailbox => (
+                         { (isNewDemoUser && !isDomainVerifiedForDemo) ? (
+                            <tr>
+                                <td colSpan={8} className="text-center py-10">
+                                    <Icon name="fas fa-lock" className="text-3xl text-yellow-500 mb-3" />
+                                    <p className="font-semibold text-lg text-[#293c51] dark:text-gray-200">Domain Verification Required</p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                        Please verify your domain to start managing mailboxes.
+                                        <Link to="/app/email-admin-suite/orgs-and-domains" className="ml-2 font-semibold text-[#679a41] dark:text-emerald-400 hover:underline">
+                                            Verify Now
+                                        </Link>
+                                    </p>
+                                </td>
+                            </tr>
+                        ) : paginatedMailboxes.map(mailbox => (
                             <tr key={mailbox.id} className={selectedMailboxes.includes(mailbox.id) ? 'bg-blue-50/50 dark:bg-sky-900/20' : ''}>
                                 <td className="px-4 py-4 whitespace-nowrap">
                                     <input type="checkbox" onChange={(e) => handleSelectOne(mailbox.id, e.target.checked)} checked={selectedMailboxes.includes(mailbox.id)} className="rounded" />

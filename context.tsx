@@ -1,9 +1,4 @@
 
-
-
-
-
-
 import React, { useState, useEffect, useCallback, createContext, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { User, AuthContextType } from '@/types';
@@ -196,6 +191,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 // --- App Layout Context ---
 interface AppLayoutContextType {
     setSearchPanelOpen: (isOpen: boolean) => void;
+    isDomainVerifiedForDemo: boolean;
 }
 export const AppLayoutContext = createContext<AppLayoutContextType | null>(null);
 export const useAppLayout = () => {

@@ -1,9 +1,5 @@
 
 
-
-
-
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation, Outlet, useSearchParams, Link } from 'react-router-dom';
 import { AuthProvider, ThemeProvider, useAuth, AppLayoutContext } from '@/context';
@@ -50,6 +46,7 @@ import {
     EmailAdminSidebar,
     EmailAdminSuiteDashboardPage,
     PlaceholderPage,
+    OrgsAndDomainsPage,
     MailboxesPage,
     EditMailboxPage,
     DistributionListsPage,
@@ -66,7 +63,8 @@ import {
     NetworkingPage,
     StoragePage,
     MonitoringPage,
-    BackupPage
+    BackupPage,
+    DemoBillingPage
 } from '@/pages';
 
 
@@ -219,6 +217,67 @@ const AppLayout: React.FC = () => {
     const [isSearchPanelOpen, setSearchPanelOpen] = useState(false);
 
     const isEmailAdminSuite = location.pathname.startsWith('/app/email-admin-suite');
+    const isNewDemoUser = user?.email === 'new.user@worldposta.com';
+    
+    // State for the new status banner in Email Admin Suite
+    const [isStatusBannerVisible, setStatusBannerVisible] = useState(true);
+    const [domainStatus, setDomainStatus] = useState({ isDomainVerified: false, isMxSpfVerified: false });
+    const [planSelectionVersion, setPlanSelectionVersion] = useState(0);
+
+    useEffect(() => {
+        const handlePlanSelected = () => {
+            setPlanSelectionVersion(v => v + 1);
+        };
+        window.addEventListener('planSelectedForDemo', handlePlanSelected);
+        return () => {
+            window.removeEventListener('planSelectedForDemo', handlePlanSelected);
+        };
+    }, []);
+    
+    // Memoize the check for demo user plan selection to avoid showing status bar on plan page
+    const planSelectedForDemo = useMemo(() => {
+        if (isNewDemoUser) {
+            return sessionStorage.getItem('demoUserPlanSelected') === 'true';
+        }
+        return true; // Default to true for non-demo users or if not applicable
+    }, [isNewDemoUser, planSelectionVersion]); // Re-check when plan selection event fires
+
+    const showStatusBar = isEmailAdminSuite && isStatusBannerVisible && isNewDemoUser && planSelectedForDemo;
+
+    const updateBannerStatus = useCallback(() => {
+        if (isNewDemoUser) {
+            try {
+                const storedDomains = localStorage.getItem('demoUserDomains');
+                if (storedDomains) {
+                    const domains = JSON.parse(storedDomains);
+                    if (domains.length > 0) {
+                        const firstDomain = domains[0];
+                        setDomainStatus({
+                            isDomainVerified: firstDomain.isDomainVerified,
+                            isMxSpfVerified: firstDomain.isMxVerified,
+                        });
+                    } else {
+                        setDomainStatus({ isDomainVerified: false, isMxSpfVerified: false });
+                    }
+                } else {
+                    setDomainStatus({ isDomainVerified: false, isMxSpfVerified: false });
+                }
+            } catch (e) {
+                console.error("Failed to parse domains from localStorage", e);
+                setDomainStatus({ isDomainVerified: false, isMxSpfVerified: false });
+            }
+        }
+    }, [isNewDemoUser]);
+
+    useEffect(() => {
+        updateBannerStatus(); // Initial check on mount and location change
+    
+        window.addEventListener('domainStateChange', updateBannerStatus);
+        
+        return () => {
+            window.removeEventListener('domainStateChange', updateBannerStatus);
+        };
+    }, [location, updateBannerStatus]);
 
     useEffect(() => {
         const storageKey = isEmailAdminSuite ? 'emailAdminSidebarCollapsed' : 'sidebarCollapsed';
@@ -380,6 +439,7 @@ const AppLayout: React.FC = () => {
     
     const appLayoutContextValue = {
         setSearchPanelOpen,
+        isDomainVerifiedForDemo: domainStatus.isDomainVerified,
     };
 
     return (
@@ -413,6 +473,34 @@ const AppLayout: React.FC = () => {
                         returnToPath={returnToPath}
                     />
                     <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8">
+                        {showStatusBar && (!domainStatus.isDomainVerified || !domainStatus.isMxSpfVerified) && (
+                            <div className={`p-4 mb-4 rounded-md flex items-start justify-between ${
+                                !domainStatus.isDomainVerified
+                                    ? 'bg-red-50 border border-red-200 text-red-800 dark:bg-red-900/30 dark:border-red-700/50 dark:text-red-300'
+                                    : 'bg-yellow-50 border border-yellow-200 text-yellow-800 dark:bg-yellow-900/30 dark:border-yellow-700/50 dark:text-yellow-300'
+                            }`}>
+                                <div className="flex items-start">
+                                    <Icon name={!domainStatus.isDomainVerified ? 'fas fa-exclamation-circle' : 'fas fa-exclamation-triangle'} className="mr-3 mt-1" />
+                                    <div>
+                                    <p className="font-semibold">
+                                        {!domainStatus.isDomainVerified ? 'Action Required: Domain setup is incomplete' : 'Action Required: Configure mail flow'}
+                                    </p>
+                                    <p className="text-sm">
+                                        {!domainStatus.isDomainVerified
+                                        ? 'Verify your domain to start using email services.'
+                                        : 'Your domain is verified, but mail flow is not configured. Finish your setup to receive emails.'}
+                                        {' '}
+                                        <Link to="/app/email-admin-suite/orgs-and-domains" className="font-semibold underline hover:no-underline">
+                                        {!domainStatus.isDomainVerified ? 'Verify Now' : 'Configure Now'}
+                                        </Link>
+                                    </p>
+                                    </div>
+                                </div>
+                                <button onClick={() => setStatusBannerVisible(false)} className="ml-4 -mt-1 -mr-1 p-1 rounded-md hover:bg-black/10">
+                                    <Icon name="fas fa-times" className="text-sm" />
+                                </button>
+                            </div>
+                        )}
                         {location.pathname !== '/app/admin-dashboard' && location.pathname !== '/app/email-admin-suite' && <Breadcrumbs items={breadcrumbItems} />}
                         <Outlet />
                     </main>
@@ -521,7 +609,7 @@ const AppRoutes: React.FC = () => {
                     {/* Email Admin Suite Routes */}
                     <Route path="email-admin-suite">
                         <Route index element={<EmailAdminSuiteDashboardPage />} />
-                        <Route path="orgs-and-domains" element={<PlaceholderPage />} />
+                        <Route path="orgs-and-domains" element={<OrgsAndDomainsPage />} />
                         <Route path="exchange/mailboxes" element={<MailboxesPage />} />
                         <Route path="exchange/mailboxes/edit/:mailboxId" element={<EditMailboxPage />} />
                         <Route path="exchange/distribution-lists" element={<DistributionListsPage />} />
@@ -536,7 +624,7 @@ const AppRoutes: React.FC = () => {
                         <Route path="exchange/rules/add" element={<RuleDetailsPage />} />
                         <Route path="exchange/rules/edit/:ruleId" element={<RuleDetailsPage />} />
                         <Route path="exchange/account-statistics" element={<AccountStatisticsPage />} />
-                        <Route path="admin/billing" element={<PlaceholderPage />} />
+                        <Route path="admin/billing" element={user?.email === 'new.user@worldposta.com' ? <DemoBillingPage /> : <PlaceholderPage />} />
                         <Route path="admin/users" element={<PlaceholderPage />} />
                         <Route path="admin/permission-groups" element={<PlaceholderPage />} />
                         <Route path="admin/background-tasks" element={<PlaceholderPage />} />

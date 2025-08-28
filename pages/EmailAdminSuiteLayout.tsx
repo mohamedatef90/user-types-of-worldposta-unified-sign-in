@@ -1,4 +1,6 @@
 
+
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { NavLink, useLocation, Link } from 'react-router-dom';
 import { Icon, Modal, Button, FormField } from '@/components/ui';
@@ -44,8 +46,16 @@ export const EmailAdminSidebar: React.FC<EmailAdminSidebarProps> = ({ isCollapse
     const iconHoverColor = "group-hover:text-[#588836] dark:group-hover:text-emerald-500";
     
     const navItems = useMemo(() => {
-        const baseItems: (NavSubItem & { icon: string } | NavItemWithSubItems)[] = [
-            { name: 'Dashboard', path: '/app/email-admin-suite', icon: 'fas fa-tachometer-alt' },
+        const isNewDemoUser = user?.email === 'new.user@worldposta.com';
+        const isAdminUser = user?.email === 'admin@worldposta.com';
+
+        const items: (NavSubItem & { icon: string } | NavItemWithSubItems)[] = [
+            isNewDemoUser
+                ? { name: 'Dashboard', path: '/app/email-admin-suite', icon: 'fas fa-history' }
+                : { name: 'Dashboard', path: '/app/email-admin-suite', icon: 'fas fa-tachometer-alt' },
+        ];
+
+        items.push(
             { name: 'Organizations and domains', path: '/app/email-admin-suite/orgs-and-domains', icon: 'fas fa-sitemap' },
             {
                 name: 'Exchange Email',
@@ -74,13 +84,13 @@ export const EmailAdminSidebar: React.FC<EmailAdminSidebarProps> = ({ isCollapse
                 ]
             },
             { name: 'Migrations', path: '/app/email-admin-suite/migrations', icon: 'fas fa-exchange-alt' },
-        ];
+        );
 
-        if (user?.email === 'admin@worldposta.com') {
-            baseItems.push({ name: 'Old Version', path: '/app/email-admin-suite/old-version', icon: 'fas fa-history' });
+        if (isAdminUser) {
+            items.push({ name: 'Old Version', path: '/app/email-admin-suite/old-version', icon: 'fas fa-history' });
         }
 
-        return baseItems;
+        return items;
     }, [user]);
     
     useEffect(() => {
@@ -88,14 +98,17 @@ export const EmailAdminSidebar: React.FC<EmailAdminSidebarProps> = ({ isCollapse
         for (const item of navItems) {
             if ('subItems' in item) {
                 if (item.subItems.some(sub => currentPath.startsWith(sub.path))) {
-                    if (!openSections.includes(item.name)) {
-                        setOpenSections(prev => [...prev, item.name]);
-                    }
+                    setOpenSections(prev => {
+                        if (!prev.includes(item.name)) {
+                            return [...prev, item.name];
+                        }
+                        return prev;
+                    });
                     return;
                 }
             }
         }
-    }, [location.pathname, navItems, openSections]);
+    }, [location.pathname, navItems]);
 
     const toggleSection = (sectionName: string) => {
         setOpenSections(prev => 
@@ -217,7 +230,10 @@ export const EmailAdminSidebar: React.FC<EmailAdminSidebarProps> = ({ isCollapse
                                     );
                                 })()
                             ) : (
-                                <NavLink to={item.path} title={isCollapsed ? item.name : undefined}
+                                <NavLink 
+                                    to={item.path} 
+                                    title={isCollapsed ? item.name : undefined}
+                                    end={item.path === '/app/email-admin-suite'}
                                     className={({isActive}) => `flex items-center py-2.5 rounded-md text-sm font-medium transition-colors duration-150 ease-in-out group ${isCollapsed ? 'px-3 justify-center' : 'px-3'} ${isActive ? `${activeBgColor} ${activeTextColor}` : `${baseTextColor} ${hoverBgColor} ${hoverTextColor}`}`}
                                 >
                                     {({isActive}) => (<>

@@ -1,9 +1,11 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Card, Button, FormField, Icon, Pagination, Modal } from '@/components/ui';
 import type { DistributionList } from '@/types';
+// Fix: Import `mockDistributionLists` from data.ts
 import { mockMailboxDomains, mockDistributionLists } from '@/data';
 import { v4 as uuidv4 } from 'uuid';
+import { Link } from 'react-router-dom';
+import { useAppLayout, useAuth } from '@/context';
 
 interface DlFilters {
     displayName: string;
@@ -126,7 +128,27 @@ const AddDlPanel: React.FC<{
     );
 };
 
+const VerificationRequiredRow: React.FC<{ colSpan: number }> = ({ colSpan }) => (
+    <tr>
+        <td colSpan={colSpan} className="text-center py-10">
+            <Icon name="fas fa-lock" className="text-3xl text-yellow-500 mb-3" />
+            <p className="font-semibold text-lg text-[#293c51] dark:text-gray-200">Domain Verification Required</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Please verify your domain to access this feature.
+                <Link to="/app/email-admin-suite/orgs-and-domains" className="ml-2 font-semibold text-[#679a41] dark:text-emerald-400 hover:underline">
+                    Verify Now
+                </Link>
+            </p>
+        </td>
+    </tr>
+);
+
 export const DistributionListsPage: React.FC = () => {
+    const { isDomainVerifiedForDemo } = useAppLayout();
+    const { user } = useAuth();
+    const isNewDemoUser = user?.email === 'new.user@worldposta.com';
+    const isDisabled = isNewDemoUser && !isDomainVerifiedForDemo;
+
     const [distributionLists, setDistributionLists] = useState<DistributionList[]>(mockDistributionLists);
     const [filters, setFilters] = useState<DlFilters>(initialDlFilters);
     const [currentPage, setCurrentPage] = useState(1);
@@ -138,7 +160,6 @@ export const DistributionListsPage: React.FC = () => {
     // State for selections and bulk actions
     const [selectedLists, setSelectedLists] = useState<string[]>([]);
     const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
-
 
     const filteredLists = useMemo(() => {
         return distributionLists.filter(list => {
@@ -209,8 +230,8 @@ export const DistributionListsPage: React.FC = () => {
     
     const DefaultToolbar = () => (
         <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => setIsFilterPanelOpen(true)} leftIconName="fas fa-filter">Filters & Search</Button>
-            <Button leftIconName="fas fa-plus-circle" onClick={handleOpenAddPanel}>Add Distribution List</Button>
+            <Button variant="outline" onClick={() => setIsFilterPanelOpen(true)} leftIconName="fas fa-filter" disabled={isDisabled}>Filters & Search</Button>
+            <Button leftIconName="fas fa-plus-circle" onClick={handleOpenAddPanel} disabled={isDisabled}>Add Distribution List</Button>
         </div>
     );
     
@@ -219,7 +240,7 @@ export const DistributionListsPage: React.FC = () => {
             <div className="flex items-center gap-4">
                 <span className="text-sm font-semibold text-blue-800 dark:text-sky-300">{selectedLists.length} selected</span>
                 <div className="h-6 w-px bg-blue-200 dark:bg-sky-700"></div>
-                <Button size="sm" variant="ghost" onClick={() => setIsBulkDeleteModalOpen(true)} leftIconName="fas fa-trash-alt" className="text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50">Delete</Button>
+                <Button size="sm" variant="ghost" onClick={() => setIsBulkDeleteModalOpen(true)} leftIconName="fas fa-trash-alt" className="text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50" disabled={isDisabled}>Delete</Button>
             </div>
             <Button size="icon" variant="ghost" onClick={() => setSelectedLists([])} title="Clear selection"><Icon name="fas fa-times" className="text-gray-500" /></Button>
         </div>
@@ -233,7 +254,7 @@ export const DistributionListsPage: React.FC = () => {
                         <thead className="bg-gray-50 dark:bg-slate-700">
                             <tr>
                                 <th className="px-4 py-3 text-left w-4">
-                                    <input type="checkbox" onChange={(e) => handleSelectAll(e.target.checked)} checked={areAllOnPageSelected} className="rounded" />
+                                    <input type="checkbox" onChange={(e) => handleSelectAll(e.target.checked)} checked={areAllOnPageSelected} className="rounded" disabled={isDisabled} />
                                 </th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Display Name</th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Primary Email Address</th>
@@ -243,7 +264,9 @@ export const DistributionListsPage: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-gray-700">
-                            {paginatedLists.map(list => (
+                            {isDisabled ? (
+                                <VerificationRequiredRow colSpan={6} />
+                            ) : paginatedLists.map(list => (
                                 <tr key={list.id} className={selectedLists.includes(list.id) ? 'bg-blue-50/50 dark:bg-sky-900/20' : ''}>
                                     <td className="px-4 py-4 whitespace-nowrap">
                                         <input type="checkbox" onChange={(e) => handleSelectOne(list.id, e.target.checked)} checked={selectedLists.includes(list.id)} className="rounded" />
@@ -254,14 +277,14 @@ export const DistributionListsPage: React.FC = () => {
                                     <td className="px-4 py-4 whitespace-nowrap text-sm">{new Date(list.creationDate).toLocaleDateString()}</td>
                                     <td className="px-4 py-4 whitespace-nowrap text-right text-sm">
                                         <div className="flex justify-end items-center">
-                                            <Button size="icon" variant="ghost" onClick={() => handleOpenEditPanel(list)} title="Edit"><Icon name="fas fa-pencil-alt" /></Button>
+                                            <Button size="icon" variant="ghost" onClick={() => handleOpenEditPanel(list)} title="Edit" disabled={isDisabled}><Icon name="fas fa-pencil-alt" /></Button>
                                         </div>
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
-                    <Pagination currentPage={currentPage} totalItems={filteredLists.length} itemsPerPage={rowsPerPage} onPageChange={setCurrentPage} onItemsPerPageChange={setRowsPerPage} />
+                    {!isDisabled && <Pagination currentPage={currentPage} totalItems={filteredLists.length} itemsPerPage={rowsPerPage} onPageChange={setCurrentPage} onItemsPerPageChange={setRowsPerPage} />}
                 </div>
             </Card>
 

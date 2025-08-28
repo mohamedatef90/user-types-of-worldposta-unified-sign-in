@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, Icon } from '@/components/ui';
 import { Link } from 'react-router-dom';
+import { useAppLayout } from '@/context';
 
 // Copied from EmailAdminSuiteDashboardPage.tsx for the "At a Glance" section
 const MiniStatCard: React.FC<{ title: string; metric: string; iconName: string; iconColor: string; }> = ({ title, metric, iconName, iconColor }) => (
@@ -15,13 +16,13 @@ const MiniStatCard: React.FC<{ title: string; metric: string; iconName: string; 
     </div>
 );
 
-const StatsGrid: React.FC = () => (
+const StatsGrid: React.FC<{ isVerified: boolean }> = ({ isVerified }) => (
     <Card title="At a Glance">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 flex-grow content-start">
-            <MiniStatCard title="Total Mailboxes" metric="1,254" iconName="fas fa-envelope" iconColor="text-blue-500" />
-            <MiniStatCard title="Domains Managed" metric="12" iconName="fas fa-sitemap" iconColor="text-green-500" />
-            <MiniStatCard title="Threats Blocked (24h)" metric="209" iconName="fas fa-flag" iconColor="text-red-500" />
-            <MiniStatCard title="Overall Health" metric="99.8%" iconName="fas fa-heart" iconColor="text-indigo-500" />
+            <MiniStatCard title="Total Mailboxes" metric={isVerified ? "1,254" : "0"} iconName="fas fa-envelope" iconColor="text-blue-500" />
+            <MiniStatCard title="Domains Managed" metric={isVerified ? "12" : "0"} iconName="fas fa-sitemap" iconColor="text-green-500" />
+            <MiniStatCard title="Threats Blocked (24h)" metric={isVerified ? "209" : "0"} iconName="fas fa-flag" iconColor="text-red-500" />
+            <MiniStatCard title="Overall Health" metric={isVerified ? "99.8%" : "N/A"} iconName="fas fa-heart" iconColor="text-indigo-500" />
         </div>
     </Card>
 );
@@ -96,9 +97,10 @@ const ticketItems = [
 ];
 
 export const OldVersionPage: React.FC = () => {
+    const { isDomainVerifiedForDemo } = useAppLayout();
     return (
         <div className="space-y-6">
-            <StatsGrid />
+            <StatsGrid isVerified={isDomainVerifiedForDemo} />
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
                 <div className="lg:col-span-2 space-y-6">
                     <DashboardSection title="Exchange Email">

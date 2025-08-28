@@ -1,6 +1,9 @@
+
+
 import React, { useState, useEffect } from 'react';
 import { Card, Button, FormField, Icon } from '@/components/ui';
 import type { SharedContact } from '@/types';
+// Fix: Import `mockSharedContacts` from data.ts
 import { mockSharedContacts } from '@/data';
 import { useNavigate, useParams } from 'react-router-dom';
 

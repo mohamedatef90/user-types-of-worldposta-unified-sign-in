@@ -3,6 +3,9 @@ import { Card, FormField, Button, Icon, CollapsibleSection, LineChart, BarChart,
 import { mockSmtpLogs } from '@/data';
 import type { SmtpLogEntry, SmtpLogAction, SmtpLogStatus, AIAnalysisResult } from '@/types';
 import { GoogleGenAI, Type } from "@google/genai";
+import { Link } from 'react-router-dom';
+import { useAppLayout, useAuth } from '@/context';
+
 
 let ai: GoogleGenAI | null = null;
 try {
@@ -163,8 +166,28 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose, onApply, onC
     );
 };
 
+const VerificationRequiredRow: React.FC<{ colSpan: number }> = ({ colSpan }) => (
+    <tr>
+        <td colSpan={colSpan} className="text-center py-10">
+            <Icon name="fas fa-lock" className="text-3xl text-yellow-500 mb-3" />
+            <p className="font-semibold text-lg text-[#293c51] dark:text-gray-200">Domain Verification Required</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Please verify your domain to access this feature.
+                <Link to="/app/email-admin-suite/orgs-and-domains" className="ml-2 font-semibold text-[#679a41] dark:text-emerald-400 hover:underline">
+                    Verify Now
+                </Link>
+            </p>
+        </td>
+    </tr>
+);
+
 
 export const EmailAdminSmtpLogsPage: React.FC = () => {
+    const { isDomainVerifiedForDemo } = useAppLayout();
+    const { user } = useAuth();
+    const isNewDemoUser = user?.email === 'new.user@worldposta.com';
+    const isDisabled = isNewDemoUser && !isDomainVerifiedForDemo;
+
     const [activeTab, setActiveTab] = useState('statistics');
     const [filters, setFilters] = useState<Filters>(initialFilters);
     const [logs] = useState<SmtpLogEntry[]>(mockSmtpLogs);
@@ -414,22 +437,22 @@ export const EmailAdminSmtpLogsPage: React.FC = () => {
             {activeTab === 'statistics' && (
                 <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-                        <StatCard title="Total Emails" metric="127,845" change="+12.5%" changeType="increase" iconName="fas fa-envelope" iconColor="text-indigo-500" />
-                        <StatCard title="Security Score" metric="98.2%" change="+2.1%" changeType="increase" iconName="fas fa-shield-alt" iconColor="text-green-500" />
-                        <StatCard title="Threats Blocked" metric="2,847" change="-15.3%" changeType="decrease" iconName="fas fa-exclamation-triangle" iconColor="text-yellow-500" />
-                        <StatCard title="Legitimate Emails" metric="124,998" change="+14.2%" changeType="increase" iconName="fas fa-check-circle" iconColor="text-green-500" />
+                        <StatCard title="Total Emails" metric={isDisabled ? "0" : "127,845"} change={isDisabled ? "N/A" : "+12.5%"} changeType="increase" iconName="fas fa-envelope" iconColor="text-indigo-500" />
+                        <StatCard title="Security Score" metric={isDisabled ? "N/A" : "98.2%"} change={isDisabled ? "N/A" : "+2.1%"} changeType="increase" iconName="fas fa-shield-alt" iconColor="text-green-500" />
+                        <StatCard title="Threats Blocked" metric={isDisabled ? "0" : "2,847"} change={isDisabled ? "N/A" : "-15.3%"} changeType="decrease" iconName="fas fa-exclamation-triangle" iconColor="text-yellow-500" />
+                        <StatCard title="Legitimate Emails" metric={isDisabled ? "0" : "124,998"} change={isDisabled ? "N/A" : "+14.2%"} changeType="increase" iconName="fas fa-check-circle" iconColor="text-green-500" />
                     </div>
                     
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <Card title="Email Traffic Trends" className="lg:col-span-2">
                             <p className="text-sm text-gray-500 dark:text-gray-400 -mt-2 mb-4">Daily email volume and security metrics over the past week</p>
-                            <LineChart data={mailFlowData.data} labels={mailFlowData.labels} />
+                            <LineChart data={isDisabled ? [] : mailFlowData.data} labels={mailFlowData.labels} />
                         </Card>
 
                         <Card title="Email Classification" className="lg:col-span-1">
                             <p className="text-sm text-gray-500 dark:text-gray-400 -mt-2 mb-4">Distribution of email types processed today</p>
                             <div className="flex flex-col items-center">
-                                <MultiSegmentDoughnutChart segments={emailClassificationData} showTotal={false} strokeWidth={25} size={200} />
+                                <MultiSegmentDoughnutChart segments={isDisabled ? [] : emailClassificationData} showTotal={false} strokeWidth={25} size={200} />
                                 <div className="mt-4 w-full space-y-2 text-sm">
                                     {emailClassificationData.map(segment => (
                                         <div key={segment.label} className="flex items-center justify-between">
@@ -437,7 +460,7 @@ export const EmailAdminSmtpLogsPage: React.FC = () => {
                                                 <span className="w-3 h-3 rounded-sm mr-2" style={{ backgroundColor: segment.color }}></span>
                                                 <span className="text-gray-600 dark:text-gray-400">{segment.label}</span>
                                             </div>
-                                            <span className="font-semibold text-gray-700 dark:text-gray-300">{segment.value.toLocaleString()}</span>
+                                            <span className="font-semibold text-gray-700 dark:text-gray-300">{isDisabled ? "0" : segment.value.toLocaleString()}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -445,14 +468,19 @@ export const EmailAdminSmtpLogsPage: React.FC = () => {
                         </Card>
                         
                         <Card title="Threat Distribution" className="lg:col-span-1">
-                            <p className="text-sm text-gray-500 dark:text-gray-400 -mt-2 mb-4">{threatDistributionData.reduce((sum, item) => sum + item.value, 0).toLocaleString()} threats detected today</p>
-                            <BarChart data={threatDistributionData} />
+                            <p className="text-sm text-gray-500 dark:text-gray-400 -mt-2 mb-4">{isDisabled ? "0" : threatDistributionData.reduce((sum, item) => sum + item.value, 0).toLocaleString()} threats detected today</p>
+                            <BarChart data={isDisabled ? [] : threatDistributionData} />
                         </Card>
 
                         <Card title="Top Threat Sources" className="lg:col-span-2">
                             <p className="text-sm text-gray-500 dark:text-gray-400 -mt-2 mb-4">Most active suspicious IP addresses</p>
                             <div className="space-y-2">
-                                {topThreatSources.map((source, index) => (
+                                {isDisabled ? (
+                                    <div className="text-center py-8 text-sm text-gray-500 dark:text-gray-400">
+                                        <Icon name="fas fa-lock" className="mb-2 text-xl" />
+                                        <p>Data unavailable. Verify domain to see threat sources.</p>
+                                    </div>
+                                ) : topThreatSources.map((source, index) => (
                                     <div key={index} className="flex items-center p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50">
                                         <div className="flex-grow">
                                             <p className="font-semibold text-[#293c51] dark:text-gray-100">{source.ip}</p>
@@ -471,7 +499,12 @@ export const EmailAdminSmtpLogsPage: React.FC = () => {
                         <Card title="Top Active Users" className="lg:col-span-2">
                             <p className="text-sm text-gray-500 dark:text-gray-400 -mt-2 mb-4">Most active email users and their activity patterns</p>
                             <div className="space-y-2">
-                                {topActiveUsers.map((user, index) => (
+                                {isDisabled ? (
+                                    <div className="text-center py-8 text-sm text-gray-500 dark:text-gray-400">
+                                        <Icon name="fas fa-lock" className="mb-2 text-xl" />
+                                        <p>Data unavailable. Verify domain to see active users.</p>
+                                    </div>
+                                ) : topActiveUsers.map((user, index) => (
                                     <div key={index} className="flex items-center p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50">
                                         <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-sm mr-3">{user.initials}</div>
                                         <div className="flex-grow">
@@ -492,7 +525,12 @@ export const EmailAdminSmtpLogsPage: React.FC = () => {
                         <Card title="Live Activity Feed" className="lg:col-span-1">
                             <p className="text-sm text-gray-500 dark:text-gray-400 -mt-2 mb-4">Real-time security events and email processing updates</p>
                             <div className="space-y-3">
-                                {liveActivityFeed.map((item, index) => (
+                                {isDisabled ? (
+                                    <div className="text-center py-8 text-sm text-gray-500 dark:text-gray-400">
+                                        <Icon name="fas fa-lock" className="mb-2 text-xl" />
+                                        <p>Feed is offline. Verify domain to enable.</p>
+                                    </div>
+                                ) : liveActivityFeed.map((item, index) => (
                                     <div key={index} className="flex items-start p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50">
                                         <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3 ${getFeedIconClass(item.type)}`}>
                                             <Icon name={item.icon} />
@@ -521,13 +559,13 @@ export const EmailAdminSmtpLogsPage: React.FC = () => {
                     title="SMTP Log Explorer"
                     titleActions={
                          <div className="flex items-center gap-2">
-                             <Button onClick={() => setIsFilterPanelOpen(true)} leftIconName="fas fa-filter" variant="outline">
+                             <Button onClick={() => setIsFilterPanelOpen(true)} leftIconName="fas fa-filter" variant="outline" disabled={isDisabled}>
                                 Filter Logs
                             </Button>
                             <Button
                                 onClick={handleAnalyzeLogs}
                                 leftIconName="fas fa-wand-magic-sparkles"
-                                disabled={isAnalyzing || !ai}
+                                disabled={isAnalyzing || !ai || isDisabled}
                                 className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white border-transparent hover:shadow-lg hover:shadow-purple-500/50 transform hover:-translate-y-0.5 transition-all duration-300 ease-in-out"
                             >
                                 Analyze with AI
@@ -549,7 +587,9 @@ export const EmailAdminSmtpLogsPage: React.FC = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                    {paginatedLogs.map(log => {
+                                    {isDisabled ? (
+                                        <VerificationRequiredRow colSpan={6} />
+                                    ) : paginatedLogs.map(log => {
                                         return (
                                             <tr key={log.id}>
                                                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{new Date(log.timestamp).toLocaleString()}</td>
@@ -565,7 +605,7 @@ export const EmailAdminSmtpLogsPage: React.FC = () => {
                                             </tr>
                                         );
                                     })}
-                                    {filteredLogs.length === 0 && (
+                                    {!isDisabled && filteredLogs.length === 0 && (
                                         <tr>
                                             <td colSpan={6} className="text-center py-10 text-gray-500 dark:text-gray-400">
                                                 No logs match your filter criteria.
@@ -574,7 +614,7 @@ export const EmailAdminSmtpLogsPage: React.FC = () => {
                                     )}
                                 </tbody>
                             </table>
-                             <Pagination
+                             {!isDisabled && <Pagination
                                 currentPage={currentPage}
                                 totalItems={filteredLogs.length}
                                 itemsPerPage={rowsPerPage}
@@ -583,7 +623,7 @@ export const EmailAdminSmtpLogsPage: React.FC = () => {
                                     setRowsPerPage(value);
                                     setCurrentPage(1);
                                 }}
-                            />
+                            />}
                         </div>
                     </div>
                 </Card>

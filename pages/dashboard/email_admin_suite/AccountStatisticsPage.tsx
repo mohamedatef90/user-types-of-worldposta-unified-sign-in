@@ -1,5 +1,7 @@
 import React from 'react';
-import { Card, Icon } from '@/components/ui';
+import { Card, Icon, Button } from '@/components/ui';
+import { Link } from 'react-router-dom';
+import { useAppLayout, useAuth } from '@/context';
 
 // A simple progress bar component for reuse within this page
 const ProgressBar: React.FC<{ value: number; max: number; className?: string }> = ({ value, max, className }) => {
@@ -29,7 +31,28 @@ const StatusIndicator: React.FC<{ enabled: boolean }> = ({ enabled }) => (
 );
 
 export const AccountStatisticsPage: React.FC = () => {
+    const { isDomainVerifiedForDemo } = useAppLayout();
+    const { user } = useAuth();
+    const isNewDemoUser = user?.email === 'new.user@worldposta.com';
+    const isDisabled = isNewDemoUser && !isDomainVerifiedForDemo;
 
+    if (isDisabled) {
+        return (
+            <Card>
+                <div className="text-center py-20">
+                    <Icon name="fas fa-lock" className="text-4xl text-yellow-500 mb-4" />
+                    <h2 className="text-2xl font-bold text-[#293c51] dark:text-gray-100 mb-2">Domain Verification Required</h2>
+                    <p className="text-gray-600 dark:text-gray-400 mb-6">
+                        Please verify your domain to view account statistics.
+                    </p>
+                    <Link to="/app/email-admin-suite/orgs-and-domains" className="font-semibold text-[#679a41] dark:text-emerald-400 hover:underline">
+                        Verify Your Domain Now
+                    </Link>
+                </div>
+            </Card>
+        );
+    }
+    
     const spaceAddOns = [
         { type: 'Extra Mailboxes', qty: 5, creationDate: 'Jun 19, 2019', status: 'Active' },
         { type: 'Extra Mailboxes', qty: 3, creationDate: 'Jul 16, 2019', status: 'Active' },

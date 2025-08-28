@@ -1,10 +1,10 @@
-
-
 import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Card, Button, Icon, Pagination, Modal, ToggleSwitch } from '@/components/ui';
+// Fix: Import `mockRules` from data.ts
 import { mockRules } from '@/data';
 import type { Rule } from '@/types';
+import { useAppLayout, useAuth } from '@/context';
 
 const RuleInfoModal: React.FC<{ rule: Rule | null; isOpen: boolean; onClose: () => void; }> = ({ rule, isOpen, onClose }) => {
     if (!rule) return null;
@@ -21,8 +21,27 @@ const RuleInfoModal: React.FC<{ rule: Rule | null; isOpen: boolean; onClose: () 
     );
 };
 
+const VerificationRequiredRow: React.FC<{ colSpan: number }> = ({ colSpan }) => (
+    <tr>
+        <td colSpan={colSpan} className="text-center py-10">
+            <Icon name="fas fa-lock" className="text-3xl text-yellow-500 mb-3" />
+            <p className="font-semibold text-lg text-[#293c51] dark:text-gray-200">Domain Verification Required</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Please verify your domain to access this feature.
+                <Link to="/app/email-admin-suite/orgs-and-domains" className="ml-2 font-semibold text-[#679a41] dark:text-emerald-400 hover:underline">
+                    Verify Now
+                </Link>
+            </p>
+        </td>
+    </tr>
+);
 
 export const RulesPage: React.FC = () => {
+    const { isDomainVerifiedForDemo } = useAppLayout();
+    const { user } = useAuth();
+    const isNewDemoUser = user?.email === 'new.user@worldposta.com';
+    const isDisabled = isNewDemoUser && !isDomainVerifiedForDemo;
+
     const navigate = useNavigate();
     const [rules, setRules] = useState<Rule[]>(mockRules);
     const [currentPage, setCurrentPage] = useState(1);
@@ -60,7 +79,7 @@ export const RulesPage: React.FC = () => {
     
     return (
         <>
-            <Card title="Rules" titleActions={<Button leftIconName="fas fa-plus-circle" onClick={handleAddRule}>Add Rule</Button>}>
+            <Card title="Rules" titleActions={<Button leftIconName="fas fa-plus-circle" onClick={handleAddRule} disabled={isDisabled}>Add Rule</Button>}>
                 <div className="overflow-x-auto">
                     <table className="min-w-full">
                         <thead className="border-b border-gray-200 dark:border-slate-700">
@@ -72,7 +91,9 @@ export const RulesPage: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
-                            {paginatedRules.map(rule => (
+                            {isDisabled ? (
+                                <VerificationRequiredRow colSpan={4} />
+                            ) : paginatedRules.map(rule => (
                                 <tr key={rule.id}>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{rule.name}</td>
                                     <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{rule.description}</td>
@@ -81,14 +102,15 @@ export const RulesPage: React.FC = () => {
                                             id={`toggle-${rule.id}`}
                                             checked={rule.status === 'enabled'}
                                             onChange={(checked) => handleStatusChangeRequest(rule, checked ? 'enabled' : 'disabled')}
+                                            disabled={isDisabled}
                                         />
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div className="flex items-center justify-end space-x-2">
-                                            <Button size="icon" variant="ghost" title="Info" onClick={() => setInfoModalRule(rule)}>
+                                            <Button size="icon" variant="ghost" title="Info" onClick={() => setInfoModalRule(rule)} disabled={isDisabled}>
                                                 <Icon name="fas fa-info-circle" className="text-gray-500"/>
                                             </Button>
-                                            <Button size="icon" variant="ghost" title="Edit" onClick={() => handleEditRule(rule.id)}>
+                                            <Button size="icon" variant="ghost" title="Edit" onClick={() => handleEditRule(rule.id)} disabled={isDisabled}>
                                                 <Icon name="fas fa-pencil-alt" className="text-gray-500"/>
                                             </Button>
                                         </div>
@@ -98,25 +120,26 @@ export const RulesPage: React.FC = () => {
                         </tbody>
                     </table>
                 </div>
-
-                <div className="flex justify-end items-center py-3 px-4 border-t border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center gap-2">
-                        <label htmlFor="rowsPerPage" className="text-sm text-gray-600 dark:text-gray-400">View of</label>
-                        <select
-                            id="rowsPerPage"
-                            value={rowsPerPage}
-                            onChange={(e) => {
-                                setRowsPerPage(Number(e.target.value));
-                                setCurrentPage(1);
-                            }}
-                            className="bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-md text-sm p-1.5 focus:ring-2 focus:ring-[#679a41] dark:focus:ring-emerald-400"
-                        >
-                            <option value={10}>10</option>
-                            <option value={20}>20</option>
-                            <option value={50}>50</option>
-                        </select>
+                {!isDisabled && (
+                    <div className="flex justify-end items-center py-3 px-4 border-t border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center gap-2">
+                            <label htmlFor="rowsPerPage" className="text-sm text-gray-600 dark:text-gray-400">View of</label>
+                            <select
+                                id="rowsPerPage"
+                                value={rowsPerPage}
+                                onChange={(e) => {
+                                    setRowsPerPage(Number(e.target.value));
+                                    setCurrentPage(1);
+                                }}
+                                className="bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-md text-sm p-1.5 focus:ring-2 focus:ring-[#679a41] dark:focus:ring-emerald-400"
+                            >
+                                <option value={10}>10</option>
+                                <option value={20}>20</option>
+                                <option value={50}>50</option>
+                            </select>
+                        </div>
                     </div>
-                </div>
+                )}
             </Card>
 
             <RuleInfoModal

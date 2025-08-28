@@ -1,6 +1,8 @@
 
+
 import React from 'react';
 import { Card, Button, Icon } from '@/components/ui';
+// Fix: Import `mockSecurityAlerts` from data.ts
 import { mockSecurityAlerts } from '@/data';
 import type { SecurityAlert } from '@/types';
 

@@ -7,6 +7,7 @@ interface FormFieldProps {
   type?: string;
   value?: string | number;
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   placeholder?: string;
   error?: string;
   required?: boolean;
@@ -28,7 +29,7 @@ interface FormFieldProps {
 }
 
 export const FormField: React.FC<FormFieldProps> = ({ 
-  id, label, type = "text", value, onChange, placeholder, error, required, as, disabled, children,
+  id, label, type = "text", value, onChange, onBlur, placeholder, error, required, as, disabled, children,
   inputClassName, labelClassName, showPasswordToggle, rows = 4, min, max, step, hint, name, checked, wrapperClassName, maxLength
 }) => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -45,6 +46,7 @@ export const FormField: React.FC<FormFieldProps> = ({
           name={name || id}
           value={(value as string) ?? ''} 
           onChange={onChange}
+          onBlur={onBlur as (e: React.FocusEvent<HTMLTextAreaElement>) => void}
           placeholder={placeholder}
           rows={rows}
           disabled={disabled}
@@ -86,6 +88,7 @@ export const FormField: React.FC<FormFieldProps> = ({
           name={name || id}
           value={value ?? ''}
           onChange={onChange}
+          onBlur={onBlur as (e: React.FocusEvent<HTMLInputElement>) => void}
           placeholder={placeholder}
           disabled={disabled}
           min={min}

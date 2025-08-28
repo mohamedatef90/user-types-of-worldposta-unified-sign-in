@@ -68,6 +68,14 @@ export const AdminDashboardPage: React.FC = () => {
             section: 'product',
         },
         {
+            id: 'admins-management',
+            name: 'Admins Management',
+            description: 'Manage admin users, groups, and system-wide permissions.',
+            iconName: 'fas fa-user-tie',
+            launchUrl: '/app/admin/staff',
+            section: 'application'
+        },
+        {
             id: 'customers',
             name: 'Customers',
             description: 'Search, manage, and view customer accounts and their dashboards.',

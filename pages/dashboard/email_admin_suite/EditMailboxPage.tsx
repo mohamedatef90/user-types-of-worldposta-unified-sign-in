@@ -1,6 +1,9 @@
+
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Card, Button, FormField, Icon, Pagination, Modal, Tooltip, ToggleSwitch, CollapsibleSection } from '@/components/ui';
 import type { Mailbox, MailboxPlan, MailboxLevel, MailboxType } from '@/types';
+// Fix: Import `mockMailboxes` from data.ts, which now has the correct export.
 import { mockMailboxes, mockMailboxPlans, mockMailboxDomains } from '@/data';
 import { useNavigate, useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';

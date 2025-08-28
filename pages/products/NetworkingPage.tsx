@@ -1,6 +1,8 @@
 
+
 import React from 'react';
 import { Card, Button, Icon } from '@/components/ui';
+// Fix: Import `mockLoadBalancers` and `mockFirewallRules` from data.ts
 import { mockLoadBalancers, mockFirewallRules } from '@/data';
 import type { LoadBalancer, FirewallRule } from '@/types';
 

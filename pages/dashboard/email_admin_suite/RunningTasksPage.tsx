@@ -1,7 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { Card, Button, Pagination } from '@/components/ui';
+import { Card, Button, Pagination, Icon } from '@/components/ui';
 import type { RunningTask } from '@/types';
+// Fix: Import `mockRunningTasks` from data.ts
 import { mockRunningTasks } from '@/data';
+import { Link } from 'react-router-dom';
+import { useAppLayout, useAuth } from '@/context';
 
 const getStatusChipClass = (status: RunningTask['status']) => {
     switch (status) {
@@ -16,7 +19,27 @@ const getStatusChipClass = (status: RunningTask['status']) => {
     }
 };
 
+const VerificationRequiredRow: React.FC<{ colSpan: number }> = ({ colSpan }) => (
+    <tr>
+        <td colSpan={colSpan} className="text-center py-10">
+            <Icon name="fas fa-lock" className="text-3xl text-yellow-500 mb-3" />
+            <p className="font-semibold text-lg text-[#293c51] dark:text-gray-200">Domain Verification Required</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Please verify your domain to access this feature.
+                <Link to="/app/email-admin-suite/orgs-and-domains" className="ml-2 font-semibold text-[#679a41] dark:text-emerald-400 hover:underline">
+                    Verify Now
+                </Link>
+            </p>
+        </td>
+    </tr>
+);
+
 export const RunningTasksPage: React.FC = () => {
+    const { isDomainVerifiedForDemo } = useAppLayout();
+    const { user } = useAuth();
+    const isNewDemoUser = user?.email === 'new.user@worldposta.com';
+    const isDisabled = isNewDemoUser && !isDomainVerifiedForDemo;
+
     const [tasks] = useState<RunningTask[]>(mockRunningTasks);
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(20);
@@ -43,7 +66,9 @@ export const RunningTasksPage: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-gray-100/10">
-                        {paginatedTasks.map((task) => (
+                        {isDisabled ? (
+                            <VerificationRequiredRow colSpan={8} />
+                        ) : paginatedTasks.map((task) => (
                             <tr key={task.id}>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                                      <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-md ${getStatusChipClass(task.status)}`}>
@@ -57,13 +82,13 @@ export const RunningTasksPage: React.FC = () => {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{task.createdBy}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{new Date(task.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                    <Button variant="outline" size="sm" onClick={() => alert(`Viewing details for task ID: ${task.id}`)}>
+                                    <Button variant="outline" size="sm" onClick={() => alert(`Viewing details for task ID: ${task.id}`)} disabled={isDisabled}>
                                         Details
                                     </Button>
                                 </td>
                             </tr>
                         ))}
-                         {paginatedTasks.length === 0 && (
+                         {!isDisabled && paginatedTasks.length === 0 && (
                             <tr>
                                 <td colSpan={8} className="text-center py-10 text-gray-500 dark:text-gray-400">
                                     No running tasks found.
@@ -72,16 +97,18 @@ export const RunningTasksPage: React.FC = () => {
                         )}
                     </tbody>
                 </table>
-                 <Pagination
-                    currentPage={currentPage}
-                    totalItems={tasks.length}
-                    itemsPerPage={rowsPerPage}
-                    onPageChange={setCurrentPage}
-                    onItemsPerPageChange={(value) => {
-                        setRowsPerPage(value);
-                        setCurrentPage(1);
-                    }}
-                />
+                 {!isDisabled && (
+                    <Pagination
+                        currentPage={currentPage}
+                        totalItems={tasks.length}
+                        itemsPerPage={rowsPerPage}
+                        onPageChange={setCurrentPage}
+                        onItemsPerPageChange={(value) => {
+                            setRowsPerPage(value);
+                            setCurrentPage(1);
+                        }}
+                    />
+                 )}
             </div>
         </Card>
     );
