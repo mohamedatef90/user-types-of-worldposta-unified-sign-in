@@ -1,6 +1,3 @@
-
-
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button, Card, FormField, Icon, Logo, ToggleSwitch } from '@/components/ui';
@@ -59,10 +56,22 @@ export const PostaPricingPage: React.FC = () => {
             default: return '/app/dashboard';
         }
     };
+    
+    const isNewDemoUser = user?.email === 'new.user@worldposta.com';
 
     const handleChoosePlan = (planId: string) => {
       if (isAuthenticated) {
-        navigate(`/app/billing/email-subscriptions?plan=${planId}&cycle=${billingCycle}`);
+        if (isNewDemoUser) {
+          sessionStorage.removeItem('demoUserPlanSelected');
+          sessionStorage.setItem('demoUserPlanId', planId);
+          // When a new plan is chosen, the confirmation step should be shown again.
+          sessionStorage.removeItem('demoUserPlanConfirmed'); 
+          // Dispatch event for other components if they need to react
+          window.dispatchEvent(new CustomEvent('planSelectedForDemo'));
+          navigate('/app/email-admin-suite');
+        } else {
+          navigate(`/app/billing/email-subscriptions?plan=${planId}&cycle=${billingCycle}`);
+        }
       } else {
         navigate('/signup', { state: { from: location } });
       }

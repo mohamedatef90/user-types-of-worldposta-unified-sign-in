@@ -1,5 +1,4 @@
 
-
 export * from './ActionLogsPage';
 export * from './AllNotificationsPage';
 export * from './CloudEdgeLayout';
@@ -51,6 +50,8 @@ export * from './dashboard/email_admin_suite/BulkModulePage';
 export * from './dashboard/email_admin_suite/RunningTasksPage';
 export * from './dashboard/email_admin_suite/OldVersionPage';
 export * from './dashboard/email_admin_suite/DemoPlanSelectionPage';
+export * from './dashboard/email_admin_suite/DemoPlanConfirmationPage';
+export * from './dashboard/email_admin_suite/DemoPlanDetailsPage';
 export * from './dashboard/email_admin_suite/DemoBillingPage';
 
 export * from './reseller/ResellerCustomersPage';
