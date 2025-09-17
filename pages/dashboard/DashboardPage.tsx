@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context';
@@ -688,7 +689,7 @@ export const DashboardPage: React.FC = () => { // This is the Customer Dashboard
           name: 'Email Admin Suite', 
           description: 'Administer your email services, mailboxes, users, and domains with ease.', 
           iconName: "https://www.worldposta.com/assets/Posta-Logo.png", 
-          launchUrl: isNewDemoUser ? '/app/email-admin-suite' : 'https://tools.worldposta.com/login',
+          launchUrl: '/app/email-admin-suite',
           section: 'product',
         },
          {

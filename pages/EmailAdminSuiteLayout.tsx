@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { NavLink, useLocation, Link } from 'react-router-dom';
 import { Icon, Modal, Button, FormField } from '@/components/ui';
@@ -47,7 +48,6 @@ export const EmailAdminSidebar: React.FC<EmailAdminSidebarProps> = ({ isCollapse
     
     const navItems = useMemo(() => {
         const isNewDemoUser = user?.email === 'new.user@worldposta.com';
-        const isAdminUser = user?.email === 'admin@worldposta.com';
 
         const items: (NavSubItem & { icon: string } | NavItemWithSubItems)[] = [
             isNewDemoUser
@@ -84,11 +84,8 @@ export const EmailAdminSidebar: React.FC<EmailAdminSidebarProps> = ({ isCollapse
                 ]
             },
             { name: 'Migrations', path: '/app/email-admin-suite/migrations', icon: 'fas fa-exchange-alt' },
+            { name: 'Old Version', path: '/app/email-admin-suite/old-version', icon: 'fas fa-history' }
         );
-
-        if (isAdminUser) {
-            items.push({ name: 'Old Version', path: '/app/email-admin-suite/old-version', icon: 'fas fa-history' });
-        }
 
         return items;
     }, [user]);

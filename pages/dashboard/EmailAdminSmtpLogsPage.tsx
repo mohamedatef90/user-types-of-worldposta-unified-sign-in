@@ -436,15 +436,14 @@ export const EmailAdminSmtpLogsPage: React.FC = () => {
             
             {activeTab === 'statistics' && (
                 <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <StatCard title="Total Emails" metric={isDisabled ? "0" : "127,845"} change={isDisabled ? "N/A" : "+12.5%"} changeType="increase" iconName="fas fa-envelope" iconColor="text-indigo-500" />
-                        <StatCard title="Security Score" metric={isDisabled ? "N/A" : "98.2%"} change={isDisabled ? "N/A" : "+2.1%"} changeType="increase" iconName="fas fa-shield-alt" iconColor="text-green-500" />
                         <StatCard title="Threats Blocked" metric={isDisabled ? "0" : "2,847"} change={isDisabled ? "N/A" : "-15.3%"} changeType="decrease" iconName="fas fa-exclamation-triangle" iconColor="text-yellow-500" />
                         <StatCard title="Legitimate Emails" metric={isDisabled ? "0" : "124,998"} change={isDisabled ? "N/A" : "+14.2%"} changeType="increase" iconName="fas fa-check-circle" iconColor="text-green-500" />
                     </div>
                     
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <Card title="Email Traffic Trends" className="lg:col-span-2">
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                        <Card title="Email Traffic Trends" className="lg:col-span-3">
                             <p className="text-sm text-gray-500 dark:text-gray-400 -mt-2 mb-4">Daily email volume and security metrics over the past week</p>
                             <LineChart data={isDisabled ? [] : mailFlowData.data} labels={mailFlowData.labels} />
                         </Card>
@@ -465,11 +464,6 @@ export const EmailAdminSmtpLogsPage: React.FC = () => {
                                     ))}
                                 </div>
                             </div>
-                        </Card>
-                        
-                        <Card title="Threat Distribution" className="lg:col-span-1">
-                            <p className="text-sm text-gray-500 dark:text-gray-400 -mt-2 mb-4">{isDisabled ? "0" : threatDistributionData.reduce((sum, item) => sum + item.value, 0).toLocaleString()} threats detected today</p>
-                            <BarChart data={isDisabled ? [] : threatDistributionData} />
                         </Card>
 
                         <Card title="Top Threat Sources" className="lg:col-span-2">
@@ -517,35 +511,6 @@ export const EmailAdminSmtpLogsPage: React.FC = () => {
                                             <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getRiskTagClass(user.risk)}`}>{user.risk}</span>
                                         </div>
                                         <span className="ml-4 w-6 text-right font-bold text-gray-400 dark:text-gray-500">{index + 1}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </Card>
-
-                        <Card title="Live Activity Feed" className="lg:col-span-1">
-                            <p className="text-sm text-gray-500 dark:text-gray-400 -mt-2 mb-4">Real-time security events and email processing updates</p>
-                            <div className="space-y-3">
-                                {isDisabled ? (
-                                    <div className="text-center py-8 text-sm text-gray-500 dark:text-gray-400">
-                                        <Icon name="fas fa-lock" className="mb-2 text-xl" />
-                                        <p>Feed is offline. Verify domain to enable.</p>
-                                    </div>
-                                ) : liveActivityFeed.map((item, index) => (
-                                    <div key={index} className="flex items-start p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50">
-                                        <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3 ${getFeedIconClass(item.type)}`}>
-                                            <Icon name={item.icon} />
-                                        </div>
-                                        <div className="flex-grow">
-                                            <p className="font-semibold text-[#293c51] dark:text-gray-100">
-                                                {item.title} 
-                                                <span className={`ml-2 px-2 py-0.5 text-xs font-bold rounded-full ${getRiskTagClass(item.type)} capitalize`}>{item.type}</span>
-                                            </p>
-                                            <p className="text-sm text-gray-600 dark:text-gray-300">{item.description}</p>
-                                            <div className="flex items-center text-xs text-gray-400 dark:text-gray-500 mt-1 gap-4">
-                                                <span><Icon name="far fa-clock" className="mr-1" />{item.time}</span>
-                                                {item.user && <span><Icon name="far fa-user" className="mr-1" />{item.user}</span>}
-                                            </div>
-                                        </div>
                                     </div>
                                 ))}
                             </div>

@@ -1,5 +1,7 @@
 
 
+
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation, Outlet, useSearchParams, Link } from 'react-router-dom';
 import { AuthProvider, ThemeProvider, useAuth, AppLayoutContext } from '@/context';
@@ -64,7 +66,8 @@ import {
     StoragePage,
     MonitoringPage,
     BackupPage,
-    DemoBillingPage
+    DemoBillingPage,
+    DistributedFirewallPage
 } from '@/pages';
 
 
@@ -604,7 +607,17 @@ const AppRoutes: React.FC = () => {
                     </Route>
                     
                     {/* CloudEdge Route (Based on AppLayout) */}
-                    <Route path="cloud-edge" element={<CloudEdgeDashboardPage />} />
+                    <Route path="cloud-edge">
+                        <Route index element={<CloudEdgeDashboardPage />} />
+                        <Route path="security/overview" element={<PlaceholderPage />} />
+                        <Route path="security/ids-ips" element={<PlaceholderPage />} />
+                        <Route path="security/suspicious-traffic" element={<PlaceholderPage />} />
+                        <Route path="security/filtering-analysis" element={<PlaceholderPage />} />
+                        <Route path="security/distributed-firewall" element={<DistributedFirewallPage />} />
+                        <Route path="security/gateway-firewall" element={<PlaceholderPage />} />
+                        <Route path="security/ids-ips-malware-prevention" element={<PlaceholderPage />} />
+                        <Route path="administration/organizations" element={<PlaceholderPage />} />
+                    </Route>
                     
                     {/* Email Admin Suite Routes */}
                     <Route path="email-admin-suite">

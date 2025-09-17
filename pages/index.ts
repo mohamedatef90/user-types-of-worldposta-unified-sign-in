@@ -1,7 +1,8 @@
 
+
 export * from './ActionLogsPage';
 export * from './AllNotificationsPage';
-export * from './CloudEdgeLayout';
+export * from './cloud-edge/CloudEdgeLayout';
 export * from './LandingPage';
 export * from './NotFoundPage';
 export * from './SupportPage';
@@ -30,7 +31,7 @@ export * from './customer/CustomerTeamManagementPage';
 export * from './customer/EditTeamUserPage';
 
 export * from './dashboard/AdminDashboardPage';
-export * from './dashboard/CloudEdgeDashboardPage';
+export * from './cloud-edge/CloudEdgeDashboardPage';
 export * from './dashboard/DashboardPage';
 export * from './dashboard/ResellerDashboardPage';
 export * from './dashboard/EmailAdminSmtpLogsPage';
@@ -69,3 +70,4 @@ export * from './products/NetworkingPage';
 export * from './products/StoragePage';
 export * from './products/MonitoringPage';
 export * from './products/BackupPage';
+export * from './cloud-edge/security/DistributedFirewallPage';
