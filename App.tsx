@@ -2,6 +2,9 @@
 
 
 
+
+
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation, Outlet, useSearchParams, Link } from 'react-router-dom';
 import { AuthProvider, ThemeProvider, useAuth, AppLayoutContext } from '@/context';
@@ -67,7 +70,9 @@ import {
     MonitoringPage,
     BackupPage,
     DemoBillingPage,
-    DistributedFirewallPage
+    DistributedFirewallPage,
+    GatewayFirewallPage,
+    IdsIpsMalwarePreventionPage
 } from '@/pages';
 
 
@@ -614,8 +619,8 @@ const AppRoutes: React.FC = () => {
                         <Route path="security/suspicious-traffic" element={<PlaceholderPage />} />
                         <Route path="security/filtering-analysis" element={<PlaceholderPage />} />
                         <Route path="security/distributed-firewall" element={<DistributedFirewallPage />} />
-                        <Route path="security/gateway-firewall" element={<PlaceholderPage />} />
-                        <Route path="security/ids-ips-malware-prevention" element={<PlaceholderPage />} />
+                        <Route path="security/gateway-firewall" element={<GatewayFirewallPage />} />
+                        <Route path="security/ids-ips-malware-prevention" element={<IdsIpsMalwarePreventionPage />} />
                         <Route path="administration/organizations" element={<PlaceholderPage />} />
                     </Route>
                     
