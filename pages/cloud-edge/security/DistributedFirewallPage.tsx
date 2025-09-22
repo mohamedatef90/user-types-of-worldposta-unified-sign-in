@@ -1002,6 +1002,25 @@ export const DistributedFirewallPage: React.FC = () => {
     const [editServicesModalState, setEditServicesModalState] = useState<{ isOpen: boolean; rule: FirewallRule | null; policyId: string | null; }>({ isOpen: false, rule: null, policyId: null });
     const [editRuleAppliedToModalState, setEditRuleAppliedToModalState] = useState<{ isOpen: boolean; rule: FirewallRule | null; policy: FirewallPolicy | null }>({ isOpen: false, rule: null, policy: null });
 
+    const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
+    const actionsMenuRef = useRef<HTMLDivElement>(null);
+    const actionsButtonRef = useRef<HTMLButtonElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                actionsMenuRef.current && !actionsMenuRef.current.contains(event.target as Node) &&
+                actionsButtonRef.current && !actionsButtonRef.current.contains(event.target as Node)
+            ) {
+                setIsActionsMenuOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
     const isReadOnly = useMemo(() => ['All Rules', 'Settings'].includes(activeTab), [activeTab]);
 
     const handleAddRuleClick = () => {
@@ -1272,15 +1291,47 @@ export const DistributedFirewallPage: React.FC = () => {
                 <div className="flex justify-between items-center pb-3 mb-3 border-b border-gray-200 dark:border-slate-700">
                     <div className="flex space-x-6">
                         {tabs.map(tab => (
-                            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`py-2 px-1 text-sm font-medium ${activeTab === tab.id ? 'border-b-2 border-[#679a41] dark:border-emerald-500 text-[#679a41] dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400 hover:text-[#293c51] dark:hover:text-gray-200'}`}>
+                            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`py-2 px-1 text-sm font-medium ${activeTab === tab.id ? 'border-b-2 border-[#679a41] dark:border-emerald-500 text-[#679a41] dark:text-emerald-400' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-[#293c51] dark:hover:text-gray-200'}`}>
                                 {tab.name}
                             </button>
                         ))}
                     </div>
                     <div className="flex items-center space-x-2">
-                        <Button variant="outline" disabled={isReadOnly}>ACTIONS <Icon name="fas fa-chevron-down" className="ml-2 text-xs" /></Button>
-                        <Button variant="outline" disabled={isReadOnly}>REVERT</Button>
-                        <Button variant="primary" disabled={isReadOnly}>PUBLISH</Button>
+                        <div className="relative">
+                            <Button
+                                ref={actionsButtonRef}
+                                variant="outline"
+                                disabled={isReadOnly}
+                                onClick={() => setIsActionsMenuOpen(prev => !prev)}
+                            >
+                                ACTIONS <Icon name="fas fa-chevron-down" className="ml-2 text-xs" />
+                            </Button>
+                            {isActionsMenuOpen && (
+                                <div
+                                    ref={actionsMenuRef}
+                                    className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-slate-700 ring-1 ring-black ring-opacity-5 dark:ring-white dark:ring-opacity-10 focus:outline-none z-10"
+                                >
+                                    <div className="py-1" role="menu">
+                                        <button
+                                            onClick={() => { alert('Save as a draft'); setIsActionsMenuOpen(false); }}
+                                            className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-600"
+                                            role="menuitem"
+                                        >
+                                            <Icon name="fas fa-save" className="mr-3" />
+                                            Save as a draft
+                                        </button>
+                                        <button
+                                            onClick={() => { alert('Export FW configuration'); setIsActionsMenuOpen(false); }}
+                                            className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-600"
+                                            role="menuitem"
+                                        >
+                                            <Icon name="fas fa-file-export" className="mr-3" />
+                                            Export FW configuration
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -1441,7 +1492,7 @@ export const DistributedFirewallPage: React.FC = () => {
                                 {policies.map(policy => (
                                     <React.Fragment key={policy.id}>
                                         <tr className="bg-gray-50 dark:bg-slate-700/50 hover:bg-gray-100 dark:hover:bg-slate-700 h-[52px]">
-                                            <td className="px-4 py-3 text-sm text-[#293c51] dark:text-gray-200 truncate">
+                                            <td className="px-4 py-3 text-sm text-[#293c51] dark:text-gray-200 truncate" colSpan={7}>
                                                 <div className="flex items-center gap-x-2">
                                                     <Icon name="fas fa-ellipsis-v" className="text-gray-400 cursor-pointer" />
                                                     <button onClick={() => togglePolicy(policy.id)} className="text-gray-500 w-5 text-center flex-shrink-0">
@@ -1457,7 +1508,6 @@ export const DistributedFirewallPage: React.FC = () => {
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td colSpan={6}></td>
                                             <td className="px-4 py-3 text-sm">
                                                 <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
                                                     <Icon name="fas fa-check-circle" />
@@ -1465,7 +1515,12 @@ export const DistributedFirewallPage: React.FC = () => {
                                                     <button className="text-sky-500"><Icon name="fas fa-sync-alt" /></button>
                                                 </div>
                                             </td>
-                                            <td className="px-4 py-3 text-right"></td>
+                                            <td className="px-4 py-3 text-right">
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <Button size="icon" variant="ghost" title="Settings" disabled={isReadOnly} className="text-gray-400 hover:text-sky-500"><Icon name="fas fa-cog" /></Button>
+                                                    <Button size="icon" variant="ghost" title="History" disabled={isReadOnly} className="text-gray-400 hover:text-sky-500"><Icon name="fas fa-clock" /></Button>
+                                                </div>
+                                            </td>
                                         </tr>
                                         {policy.isExpanded && (
                                             <>
@@ -1558,7 +1613,7 @@ export const DistributedFirewallPage: React.FC = () => {
                                                         <td className="px-4 py-3 text-right">
                                                             <div className="flex items-center justify-end">
                                                                 <Button size="icon" variant="ghost" title="Settings" disabled={isReadOnly} className="text-gray-400 hover:text-sky-500"><Icon name="fas fa-cog" /></Button>
-                                                                <Button size="icon" variant="ghost" title="History" disabled={isReadOnly} className="text-gray-400 hover:text-sky-500"><Icon name="fas fa-clock" /></Button>
+                                                                <Button size="icon" variant="ghost" title="Statistics" disabled={isReadOnly} className="text-gray-400 hover:text-sky-500"><Icon name="fas fa-chart-bar" /></Button>
                                                             </div>
                                                         </td>
                                                     </tr>
