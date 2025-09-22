@@ -63,12 +63,12 @@ import {
     MonitoringPage,
     BackupPage,
     DemoBillingPage,
+    DistributedFirewallPage,
     GatewayFirewallPage,
     GroupsPage,
     PoliciesPage,
     ServicesPage,
-    IdsIpsMalwarePreventionPage,
-    DistributedFirewallPage
+    IdsIpsMalwarePreventionPage
 } from '@/pages';
 
 
