@@ -1,7 +1,3 @@
-
-
-
-
 export * from './ActionLogsPage';
 export * from './AllNotificationsPage';
 export * from './cloud-edge/CloudEdgeLayout';
@@ -75,3 +71,6 @@ export * from './products/BackupPage';
 export * from './cloud-edge/security/DistributedFirewallPage';
 export * from './cloud-edge/security/GatewayFirewallPage';
 export * from './cloud-edge/security/IdsIpsMalwarePreventionPage';
+export * from './cloud-edge/firewall/GroupsPage';
+export * from './cloud-edge/firewall/PoliciesPage';
+export * from './cloud-edge/firewall/ServicesPage';

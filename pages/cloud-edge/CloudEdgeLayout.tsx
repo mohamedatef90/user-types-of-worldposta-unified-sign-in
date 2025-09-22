@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Link, useLocation, useSearchParams, NavLink, Outlet } from 'react-router-dom';
 import { Icon, FormField, Button, ToggleSwitch, DoughnutChart, FloatingAppLauncher, FeedbackSystem, Breadcrumbs } from '@/components/ui';
@@ -149,12 +148,22 @@ const CloudEdgeSidebar: React.FC<CloudEdgeSidebarProps> = ({ isCollapsed }) => {
                 { name: 'Route', icon: 'fas fa-route', path: '#', collapsible: true, subItems: [] },
                 { name: 'VPN', icon: 'fas fa-user-secret', path: '#', collapsible: true, subItems: [] },
                 { 
+                    name: 'Firewall', 
+                    icon: 'fas fa-fire-alt',
+                    path: '/app/cloud-edge/firewall',
+                    collapsible: true,
+                    subItems: [
+                        { name: 'Groups', icon: 'fas fa-users-cog', path: '/app/cloud-edge/firewall/groups' },
+                        { name: 'Services', icon: 'fas fa-concierge-bell', path: '/app/cloud-edge/firewall/services' },
+                        { name: 'Policies', icon: 'fas fa-file-contract', path: '/app/cloud-edge/firewall/policies' },
+                    ]
+                },
+                { 
                     name: 'Security', 
                     icon: 'fas fa-shield-alt',
                     path: '/app/cloud-edge/security',
                     collapsible: true,
                     subItems: [
-                        { name: 'Security Overview', path: '/app/cloud-edge/security/overview' },
                         { name: 'IDS/IPS', path: '/app/cloud-edge/security/ids-ips' },
                         { name: 'Suspicious Traffic', path: '/app/cloud-edge/security/suspicious-traffic' },
                         { name: 'Filtering and Analysis', path: '/app/cloud-edge/security/filtering-analysis' },
@@ -173,9 +182,13 @@ const CloudEdgeSidebar: React.FC<CloudEdgeSidebarProps> = ({ isCollapsed }) => {
 
     useEffect(() => {
         const currentPath = location.pathname;
+        const newOpenSections: string[] = [];
+        let foundActive = false;
+
+        // Determine active sections based on path
         for (const item of sidebarNavItems) {
-            if ('subItems' in item && item.subItems && item.subItems.length > 0) {
-                 const isChildActive = item.subItems.some(sub => {
+            if ('subItems' in item && item.subItems) {
+                const isTopLevelActive = item.subItems.some(sub => {
                     if (sub.path && sub.path !== '#' && currentPath.startsWith(sub.path)) return true;
                     if ('subItems' in sub && sub.subItems) {
                         return sub.subItems.some(subSub => currentPath.startsWith(subSub.path));
@@ -183,48 +196,69 @@ const CloudEdgeSidebar: React.FC<CloudEdgeSidebarProps> = ({ isCollapsed }) => {
                     return false;
                 });
 
-                if (isChildActive) {
-                     setOpenSections(prev => {
-                        if (!prev.includes(item.name)) {
-                            return [...prev, item.name];
-                        }
-                        return prev;
-                    });
-                }
-
-                for (const subItem of item.subItems) {
-                    if ('subItems' in subItem && subItem.subItems && subItem.subItems.length > 0) {
-                        if (subItem.subItems.some(sub => currentPath.startsWith(sub.path))) {
-                            setOpenSections(prev => {
-                                if (!prev.includes(subItem.name)) {
-                                    return [...prev, subItem.name];
-                                }
-                                return prev;
-                            });
+                if (isTopLevelActive) {
+                    newOpenSections.push(item.name);
+                    // Check for active sub-sections
+                    for (const subItem of item.subItems) {
+                        if ('subItems' in subItem && subItem.subItems) {
+                            if (subItem.subItems.some(sub => currentPath.startsWith(sub.path))) {
+                                newOpenSections.push(subItem.name);
+                            }
                         }
                     }
+                    foundActive = true;
+                    break; // Because top-level sections are mutually exclusive
                 }
             }
         }
+
+        // Default case for dashboard
+        if (!foundActive && (currentPath === '/app/cloud-edge' || currentPath === '/app/cloud-edge/')) {
+            newOpenSections.push('Organization');
+        }
+
+        setOpenSections(newOpenSections);
     }, [location.pathname]);
 
     const toggleSection = (sectionName: string) => {
-        const mutuallyExclusiveSections = ['Administration', 'Organization'];
-        
+        const organizationSubSections = ['Route', 'VPN', 'Firewall', 'Security', 'Backup', 'Scheduled Tasks'];
+
         setOpenSections(prev => {
             const isOpening = !prev.includes(sectionName);
             let newSections = [...prev];
 
             if (isOpening) {
-                newSections.push(sectionName);
-                // If the opened section is one of the exclusive ones, close its counterpart.
-                if (mutuallyExclusiveSections.includes(sectionName)) {
-                    const sectionToClose = sectionName === 'Administration' ? 'Organization' : 'Administration';
-                    newSections = newSections.filter(name => name !== sectionToClose);
+                // Handle top-level exclusivity
+                if (sectionName === 'Administration') {
+                    // Close Organization and all its children
+                    newSections = newSections.filter(name => name !== 'Organization' && !organizationSubSections.includes(name));
+                } else if (sectionName === 'Organization') {
+                    // Close Administration
+                    newSections = newSections.filter(name => name !== 'Administration');
                 }
-            } else {
-                // Just close the clicked one
-                newSections = newSections.filter(name => name !== sectionName);
+
+                // Handle sub-level exclusivity within Organization
+                if (organizationSubSections.includes(sectionName)) {
+                    // Close all other sub-sections
+                    newSections = newSections.filter(name => !organizationSubSections.includes(name));
+                    // Also ensure parent is open and other top-level is closed
+                    if (!newSections.includes('Organization')) newSections.push('Organization');
+                    newSections = newSections.filter(name => name !== 'Administration');
+                }
+                
+                // Finally, add the section we're trying to open
+                if (!newSections.includes(sectionName)) {
+                    newSections.push(sectionName);
+                }
+
+            } else { // Closing
+                if (sectionName === 'Organization') {
+                    // Closing Organization should close all its children
+                    newSections = newSections.filter(name => name !== 'Organization' && !organizationSubSections.includes(name));
+                } else {
+                    // Closing anything else just removes itself
+                    newSections = newSections.filter(name => name !== sectionName);
+                }
             }
             return newSections;
         });
@@ -252,62 +286,68 @@ const CloudEdgeSidebar: React.FC<CloudEdgeSidebarProps> = ({ isCollapsed }) => {
                                         <Icon name={item.icon} fixedWidth className={`${faIconBaseClasses} ${isSectionActive ? iconActiveColor : `${iconBaseColor} ${iconHoverColor}`}`} />
                                         {!isCollapsed && <span className="text-sm">{item.name}</span>}
                                     </div>
-                                    {item.collapsible && !isCollapsed && <Icon name={isSectionOpen ? "fas fa-chevron-down" : "fas fa-chevron-right"} className="w-3 h-3 text-xs transition-transform" />}
+                                    {item.collapsible && !isCollapsed && <Icon name="fas fa-chevron-right" className={`w-3 h-3 text-xs transition-transform transform duration-200 ${isSectionOpen ? 'rotate-90' : 'rotate-0'}`} />}
                                 </button>
-                                {!isCollapsed && isSectionOpen && (
-                                    <ul className="pt-1 pl-6 space-y-1">
-                                        {item.subItems.map(subItem => {
-                                            if ('subItems' in subItem && subItem.subItems && subItem.collapsible) {
-                                                const isSubSectionOpen = openSections.includes(subItem.name);
-                                                const isSubSectionActive = subItem.subItems.some(subSub => subSub.path && location.pathname.startsWith(subSub.path));
-                                                return (
-                                                    <li key={subItem.name}>
-                                                        <button onClick={() => toggleSection(subItem.name)} className={`w-full flex items-center justify-between py-2.5 px-3 rounded-md text-sm transition-colors duration-150 ease-in-out group ${isSubSectionActive ? 'font-bold text-[#293c51] dark:text-gray-100' : `font-medium ${baseTextColor}`} ${hoverBgColor} ${hoverTextColor}`}>
-                                                            <div className="flex items-center">
-                                                                {subItem.icon && <Icon name={subItem.icon} fixedWidth className={`${faIconBaseClasses} ${isSubSectionActive ? iconBaseColor : iconBaseColor} ${!isSubSectionActive ? iconHoverColor : ''}`} />}
-                                                                <span>{subItem.name}</span>
-                                                            </div>
-                                                            <Icon name={isSubSectionOpen ? "fas fa-chevron-down" : "fas fa-chevron-right"} className="w-3 h-3 text-xs transition-transform" />
-                                                        </button>
-                                                        {isSubSectionOpen && (
-                                                            <ul className="pt-1 pl-6 space-y-1">
-                                                                {subItem.subItems.map(subSubItem => (
-                                                                    <li key={subSubItem.name}>
-                                                                        <NavLink to={subSubItem.path} className={({isActive}) => `block py-2 pr-3 pl-5 text-sm font-medium rounded-md ${isActive ? `${activeBgColor} ${activeTextColor}` : `${baseTextColor} ${hoverBgColor} ${hoverTextColor}`}`}>
-                                                                            {subSubItem.name}
-                                                                        </NavLink>
-                                                                    </li>
-                                                                ))}
-                                                            </ul>
-                                                        )}
-                                                    </li>
-                                                );
-                                            }
+                                {!isCollapsed && (
+                                    <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${isSectionOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                                        <div className="overflow-hidden">
+                                            <ul className="pt-1 pl-6 space-y-1">
+                                                {item.subItems.map(subItem => {
+                                                    if ('subItems' in subItem && subItem.subItems && subItem.collapsible) {
+                                                        const isSubSectionOpen = openSections.includes(subItem.name);
+                                                        const isSubSectionActive = subItem.subItems.some(subSub => subSub.path && location.pathname.startsWith(subSub.path));
+                                                        return (
+                                                            <li key={subItem.name}>
+                                                                <button onClick={() => toggleSection(subItem.name)} className={`w-full flex items-center justify-between py-2.5 px-3 rounded-md text-sm transition-colors duration-150 ease-in-out group ${isSubSectionActive ? 'font-bold text-[#293c51] dark:text-gray-100' : `font-medium ${baseTextColor}`} ${hoverBgColor} ${hoverTextColor}`}>
+                                                                    <div className="flex items-center">
+                                                                        {subItem.icon && <Icon name={subItem.icon} fixedWidth className={`${faIconBaseClasses} ${isSubSectionActive ? iconBaseColor : iconBaseColor} ${!isSubSectionActive ? iconHoverColor : ''}`} />}
+                                                                        <span>{subItem.name}</span>
+                                                                    </div>
+                                                                    <Icon name="fas fa-chevron-right" className={`w-3 h-3 text-xs transition-transform transform duration-200 ${isSubSectionOpen ? 'rotate-90' : 'rotate-0'}`} />
+                                                                </button>
+                                                                <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${isSubSectionOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                                                                    <div className="overflow-hidden">
+                                                                        <ul className="pt-1 pl-6 space-y-1">
+                                                                            {subItem.subItems.map(subSubItem => (
+                                                                                <li key={subSubItem.name}>
+                                                                                    <NavLink to={subSubItem.path} className={({isActive}) => `block py-2 pr-3 pl-5 text-sm font-medium rounded-md ${isActive ? `${activeBgColor} ${activeTextColor}` : `${baseTextColor} ${hoverBgColor} ${hoverTextColor}`}`}>
+                                                                                        {subSubItem.name}
+                                                                                    </NavLink>
+                                                                                </li>
+                                                                            ))}
+                                                                        </ul>
+                                                                    </div>
+                                                                </div>
+                                                            </li>
+                                                        );
+                                                    }
 
-                                            const isNoActiveStateSubItem = noActiveStateItems.includes(subItem.name);
-                                            if (isNoActiveStateSubItem) {
-                                                return (
-                                                    <li key={subItem.name}>
-                                                        <a href={subItem.path} className={`flex items-center py-2.5 px-3 rounded-md text-sm font-medium transition-colors duration-150 ease-in-out group ${baseTextColor} ${hoverBgColor} ${hoverTextColor}`}>
-                                                            {subItem.icon && <Icon name={subItem.icon} fixedWidth className={`${faIconBaseClasses} ${iconBaseColor} ${iconHoverColor}`} />}
-                                                            <span>{subItem.name}</span>
-                                                        </a>
-                                                    </li>
-                                                );
-                                            }
+                                                    const isNoActiveStateSubItem = noActiveStateItems.includes(subItem.name);
+                                                    if (isNoActiveStateSubItem) {
+                                                        return (
+                                                            <li key={subItem.name}>
+                                                                <a href={subItem.path} className={`flex items-center py-2.5 px-3 rounded-md text-sm font-medium transition-colors duration-150 ease-in-out group ${baseTextColor} ${hoverBgColor} ${hoverTextColor}`}>
+                                                                    {subItem.icon && <Icon name={subItem.icon} fixedWidth className={`${faIconBaseClasses} ${iconBaseColor} ${iconHoverColor}`} />}
+                                                                    <span>{subItem.name}</span>
+                                                                </a>
+                                                            </li>
+                                                        );
+                                                    }
 
-                                            return (
-                                                <li key={subItem.name}>
-                                                    <NavLink to={subItem.path} className={({isActive}) => `flex items-center py-2.5 px-3 rounded-md text-sm font-medium transition-colors duration-150 ease-in-out group ${isActive ? `${activeBgColor} ${activeTextColor}` : `${baseTextColor} ${hoverBgColor} ${hoverTextColor}`}`}>
-                                                        {({isActive}) => (<>
-                                                            {subItem.icon && <Icon name={subItem.icon} fixedWidth className={`${faIconBaseClasses} ${isActive ? iconActiveColor : `${iconBaseColor} ${iconHoverColor}`}`} />}
-                                                            <span>{subItem.name}</span>
-                                                        </>)}
-                                                    </NavLink>
-                                                </li>
-                                            );
-                                        })}
-                                    </ul>
+                                                    return (
+                                                        <li key={subItem.name}>
+                                                            <NavLink to={subItem.path} className={({isActive}) => `flex items-center py-2.5 px-3 rounded-md text-sm font-medium transition-colors duration-150 ease-in-out group ${isActive ? `${activeBgColor} ${activeTextColor}` : `${baseTextColor} ${hoverBgColor} ${hoverTextColor}`}`}>
+                                                                {({isActive}) => (<>
+                                                                    {subItem.icon && <Icon name={subItem.icon} fixedWidth className={`${faIconBaseClasses} ${isActive ? iconActiveColor : `${iconBaseColor} ${iconHoverColor}`}`} />}
+                                                                    <span>{subItem.name}</span>
+                                                                </>)}
+                                                            </NavLink>
+                                                        </li>
+                                                    );
+                                                })}
+                                            </ul>
+                                        </div>
+                                    </div>
                                 )}
                             </div>
                         );
