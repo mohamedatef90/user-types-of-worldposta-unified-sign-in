@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation, Outlet, useSearchParams, Link } from 'react-router-dom';
 import { AuthProvider, ThemeProvider, useAuth, AppLayoutContext } from '@/context';
@@ -38,6 +39,7 @@ import {
     CloudEdgeDashboardPage,
     EmailAdminSubscriptionsPage,
     CloudEdgeConfigurationsPage,
+    AddCloudEdgeConfigurationPage,
     PostaPricingPage,
     CreateTicketPage,
     EmailAdminSmtpLogsPage,
@@ -68,7 +70,9 @@ import {
     GroupsPage,
     PoliciesPage,
     ServicesPage,
-    IdsIpsMalwarePreventionPage
+    IdsIpsMalwarePreventionPage,
+    BlogsCenterPage,
+    BlogDetailsPage // Added import
 } from '@/pages';
 
 
@@ -166,13 +170,7 @@ const getAppLauncherItems = (role: User['role'] | undefined): ApplicationCardDat
             iconName: 'fas fa-file-invoice', 
             launchUrl: '/app/invoices',
         },
-        {
-            id: 'user-management',
-            name: 'Users Management',
-            description: 'Manage team members, user groups, and their permissions.',
-            iconName: 'fas fa-users-cog',
-            launchUrl: '/app/team-management',
-        },
+        // Removed User Management from launcher as requested for dashboard
         {
             id: 'support',
             name: 'Support Center',
@@ -186,6 +184,13 @@ const getAppLauncherItems = (role: User['role'] | undefined): ApplicationCardDat
             description: 'Review a detailed history of all activities and events on your account.',
             iconName: 'fas fa-history',
             launchUrl: '/app/action-logs',
+        },
+        {
+            id: 'blogs-center',
+            name: 'Blogs Center',
+            description: 'Access the latest security news, updates, and expert insights.',
+            iconName: 'fas fa-newspaper',
+            launchUrl: '/app/blogs-center',
         },
     ];
 
@@ -341,6 +346,7 @@ const AppLayout: React.FC = () => {
             'shared-contacts': 'Shared Contacts',
             'rules': 'Rules',
             'bulk-module': 'Bulk Module',
+            'blogs-center': 'Blogs Center',
         };
         
         const getLabel = (value: string) => {
@@ -374,7 +380,10 @@ const AppLayout: React.FC = () => {
                 if (value === 'dashboard') return; 
 
                 const to = `/app/${pathnames.slice(1, index + 2).join('/')}?viewAsUser=${viewAsUserId}&returnTo=${encodeURIComponent(returnToPath)}`;
-                const label = getLabel(value);
+                let label = getLabel(value);
+                if (value === 'add' && segmentsToProcess[index - 1] === 'cloudedge-configurations') {
+                    label = 'Add Configuration';
+                }
                 crumbs.push({ label, path: to });
             });
             
@@ -415,7 +424,10 @@ const AppLayout: React.FC = () => {
             }
 
             const to = `/app/${pathnames.slice(1, index + 2).join('/')}`;
-            const label = getLabel(value);
+            let label = getLabel(value);
+            if (value === 'add' && segmentsToProcess[index - 1] === 'cloudedge-configurations') {
+                label = 'Add Configuration';
+            }
             if (label !== 'Dashboard' && label !== 'App' && label !== 'Home') {
                  crumbs.push({ label, path: to });
             }
@@ -542,7 +554,9 @@ const AppRoutes: React.FC = () => {
     
     return (
         <Routes>
-            <Route path="/" element={<LandingPage />} />
+            {/* Root route logic: Redirect to /app if authenticated, else show LandingPage */}
+            <Route path="/" element={isAuthenticated ? <Navigate to="/app" replace /> : <LandingPage />} />
+            
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/email-verification" element={<EmailVerificationPage />} />
@@ -555,11 +569,15 @@ const AppRoutes: React.FC = () => {
                     
                     {/* Customer Routes */}
                     <Route path="dashboard" element={<DashboardPage />} />
+                    <Route path="blogs-center" element={<BlogsCenterPage />} />
+                    <Route path="blogs-center/:blogId" element={<BlogDetailsPage />} />
                     <Route path="profile" element={<ProfilePage />} />
                     <Route path="billing" element={<BillingSettingsPage />} />
                     <Route path="billing/email-subscriptions" element={<EmailAdminSubscriptionsPage />} />
                     <Route path="billing/email-configurations" element={<EmailConfigurationsPage />} />
                     <Route path="billing/cloudedge-configurations" element={<CloudEdgeConfigurationsPage />} />
+                    <Route path="billing/cloudedge-configurations/add" element={<AddCloudEdgeConfigurationPage />} />
+                    <Route path="billing/cloudedge-configurations/edit/:configId" element={<AddCloudEdgeConfigurationPage />} />
                     <Route path="invoices" element={<InvoiceRouterPage />}>
                         <Route index element={<InvoiceHistoryPage />} />
                         <Route path=":invoiceId" element={<InvoiceDetailPage />} />

@@ -1,3 +1,4 @@
+
 export * from './AuthLayout';
 export * from './Breadcrumbs';
 export * from './Button';
@@ -31,3 +32,4 @@ export * from './StatCard';
 export * from './Pagination';
 export * from './DashboardCustomizationMenu';
 export * from './FloatingActionMenu';
+export * from './BlogCard';

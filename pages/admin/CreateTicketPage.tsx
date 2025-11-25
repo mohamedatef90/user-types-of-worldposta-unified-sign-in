@@ -1,4 +1,6 @@
 
+
+
 import React, { useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, Button, FormField, SearchableSelect, Icon } from '@/components/ui';
@@ -11,8 +13,10 @@ export const CreateTicketPage: React.FC = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [formData, setFormData] = useState({
-        requestType: 'Incident' as SupportTicketRequestType,
-        priority: 'Medium' as SupportTicketPriority,
+        // FIX: 'Incident' is not a valid SupportTicketRequestType. Changed to 'Issue'.
+        requestType: 'Issue' as SupportTicketRequestType,
+        // FIX: 'Medium' is not a valid SupportTicketPriority. Changed to 'Normal'.
+        priority: 'Normal' as SupportTicketPriority,
         customerId: '',
         subject: '',
         department: 'Technical Support' as SupportTicketDepartment,
@@ -95,9 +99,10 @@ export const CreateTicketPage: React.FC = () => {
                         onChange={handleFormChange}
                         required
                     >
-                        <option value="Incident">Incident</option>
-                        <option value="Question">Question</option>
-                        <option value="Problem">Problem</option>
+                        {/* FIX: Changed 'Incident' to 'Issue' to match type definition */}
+                        <option value="Issue">Issue</option>
+                        <option value="Inquiry">Inquiry</option>
+                        <option value="Task">Task</option>
                         <option value="Feature Request">Feature Request</option>
                     </FormField>
                     <FormField
@@ -110,7 +115,8 @@ export const CreateTicketPage: React.FC = () => {
                         required
                     >
                         <option value="Low">Low</option>
-                        <option value="Medium">Medium</option>
+                        {/* FIX: Changed 'Medium' to 'Normal' to match type definition */}
+                        <option value="Normal">Normal</option>
                         <option value="High">High</option>
                         <option value="Urgent">Urgent</option>
                     </FormField>

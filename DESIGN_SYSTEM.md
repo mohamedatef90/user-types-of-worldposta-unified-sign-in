@@ -1,4 +1,3 @@
-
 # WorldPosta SSO Design System
 
 This document outlines the design system for the WorldPosta SSO application. It is designed to ensure clarity, consistency, and efficiency across all WorldPosta services.
@@ -39,28 +38,37 @@ We use a system font stack for optimal performance and a native feel across all 
     *   **Card/Section Titles (h2)**: `text-xl font-semibold`
     *   **Sub-headings (h3)**: `text-lg font-medium`
     *   **Body Text**: `text-sm` for most content, `text-base` for primary paragraphs.
-    *   **Labels & Metadata**: `text-xs` for less critical information like timestamps or table headers.
+    
+## 4. Components
 
-## 4. Layout & Spacing
+This section details some of the key UI components used throughout the application.
 
-*   **Overall Layout**: The application uses a persistent sidebar navigation pattern. The main structure is a two-column layout: a fixed-width sidebar and a main content area that handles scrolling.
-*   **Specialized Layouts**: Services like **CloudEdge** and **Posta Email services** have their own dedicated layouts. This creates a focused, "app-within-an-app" experience, reducing clutter and tailoring the navigation to the service's specific needs.
-*   **Grid System**: We heavily utilize CSS Grid and Flexbox. Responsive grids (`grid-cols-1 md:grid-cols-2 lg:grid-cols-4`) are used for dashboard cards and other collections of items.
-*   **Spacing**: We follow a consistent spacing scale based on Tailwind's defaults (multiples of 4px). This applies to padding (`p-6` in cards), margins, and gaps (`space-y-4`, `gap-6`).
+### Old Version Page Announcement Banner
 
-## 5. Component System
+This banner is used on the "Old Version" page to inform users about upcoming UI changes. It's designed to be eye-catching yet non-disruptive.
 
-Our UI is built from a library of reusable and consistent components.
+*   **Container & Layout**:
+    *   A full-width block element with `p-4` padding.
+    *   Uses `relative` positioning to contain decorative elements.
+    *   `overflow-hidden` is applied to elegantly clip the decorative circles.
+    *   `rounded-lg` corners and `shadow-lg` for depth.
+    *   Uses Flexbox for alignment (`flex items-center justify-center`), adapting from centered on mobile to left-aligned on larger screens (`sm:text-left`).
 
-*   **Card (`Card.tsx`)**: The primary content container. Features `rounded-xl` corners, `p-6` padding, and a subtle shadow.
-*   **Button (`Button.tsx`)**: The main interactive element with clear variants:
-    *   **Primary**: Solid brand color (`#679a41`) for the main call-to-action.
-    *   **Outline**: Transparent background with a brand-colored border.
-    *   **Ghost**: Fully transparent for tertiary actions.
-    *   **Danger**: Red for destructive actions.
-*   **FormField (`FormField.tsx`)**: Provides a consistent experience for all data entry with a standard border, a highlighted focus ring, and a distinct error state.
-*   **Navigation**:
-    *   **Sidebar (`Sidebar.tsx`)**: Collapsible on desktop, slides in as an overlay on mobile. Active links are highlighted.
-    *   **Navbar (`Navbar.tsx`)**: Contains global elements like the user profile, notifications, and the **Floating App Launcher**.
-*   **Modals (`Modal.tsx`)**: Used for focused tasks. Appears with a backdrop to dim the background content.
-*   **Data Visualization**: Charts are designed to be clean and readable, using the application's color palette.
+*   **Background & Effects**:
+    *   Features a horizontal `bg-gradient-to-r` from `from-sky-500 to-emerald-500`.
+    *   Includes two decorative, semi-transparent circular elements (`bg-white/10 rounded-full opacity-50`) positioned absolutely at the top-left and bottom-right corners to add visual interest.
+
+*   **Typography**:
+    *   **Heading**: `font-bold text-lg` and `text-white`.
+    *   **Body Text**: `text-white/90 text-sm`.
+
+*   **Iconography**:
+    *   **Main Icon**: A `fas fa-rocket` icon. It is styled to be large (`text-3xl`), semi-transparent (`text-white/80`), and includes a subtle `animate-pulse` effect. It's hidden on small screens (`hidden sm:block`).
+    *   **Dismiss Icon**: A `fas fa-times` icon inside a button for closing the banner.
+
+*   **Interactivity**:
+    *   The entire banner is dismissible via a close button in the top-right corner.
+    *   The dismiss button has a `hover:bg-white/20` effect for visual feedback.
+
+*   **Animation**:
+    *   The banner appears with a subtle fade-in and upward translation effect using a custom `animate-fade-in` animation.

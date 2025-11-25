@@ -1,4 +1,6 @@
 
+
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 // FIX: Import Tooltip component to resolve 'Cannot find name' error.
 import { Card, Stepper, FormField, Button, Icon, Tooltip } from '@/components/ui';
@@ -443,11 +445,9 @@ export const OrgsAndDomainsPage: React.FC = () => {
                                     <td className="px-4 py-3 text-sm text-center">{d.subDomainCount}</td>
                                     <td className="px-4 py-3 text-center"><StatusIcon verified={d.isDomainVerified} /></td>
                                     <td className="px-4 py-3 text-center">
-                                        {/* FIX: Changed button variant from "link" to "ghost" and added link-like styling. */}
                                         {d.isMxVerified ? <StatusIcon verified={true} /> : <Button variant="ghost" size="sm" onClick={() => handleVerifyNowClick(d)} className="text-[#679a41] dark:text-emerald-400 hover:underline p-0 h-auto">Verify Now</Button>}
                                     </td>
                                     <td className="px-4 py-3 text-center">
-                                         {/* FIX: Changed button variant from "link" to "ghost" and added link-like styling. */}
                                          {d.isSpfVerified ? <StatusIcon verified={true} /> : <Button variant="ghost" size="sm" onClick={() => handleVerifyNowClick(d)} className="text-[#679a41] dark:text-emerald-400 hover:underline p-0 h-auto">Verify Now</Button>}
                                     </td>
                                 </tr>

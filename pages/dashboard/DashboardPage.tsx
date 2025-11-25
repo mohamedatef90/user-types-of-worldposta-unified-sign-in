@@ -1,5 +1,8 @@
 
 
+
+
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context';
@@ -741,14 +744,6 @@ export const DashboardPage: React.FC = () => { // This is the Customer Dashboard
           section: 'application',
         },
         {
-          id: 'user-management',
-          name: 'Users Management',
-          description: 'Manage team members, user groups, and their permissions.',
-          iconName: 'fas fa-users-cog',
-          launchUrl: '/app/team-management',
-          section: 'application',
-        },
-        {
           id: 'support',
           name: 'Support Center',
           description: 'Access knowledge base or create support tickets with our team.',
@@ -772,6 +767,14 @@ export const DashboardPage: React.FC = () => { // This is the Customer Dashboard
           launchUrl: '/app/monitoring',
           section: 'application',
         },
+        {
+          id: 'blogs-center',
+          name: 'Blogs Center',
+          description: 'Access the latest security news, updates, and expert insights.',
+          iconName: 'fas fa-newspaper',
+          launchUrl: '/app/blogs-center',
+          section: 'application',
+        },
       ];
 
     if (loggedInUser?.role === 'reseller' && viewAsUserId) {
@@ -787,10 +790,6 @@ export const DashboardPage: React.FC = () => { // This is the Customer Dashboard
             'monitoring',
         ];
         portals = portals.filter(p => !customerHiddenCardIds.includes(p.id));
-    }
-
-    if (userToDisplay?.role !== 'customer') {
-        portals = portals.filter(p => p.id !== 'user-management');
     }
     
     return portals;

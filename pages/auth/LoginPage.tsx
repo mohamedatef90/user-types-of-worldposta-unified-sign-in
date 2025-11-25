@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { AuthLayout, FormField, Button } from '@/components/ui';
 import { useAuth } from '@/context';
 
@@ -9,7 +9,6 @@ export const LoginPage: React.FC = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const { login, isLoading } = useAuth();
-  const location = useLocation();
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,12 +18,8 @@ export const LoginPage: React.FC = () => {
       return;
     }
     try {
-      const sessionRedirect = sessionStorage.getItem('loginRedirectPath');
-      const from = location.state?.from?.pathname || sessionRedirect;
-      if (sessionRedirect) {
-        sessionStorage.removeItem('loginRedirectPath');
-      }
-      await login(email, password, from);
+      // Always redirect to the default dashboard upon successful login.
+      await login(email, password);
     } catch (err: any) {
       setError(err.message || 'Login failed. Please try again.');
     }
@@ -33,12 +28,8 @@ export const LoginPage: React.FC = () => {
   const handleRoleLogin = async (roleEmail: string, rolePass: string) => {
     setError('');
     try {
-      const sessionRedirect = sessionStorage.getItem('loginRedirectPath');
-      const from = location.state?.from?.pathname || sessionRedirect;
-      if (sessionRedirect) {
-        sessionStorage.removeItem('loginRedirectPath');
-      }
-      await login(roleEmail, rolePass, from);
+      // Always redirect to the default dashboard upon successful login.
+      await login(roleEmail, rolePass);
     } catch (err: any) {
       setError(err.message || `Demo login for ${roleEmail} failed.`);
     }

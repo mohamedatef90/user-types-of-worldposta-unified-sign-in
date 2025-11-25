@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, Icon } from '@/components/ui';
 import { Link } from 'react-router-dom';
 import { useAppLayout } from '@/context';
@@ -98,8 +98,32 @@ const ticketItems = [
 
 export const OldVersionPage: React.FC = () => {
     const { isDomainVerifiedForDemo } = useAppLayout();
+    const [isBannerVisible, setBannerVisible] = useState(true);
+
     return (
         <div className="space-y-6">
+            {isBannerVisible && (
+                <div className="relative p-4 mb-6 overflow-hidden rounded-lg bg-gradient-to-r from-sky-500 to-emerald-500 dark:from-sky-600 dark:to-emerald-600 shadow-lg animate-fade-in">
+                    <div className="absolute -top-4 -left-4 w-24 h-24 bg-white/10 rounded-full opacity-50"></div>
+                    <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-white/10 rounded-full opacity-50"></div>
+                    <div className="relative flex items-center justify-center">
+                        <div className="flex items-center text-white text-center sm:text-left">
+                            <Icon name="fas fa-rocket" className="hidden sm:block text-3xl text-white/80 mr-4 animate-pulse flex-shrink-0" />
+                            <div>
+                                <h3 className="font-bold text-lg">A New Experience is Coming!</h3>
+                                <p className="text-white/90 text-sm mt-1">We're working on an updated dashboard. Stay tuned for a fresh new look.</p>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={() => setBannerVisible(false)}
+                            className="absolute top-2 right-2 p-2 rounded-full hover:bg-white/20 transition-colors"
+                            aria-label="Dismiss announcement"
+                        >
+                            <Icon name="fas fa-times" className="text-white" />
+                        </button>
+                    </div>
+                </div>
+            )}
             <StatsGrid isVerified={isDomainVerifiedForDemo} />
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
                 <div className="lg:col-span-2 space-y-6">

@@ -25,6 +25,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ navItems, isOpen, isCollapsed,
   const settingsNavItem: NavItem = { name: 'Settings', path: '/app/settings', iconName: "fas fa-cog" };
   
   const additionalNavItems: NavItem[] = [
+    { name: "What's News", path: '/app/blogs-center', iconName: 'fas fa-newspaper' },
     { name: 'Workspace Hub', path: 'https://cloudspace.worldposta.com/index.php/login', iconUrl: 'https://www.worldposta.com/assets/CloudSpace.png' },
     { name: 'Mail In-box', path: 'https://mail.worldposta.com/owa/auth/logon.aspx?replaceCurrent=1&url=https://mail.worldposta.com/owa/', iconUrl: 'https://www.worldposta.com/assets/Newhomeimgs/postaImgs/Microsoft_Exchange_(2019-present)%201.png' },
   ];
@@ -97,27 +98,60 @@ export const Sidebar: React.FC<SidebarProps> = ({ navItems, isOpen, isCollapsed,
         
         <div className="px-2 pb-2 pt-0 mt-auto">
             {additionalNavItems.map((item) => {
-                 const commonClasses = `flex items-center py-2.5 rounded-md text-sm font-medium transition-colors duration-150 ease-in-out group ${baseTextColor} ${hoverBgColor} ${hoverTextColor} ${isCollapsed ? 'px-3 justify-center' : 'px-3'}`;
-                 const currentFaIconClasses = `${faIconBaseClasses} ${iconBaseColor} ${iconHoverColor}`;
+                 const isInternal = item.path.startsWith('/');
+                 const commonClassesBase = `flex items-center py-2.5 rounded-md text-sm font-medium transition-colors duration-150 ease-in-out group ${isCollapsed ? 'px-3 justify-center' : 'px-3'} mb-1`;
 
-                return (
-                    <a
-                        key={item.name}
-                        href={item.path}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title={isCollapsed ? item.name : undefined}
-                        className={`${commonClasses} mb-1`} 
-                        onClick={isOpen ? onClose : undefined}
-                    >
-                        {item.iconUrl ? (
-                           <img src={item.iconUrl} alt={`${item.name} icon`} className={imageIconClasses} />
-                        ) : item.iconName ? (
-                            <Icon name={item.iconName} fixedWidth className={currentFaIconClasses} />
-                        ) : null}
-                        {!isCollapsed && <span>{item.name}</span>}
-                    </a>
-                );
+                 if (isInternal) {
+                     return (
+                        <NavLink
+                            key={item.name}
+                            to={item.path}
+                            onClick={isOpen ? onClose : undefined}
+                            title={isCollapsed ? item.name : undefined}
+                            className={({ isActive }) =>
+                                `${commonClassesBase} ${isActive
+                                    ? `${activeBgColor} ${activeTextColor} shadow-inner`
+                                    : `${baseTextColor} ${hoverBgColor} ${hoverTextColor}`
+                                }`
+                            }
+                        >
+                            {({ isActive }) => (
+                                <>
+                                    {item.iconUrl ? (
+                                        <img src={item.iconUrl} alt={`${item.name} icon`} className={`${imageIconClasses} ${isActive ? 'opacity-100' : 'opacity-90'}`} />
+                                    ) : item.iconName ? (
+                                        <Icon 
+                                            name={item.iconName} 
+                                            fixedWidth 
+                                            className={`${faIconBaseClasses} ${isActive ? iconActiveColor : `${iconBaseColor} ${iconHoverColor}`}`} 
+                                        />
+                                    ) : null}
+                                    {!isCollapsed && <span>{item.name}</span>}
+                                </>
+                            )}
+                        </NavLink>
+                     );
+                 } else {
+                     const currentFaIconClasses = `${faIconBaseClasses} ${iconBaseColor} ${iconHoverColor}`;
+                     return (
+                        <a
+                            key={item.name}
+                            href={item.path}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={isCollapsed ? item.name : undefined}
+                            className={`${commonClassesBase} ${baseTextColor} ${hoverBgColor} ${hoverTextColor}`}
+                            onClick={isOpen ? onClose : undefined}
+                        >
+                            {item.iconUrl ? (
+                               <img src={item.iconUrl} alt={`${item.name} icon`} className={imageIconClasses} />
+                            ) : item.iconName ? (
+                                <Icon name={item.iconName} fixedWidth className={currentFaIconClasses} />
+                            ) : null}
+                            {!isCollapsed && <span>{item.name}</span>}
+                        </a>
+                    );
+                 }
             })}
 
             <NavLink

@@ -1,4 +1,8 @@
 
+
+
+
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, Button, Modal, FormField, Icon, CollapsibleSection, SearchableSelect, Pagination } from '@/components/ui';
@@ -22,7 +26,8 @@ const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ isOpen, onClose, 
         description: '',
     };
     const [formData, setFormData] = useState(initialFormState);
-    const [attachments, setAttachments] = useState<File[]>([]);
+    // FIX: Change state to store TicketAttachment[] directly for consistency and type safety.
+    const [attachments, setAttachments] = useState<TicketAttachment[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -30,9 +35,39 @@ const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ isOpen, onClose, 
         setFormData(prev => ({ ...prev, [name]: value }));
     };
     
+    // FIX: Refactor file handling to be robust and async, creating TicketAttachment objects immediately.
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
-            setAttachments(prev => [...prev, ...Array.from(e.target.files)]);
+            const files = Array.from(e.target.files);
+            const attachmentPromises = files.map((file: File): Promise<TicketAttachment> => {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (readEvt) => {
+                        const dataUrl = readEvt.target?.result as string;
+                        if (dataUrl) {
+                            resolve({
+                                name: file.name,
+                                type: file.type,
+                                size: file.size,
+                                dataUrl: dataUrl,
+                            });
+                        } else {
+                            reject(new Error(`Failed to read file: ${file.name}`));
+                        }
+                    };
+                    reader.onerror = (error) => reject(error);
+                    reader.readAsDataURL(file);
+                });
+            });
+
+            Promise.all(attachmentPromises)
+                .then(newAttachmentsArray => {
+                    setAttachments(prev => [...prev, ...newAttachmentsArray]);
+                })
+                .catch(error => {
+                    console.error("Error reading attachments:", error);
+                    alert("An error occurred while attaching files.");
+                });
         }
     };
     
@@ -49,14 +84,8 @@ const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ isOpen, onClose, 
             return;
         }
 
-        const finalAttachments: TicketAttachment[] = attachments.map(file => ({
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            dataUrl: '', // This would be populated by an upload service
-        }));
-
-        onSubmit({ ...formData, attachments: finalAttachments });
+        // FIX: Attachments are now already in the correct format.
+        onSubmit({ ...formData, attachments });
         // Reset form state after submission
         setFormData(initialFormState);
         setAttachments([]);
@@ -144,20 +173,39 @@ const ViewTicketModal: React.FC<ViewTicketModalProps> = ({ isOpen, onClose, tick
 
     const isUserAdminOrReseller = currentUser?.role === 'admin' || currentUser?.role === 'reseller';
 
+    // FIX: Refactor file handling to use Promise.all for robustness, which may resolve cascading type errors.
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const files = Array.from(e.target.files);
-            files.forEach(file => {
-                const reader = new FileReader();
-                reader.onload = (readEvt) => {
-                    const newAttachment: TicketAttachment = {
-                        name: file.name, type: file.type, size: file.size,
-                        dataUrl: readEvt.target?.result as string,
+            const attachmentPromises = files.map((file: File): Promise<TicketAttachment> => {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (readEvt) => {
+                        const dataUrl = readEvt.target?.result as string;
+                        if (dataUrl) {
+                            resolve({
+                                name: file.name,
+                                type: file.type,
+                                size: file.size,
+                                dataUrl: dataUrl,
+                            });
+                        } else {
+                            reject(new Error(`Failed to read file: ${file.name}`));
+                        }
                     };
-                    setNewAttachments(prev => [...prev, newAttachment]);
-                };
-                reader.readAsDataURL(file);
+                    reader.onerror = (error) => reject(error);
+                    reader.readAsDataURL(file);
+                });
             });
+    
+            Promise.all(attachmentPromises)
+                .then(newAttachmentsArray => {
+                    setNewAttachments(prev => [...prev, ...newAttachmentsArray]);
+                })
+                .catch(error => {
+                    console.error("Error reading attachments:", error);
+                    alert("An error occurred while attaching files.");
+                });
         }
     };
     
@@ -428,13 +476,13 @@ const KnowledgeBaseModal: React.FC<{
 
     const groupedArticles = useMemo(() => {
         return filteredArticles.reduce((acc, article) => {
-            const category = article.category as keyof typeof acc;
+            const category = article.category;
             if (!acc[category]) {
                 acc[category] = [];
             }
             acc[category].push(article);
             return acc;
-        }, {} as Record<KnowledgeBaseArticle['category'], KnowledgeBaseArticle[]>);
+        }, {} as Record<string, KnowledgeBaseArticle[]>);
     }, [filteredArticles]);
 
     return (
@@ -455,7 +503,7 @@ const KnowledgeBaseModal: React.FC<{
                         Object.entries(groupedArticles).map(([category, articlesInCategory]) => (
                             <div key={category}>
                                 <h4 className="font-semibold text-lg mb-2 text-[#293c51] dark:text-gray-200">{category}</h4>
-                                {articlesInCategory.map(article => (
+                                {(articlesInCategory as KnowledgeBaseArticle[]).map(article => (
                                     <CollapsibleSection key={article.id} title={article.question}>
                                         <p className="text-sm text-gray-600 dark:text-gray-400 p-2">{article.answer}</p>
                                     </CollapsibleSection>

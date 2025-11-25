@@ -1,3 +1,4 @@
+
 export * from './ActionLogsPage';
 export * from './AllNotificationsPage';
 export * from './cloud-edge/CloudEdgeLayout';
@@ -18,6 +19,7 @@ export * from './auth/SignupPage';
 
 export * from './billing/BillingSettingsPage';
 export * from './billing/CloudEdgeConfigurationsPage';
+export * from './billing/AddCloudEdgeConfigurationPage';
 export * from './billing/EmailAdminSubscriptionsPage';
 export * from './billing/EmailConfigurationsPage';
 export * from './billing/InvoiceDetailPage';
@@ -34,6 +36,8 @@ export * from './dashboard/DashboardPage';
 export * from './dashboard/ResellerDashboardPage';
 export * from './dashboard/EmailAdminSmtpLogsPage';
 export * from './dashboard/EmailAdminSuiteDashboardPage';
+export * from './dashboard/BlogsCenterPage';
+export * from './dashboard/BlogDetailsPage'; // Added export
 export * from './dashboard/email_admin_suite/PlaceholderPage';
 export * from './dashboard/email_admin_suite/OrgsAndDomainsPage';
 export * from './dashboard/email_admin_suite/MailboxesPage';
