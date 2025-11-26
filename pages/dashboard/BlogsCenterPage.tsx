@@ -1,19 +1,10 @@
-
 import React from 'react';
 import { Card, Button, Icon } from '@/components/ui';
 import { useNavigate } from 'react-router-dom';
 import { DEMO_BLOGS, BlogPost } from './BlogsData';
 
 const BlogRow: React.FC<{ blog: BlogPost; onClick: () => void }> = ({ blog, onClick }) => (
-    <Card className="flex flex-col sm:flex-row overflow-hidden !p-0 group hover:shadow-lg transition-all duration-300 border border-gray-200 dark:border-slate-700 cursor-pointer mb-4" onClick={onClick}>
-      <div className="relative w-full sm:w-64 h-48 sm:h-auto flex-shrink-0 overflow-hidden">
-        <img 
-          src={blog.thumbnail} 
-          alt={blog.title} 
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
-        />
-      </div>
-      <div className="p-6 flex-grow flex flex-col justify-center">
+    <Card className="group hover:shadow-lg transition-all duration-300 border border-gray-200 dark:border-slate-700 cursor-pointer mb-4" onClick={onClick}>
         <div className="flex items-center justify-between mb-2">
             <div className="flex flex-wrap gap-2">
             {blog.tags.map(tag => (
@@ -38,7 +29,6 @@ const BlogRow: React.FC<{ blog: BlogPost; onClick: () => void }> = ({ blog, onCl
                 Read More <Icon name="fas fa-arrow-right" className="ml-1 text-xs" />
             </Button>
         </div>
-      </div>
     </Card>
 );
 
