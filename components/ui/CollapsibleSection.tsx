@@ -10,13 +10,36 @@ interface CollapsibleSectionProps {
   items?: string[]; 
   itemClassName?: string; 
   seeMoreLinkClassName?: string;
+  isOpen?: boolean; // Add controlled state prop
+  onToggle?: () => void; // Add controlled state handler
 }
 
 export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({ 
-    title, children, initialOpen = false, className, maxItemsToShow, items, itemClassName = "text-sm text-gray-600 dark:text-gray-400", seeMoreLinkClassName = "text-xs text-[#679a41] dark:text-emerald-400 hover:underline mt-1"
+    title, 
+    children, 
+    initialOpen = false, 
+    className, 
+    maxItemsToShow, 
+    items, 
+    itemClassName = "text-sm text-gray-600 dark:text-gray-400", 
+    seeMoreLinkClassName = "text-xs text-[#679a41] dark:text-emerald-400 hover:underline mt-1",
+    isOpen: controlledIsOpen,
+    onToggle
 }) => {
-  const [isOpen, setIsOpen] = useState(initialOpen);
+  const [internalIsOpen, setInternalIsOpen] = useState(initialOpen);
   const [showAllItems, setShowAllItems] = useState(false);
+
+  const isControlled = controlledIsOpen !== undefined;
+  const isOpen = isControlled ? controlledIsOpen : internalIsOpen;
+
+  const handleToggle = () => {
+    if (onToggle) {
+        onToggle();
+    }
+    if (!isControlled) {
+        setInternalIsOpen(prev => !prev);
+    }
+  };
 
   const renderContent = () => {
     if (items && maxItemsToShow && items.length > maxItemsToShow) {
@@ -52,7 +75,7 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
   return (
     <div className={`py-2 ${className}`}>
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggle}
         className="flex justify-between items-center w-full text-left text-sm font-medium text-[#293c51] dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700 p-2 rounded-md"
       >
         <span>{title}</span>

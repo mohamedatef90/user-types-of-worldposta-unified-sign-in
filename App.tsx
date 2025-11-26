@@ -72,7 +72,8 @@ import {
     ServicesPage,
     IdsIpsMalwarePreventionPage,
     BlogsCenterPage,
-    BlogDetailsPage // Added import
+    BlogDetailsPage,
+    OsImagesPage
 } from '@/pages';
 
 
@@ -577,6 +578,7 @@ const AppRoutes: React.FC = () => {
                     <Route path="billing/email-configurations" element={<EmailConfigurationsPage />} />
                     <Route path="billing/cloudedge-configurations" element={<CloudEdgeConfigurationsPage />} />
                     <Route path="billing/cloudedge-configurations/add" element={<AddCloudEdgeConfigurationPage />} />
+                    <Route path="billing/cloudedge-configurations/os-images" element={<OsImagesPage />} />
                     <Route path="billing/cloudedge-configurations/edit/:configId" element={<AddCloudEdgeConfigurationPage />} />
                     <Route path="invoices" element={<InvoiceRouterPage />}>
                         <Route index element={<InvoiceHistoryPage />} />

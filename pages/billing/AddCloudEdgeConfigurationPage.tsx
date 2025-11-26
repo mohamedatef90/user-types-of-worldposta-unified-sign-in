@@ -3,7 +3,7 @@ import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Button, Card, FormField, CollapsibleSection, SliderInput, Icon } from '@/components/ui';
 import type { CloudEdgeConfiguration, InstanceTemplate, GPUType, CloudEdgeComponentType, MachineType, ProvisioningModel, SubscriptionTermUnit } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link, useLocation } from 'react-router-dom';
 
 const CONFIG_STORAGE_KEY = 'cloudEdgeConfigurations';
 
@@ -32,6 +32,13 @@ const mockOSSoftware = [
     {id: 'windows-2022-std', name: 'Windows Server 2022 Standard'},
     {id: 'rocky-9', name: 'Rocky Linux 9'},
 ];
+
+const topOsChoices = [
+    { id: 'ubuntu-22', name: 'Ubuntu 22.04 LTS' },
+    { id: 'windows-2022-std', name: 'Windows Server 2022 Standard' },
+    { id: 'centos-9', name: 'CentOS Stream 9' },
+];
+
 
 interface ReadyPlan {
   id: string;
@@ -125,6 +132,7 @@ const RadioCard = ({ id, name, value, checked, onChange, label, iconName, toolti
 export const AddCloudEdgeConfigurationPage: React.FC = () => {
     const navigate = useNavigate();
     const { configId } = useParams<{ configId: string }>();
+    const location = useLocation();
     const isEditing = !!configId;
 
     const [config, setConfig] = useState<Partial<CloudEdgeConfiguration>>({
@@ -139,6 +147,7 @@ export const AddCloudEdgeConfigurationPage: React.FC = () => {
     const [currentSubtotal, setCurrentSubtotal] = useState(0);
     const [pageStep, setPageStep] = useState(1);
     const [individualNames, setIndividualNames] = useState<string[]>([]);
+    const [isAdvancedSectionOpen, setIsAdvancedSectionOpen] = useState(false);
 
     useEffect(() => {
         if (isEditing) {
@@ -168,6 +177,15 @@ export const AddCloudEdgeConfigurationPage: React.FC = () => {
     }, [configId, isEditing, navigate]);
 
     useEffect(() => {
+        if (location.state?.selectedOs) {
+            setConfig(prev => ({ ...prev, osSoftware: location.state.selectedOs.id }));
+            setIsAdvancedSectionOpen(true);
+            const currentPath = configId ? `/app/billing/cloudedge-configurations/edit/${configId}` : '/app/billing/cloudedge-configurations/add';
+            navigate(currentPath, { replace: true, state: {} });
+        }
+    }, [location.state, navigate, configId]);
+
+    useEffect(() => {
         let subtotal = 0;
         if (config.type === 'ready-plan') {
             const plan = mockReadyPlans.find(p => p.id === config.readyPlanId);
@@ -193,6 +211,15 @@ export const AddCloudEdgeConfigurationPage: React.FC = () => {
             newConfig.readyPlanId = undefined;
         }
         setConfig(newConfig);
+    };
+
+    const handleOsChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const value = e.target.value;
+        if (value === 'see-all') {
+            navigate('/app/billing/cloudedge-configurations/os-images', { state: { configId } });
+        } else {
+            setConfig(prev => ({ ...prev, osSoftware: value }));
+        }
     };
 
     const handleReadyPlanSelect = (plan: ReadyPlan) => {
@@ -284,6 +311,18 @@ export const AddCloudEdgeConfigurationPage: React.FC = () => {
         return null;
     }, [config.type, config.instanceTemplateId]);
 
+    const isOsInTopChoices = useMemo(() => {
+        return topOsChoices.some(os => os.id === config.osSoftware);
+    }, [config.osSoftware]);
+
+    const selectedOsName = useMemo(() => {
+        if (!config.osSoftware) return '';
+        const allOsOptions = [...mockOSSoftware, ...topOsChoices];
+        const choice = allOsOptions.find(os => os.id === config.osSoftware);
+        return choice ? choice.name : config.osSoftware;
+    }, [config.osSoftware]);
+
+
   return (
     <Card>
         {pageStep === 1 && (
@@ -368,10 +407,35 @@ export const AddCloudEdgeConfigurationPage: React.FC = () => {
                     
                     {config.type !== 'ready-plan' && (
                         <>
-                            <CollapsibleSection title="Advanced Settings & Optional Resources">
-                                <FormField id="osSoftware" name="osSoftware" label="Operating System / Software" as="select" value={config.osSoftware || ''} onChange={handleChange}>
-                                    <option value="">Default (based on template or VDC policy)</option>{mockOSSoftware.map(os => <option key={os.id} value={os.id}>{os.name}</option>)}
-                                </FormField>
+                            <CollapsibleSection 
+                                title="Advanced Settings & Optional Resources"
+                                isOpen={isAdvancedSectionOpen}
+                                onToggle={() => setIsAdvancedSectionOpen(prev => !prev)}
+                            >
+                                <div className="mb-4">
+                                    <FormField
+                                        id="osSoftware"
+                                        name="osSoftware"
+                                        label="Operating System / Software"
+                                        as="select"
+                                        value={config.osSoftware || ''}
+                                        onChange={handleOsChange}
+                                    >
+                                        <option value="">Default (based on template or VDC policy)</option>
+                                        {topOsChoices.map(os => (
+                                            <option key={os.id} value={os.id}>{os.name}</option>
+                                        ))}
+                                        {!isOsInTopChoices && config.osSoftware && (
+                                            <option value={config.osSoftware}>{selectedOsName}</option>
+                                        )}
+                                        <option value="see-all">See more choices...</option>
+                                    </FormField>
+                                    <div className="text-left mt-1">
+                                        <Link to="/app/billing/cloudedge-configurations/os-images" state={{ configId }} className="text-sm text-[#679a41] dark:text-emerald-400 hover:underline">
+                                            See all images
+                                        </Link>
+                                    </div>
+                                </div>
                                 <FormField id="provisioningModel" name="provisioningModel" label="Provisioning Model" as="select" value={config.provisioningModel || 'regular'} onChange={handleChange}>
                                     <option value="regular">Regular (On-demand)</option><option value="spot">Spot/Preemptible (Up to 70% Disc.)</option>
                                 </FormField>

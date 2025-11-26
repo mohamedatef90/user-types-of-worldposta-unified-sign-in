@@ -25,6 +25,7 @@ export * from './billing/EmailConfigurationsPage';
 export * from './billing/InvoiceDetailPage';
 export * from './billing/InvoiceHistoryPage';
 export * from './billing/InvoiceRouterPage';
+export * from './billing/OsImagesPage';
 
 export * from './customer/AddTeamUserPage';
 export * from './customer/CustomerTeamManagementPage';
