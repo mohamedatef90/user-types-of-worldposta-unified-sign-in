@@ -38,7 +38,6 @@ export * from './dashboard/ResellerDashboardPage';
 export * from './dashboard/EmailAdminSmtpLogsPage';
 export * from './dashboard/EmailAdminSuiteDashboardPage';
 export * from './dashboard/BlogsCenterPage';
-export * from './dashboard/BlogDetailsPage'; // Added export
 export * from './dashboard/email_admin_suite/PlaceholderPage';
 export * from './dashboard/email_admin_suite/OrgsAndDomainsPage';
 export * from './dashboard/email_admin_suite/MailboxesPage';

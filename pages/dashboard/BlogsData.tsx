@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 export interface BlogPost {
@@ -10,6 +9,8 @@ export interface BlogPost {
   date: string;
   author: string;
   content: React.ReactNode;
+  sourceUrl?: string;
+  sourceName?: string;
 }
 
 export const CONTENT_1 = (
@@ -48,7 +49,6 @@ export const CONTENT_2 = (
       Attackers use LLMs to generate context-aware emails that reference real recent events or internal company news. 
       These emails lack the grammatical errors and generic greetings typical of older phishing attempts.
     </p>
-    <img src="https://images.unsplash.com/photo-1563986768609-322da13575f3?q=80&w=1470&auto=format&fit=crop" alt="AI Phishing" className="w-full h-64 object-cover rounded-lg my-4 shadow-md" />
     <h3 className="text-xl font-bold text-[#293c51] dark:text-gray-100 mt-6 mb-2">Defense in Depth</h3>
     <ul className="list-disc pl-5 space-y-2">
       <li>Implement FIDO2 authentication keys to eliminate password theft risks.</li>
@@ -130,7 +130,9 @@ export const DEMO_BLOGS: BlogPost[] = [
     tags: ['Security', 'Zero-Day', 'Patch'],
     date: 'Oct 24, 2023',
     author: 'Sarah Jenkins',
-    content: CONTENT_1
+    content: CONTENT_1,
+    sourceName: 'The Hacker News',
+    sourceUrl: 'https://thehackernews.com/',
   },
   {
     id: '2',
@@ -140,7 +142,9 @@ export const DEMO_BLOGS: BlogPost[] = [
     tags: ['AI', 'Phishing', 'Cybersecurity'],
     date: 'Oct 20, 2023',
     author: 'Michael Chang',
-    content: CONTENT_2
+    content: CONTENT_2,
+    sourceName: 'Krebs on Security',
+    sourceUrl: 'https://krebsonsecurity.com/',
   },
   {
     id: '3',
@@ -150,7 +154,9 @@ export const DEMO_BLOGS: BlogPost[] = [
     tags: ['Cloud', 'Best Practices', '2024'],
     date: 'Oct 15, 2023',
     author: 'Alex Drayson',
-    content: CONTENT_3
+    content: CONTENT_3,
+    sourceName: 'Stack Overflow',
+    sourceUrl: 'https://stackoverflow.com/',
   },
   {
     id: '4',
@@ -160,6 +166,8 @@ export const DEMO_BLOGS: BlogPost[] = [
     tags: ['Product Update', 'CloudEdge', 'Posta'],
     date: 'Nov 01, 2024',
     author: 'WorldPosta Team',
-    content: CONTENT_4
+    content: CONTENT_4,
+    sourceName: 'daily.dev',
+    sourceUrl: 'https://daily.dev/',
   }
 ];

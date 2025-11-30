@@ -72,7 +72,6 @@ import {
     ServicesPage,
     IdsIpsMalwarePreventionPage,
     BlogsCenterPage,
-    BlogDetailsPage,
     OsImagesPage
 } from '@/pages';
 
@@ -185,13 +184,6 @@ const getAppLauncherItems = (role: User['role'] | undefined): ApplicationCardDat
             description: 'Review a detailed history of all activities and events on your account.',
             iconName: 'fas fa-history',
             launchUrl: '/app/action-logs',
-        },
-        {
-            id: 'blogs-center',
-            name: 'Blogs Center',
-            description: 'Access the latest security news, updates, and expert insights.',
-            iconName: 'fas fa-newspaper',
-            launchUrl: '/app/blogs-center',
         },
     ];
 
@@ -571,7 +563,6 @@ const AppRoutes: React.FC = () => {
                     {/* Customer Routes */}
                     <Route path="dashboard" element={<DashboardPage />} />
                     <Route path="blogs-center" element={<BlogsCenterPage />} />
-                    <Route path="blogs-center/:blogId" element={<BlogDetailsPage />} />
                     <Route path="profile" element={<ProfilePage />} />
                     <Route path="billing" element={<BillingSettingsPage />} />
                     <Route path="billing/email-subscriptions" element={<EmailAdminSubscriptionsPage />} />

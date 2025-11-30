@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import type { NavItem } from '@/types';
@@ -99,7 +100,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ navItems, isOpen, isCollapsed,
         <div className="px-2 pb-2 pt-0 mt-auto">
             {additionalNavItems.map((item) => {
                  const isInternal = item.path.startsWith('/');
-                 const commonClassesBase = `flex items-center py-2.5 rounded-md text-sm font-medium transition-colors duration-150 ease-in-out group ${isCollapsed ? 'px-3 justify-center' : 'px-3'} mb-1`;
+                 const commonClassesBase = `relative flex items-center py-2.5 rounded-md text-sm font-medium transition-colors duration-150 ease-in-out group ${isCollapsed ? 'px-3 justify-center' : 'px-3'} mb-1`;
 
                  if (isInternal) {
                      return (
@@ -127,6 +128,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ navItems, isOpen, isCollapsed,
                                         />
                                     ) : null}
                                     {!isCollapsed && <span>{item.name}</span>}
+                                    {item.name === "What's News" && (
+                                        <span className={`absolute top-1/2 -translate-y-1/2 ${isCollapsed ? 'right-2' : 'right-3'} flex h-3 w-3`}>
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                                        </span>
+                                    )}
                                 </>
                             )}
                         </NavLink>

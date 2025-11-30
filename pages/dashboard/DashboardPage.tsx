@@ -1,8 +1,4 @@
 
-
-
-
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context';
@@ -765,14 +761,6 @@ export const DashboardPage: React.FC = () => { // This is the Customer Dashboard
           description: 'Monitor resources, set alerts, and secure your environment with advanced tools.',
           iconName: 'fas fa-shield-alt',
           launchUrl: '/app/monitoring',
-          section: 'application',
-        },
-        {
-          id: 'blogs-center',
-          name: 'Blogs Center',
-          description: 'Access the latest security news, updates, and expert insights.',
-          iconName: 'fas fa-newspaper',
-          launchUrl: '/app/blogs-center',
           section: 'application',
         },
       ];
