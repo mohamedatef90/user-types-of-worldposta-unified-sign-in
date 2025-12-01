@@ -1,12 +1,14 @@
+
+
 import React, { useState } from 'react';
 import { Card, Button, Icon, BlogCard } from '@/components/ui';
-import { DEMO_BLOGS, BlogPost } from './BlogsData';
+import { DEMO_BLOGS } from './BlogsData';
+import type { BlogPost } from '@/types';
 
 const BlogRow: React.FC<{ blog: BlogPost; isExpanded: boolean; onToggleExpand: () => void; }> = ({ blog, isExpanded, onToggleExpand }) => {
     return (
         <Card 
-            className="group hover:shadow-lg transition-all duration-300 border border-gray-200 dark:border-slate-700 cursor-pointer mb-4 !p-4" 
-            onClick={onToggleExpand}
+            className="group hover:shadow-lg transition-all duration-300 border border-gray-200 dark:border-slate-700 mb-4 !p-4"
         >
             <div className="flex flex-col sm:flex-row items-start gap-4">
                 <img 
@@ -29,11 +31,14 @@ const BlogRow: React.FC<{ blog: BlogPost; isExpanded: boolean; onToggleExpand: (
                         </span>
                     </div>
 
-                    <h3 className="text-xl font-bold text-[#293c51] dark:text-gray-100 mb-2 group-hover:text-[#679a41] dark:group-hover:text-emerald-400 transition-colors cursor-pointer">
+                    <h3 
+                        className="text-xl font-bold text-[#293c51] dark:text-gray-100 mb-2 group-hover:text-[#679a41] dark:group-hover:text-emerald-400 transition-colors cursor-pointer"
+                        onClick={onToggleExpand}
+                    >
                       {blog.title}
                     </h3>
 
-                    <p className={`text-sm text-gray-600 dark:text-gray-400 mb-4 transition-all duration-300 ${isExpanded ? 'line-clamp-4' : 'line-clamp-2'}`}>
+                    <p className={`text-sm text-gray-600 dark:text-gray-400 mb-4 transition-all duration-300 ${isExpanded ? 'line-clamp-6' : 'line-clamp-2'}`}>
                       {blog.subtitle}
                     </p>
 
@@ -44,7 +49,7 @@ const BlogRow: React.FC<{ blog: BlogPost; isExpanded: boolean; onToggleExpand: (
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={(e) => e.stopPropagation()}
-                                className="text-xs font-semibold text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-1"
+                                className="text-xs font-semibold text-sky-600 dark:text-sky-400 hover:underline inline-flex items-center gap-1"
                             >
                                 <Icon name="fas fa-link" />
                                 Source: {blog.sourceName || 'Read more'}

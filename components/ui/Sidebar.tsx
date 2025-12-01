@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import type { NavItem } from '@/types';
 import { Icon } from './Icon';
@@ -33,6 +33,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ navItems, isOpen, isCollapsed,
 
   const imageIconClasses = `h-5 w-5 object-contain ${isCollapsed ? '' : 'mr-3'} transition-opacity duration-150 ease-in-out group-hover:opacity-75`;
   const faIconBaseClasses = `text-lg ${isCollapsed ? '' : 'mr-3'} transition-colors duration-150 ease-in-out`;
+
+  const [whatsNewsVisited, setWhatsNewsVisited] = useState(() => {
+    return localStorage.getItem('whatsNewsVisited') === 'true';
+  });
+
+  const handleWhatsNewsClick = () => {
+    if (!whatsNewsVisited) {
+        localStorage.setItem('whatsNewsVisited', 'true');
+        setWhatsNewsVisited(true);
+    }
+  };
 
   return (
     <>
@@ -107,7 +118,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ navItems, isOpen, isCollapsed,
                         <NavLink
                             key={item.name}
                             to={item.path}
-                            onClick={isOpen ? onClose : undefined}
+                            onClick={(e) => {
+                                if (isOpen && onClose) onClose();
+                                if (item.name === "What's News") handleWhatsNewsClick();
+                            }}
                             title={isCollapsed ? item.name : undefined}
                             className={({ isActive }) =>
                                 `${commonClassesBase} ${isActive
@@ -128,7 +142,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ navItems, isOpen, isCollapsed,
                                         />
                                     ) : null}
                                     {!isCollapsed && <span>{item.name}</span>}
-                                    {item.name === "What's News" && (
+                                    {item.name === "What's News" && !whatsNewsVisited && (
                                         <span className={`absolute top-1/2 -translate-y-1/2 ${isCollapsed ? 'right-2' : 'right-3'} flex h-3 w-3`}>
                                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                                             <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>

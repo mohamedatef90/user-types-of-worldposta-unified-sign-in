@@ -1,17 +1,5 @@
 import React from 'react';
-
-export interface BlogPost {
-  id: string;
-  thumbnail: string;
-  title: string;
-  subtitle: string;
-  tags: string[];
-  date: string;
-  author: string;
-  content: React.ReactNode;
-  sourceUrl?: string;
-  sourceName?: string;
-}
+import type { BlogPost } from '@/types';
 
 export const CONTENT_1 = (
   <div className="space-y-4 text-gray-700 dark:text-gray-300 leading-relaxed">

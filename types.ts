@@ -1,7 +1,5 @@
-
-
-
-
+// Fix: Added a type-only import for `ReactNode` to resolve the "Cannot find namespace 'React'" error.
+import type { ReactNode } from 'react';
 
 export interface User {
   id: string;
@@ -444,4 +442,18 @@ export interface RunningTask {
   done: number;
   createdBy: string;
   createdAt: string;
+}
+
+export interface BlogPost {
+  id: string;
+  thumbnail: string;
+  title: string;
+  subtitle: string;
+  tags: string[];
+  date: string;
+  author: string;
+  // Fix: Changed `React.ReactNode` to `ReactNode` to match the type-only import.
+  content: ReactNode;
+  sourceUrl?: string;
+  sourceName?: string;
 }
