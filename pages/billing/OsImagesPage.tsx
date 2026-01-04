@@ -136,14 +136,14 @@ export const OsImagesPage: React.FC = () => {
                     </div>
                     <div className="p-4 flex-grow flex flex-col">
                         <h3 className="font-bold text-md text-[#293c51] dark:text-gray-200 group-hover:text-[#679a41] dark:group-hover:text-emerald-400 transition-colors">{image.name}</h3>
-                        <div className="mt-4 flex-grow">
+                        {/* Fix: Wrapped FormField in a div that stops event propagation, and removed the unsupported 'onClick' prop from FormField */}
+                        <div className="mt-4 flex-grow" onClick={(e) => e.stopPropagation()}>
                             <FormField 
                                 id={`${image.id}-version`}
                                 label="Version"
                                 as="select"
                                 value={image.selectedVersion}
                                 onChange={(e) => handleVersionChange(image.id, e as any)}
-                                onClick={(e: any) => e.stopPropagation()}
                                 inputClassName="text-sm"
                                 wrapperClassName="!mb-0"
                             >

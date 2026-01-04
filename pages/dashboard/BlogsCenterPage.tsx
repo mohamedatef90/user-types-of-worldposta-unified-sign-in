@@ -1,5 +1,4 @@
 
-
 import React, { useState } from 'react';
 import { Card, Button, Icon, BlogCard } from '@/components/ui';
 import { DEMO_BLOGS } from './BlogsData';
@@ -38,7 +37,7 @@ const BlogRow: React.FC<{ blog: BlogPost; isExpanded: boolean; onToggleExpand: (
                       {blog.title}
                     </h3>
 
-                    <p className={`text-sm text-gray-600 dark:text-gray-400 mb-4 transition-all duration-300 ${isExpanded ? 'line-clamp-6' : 'line-clamp-2'}`}>
+                    <p className={`text-sm text-gray-600 dark:text-gray-400 mb-4 transition-all duration-300 ${isExpanded ? 'line-clamp-4' : 'line-clamp-2'}`}>
                       {blog.subtitle}
                     </p>
 
