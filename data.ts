@@ -366,6 +366,9 @@ export const mockSupportTickets: SupportTicket[] = [
         description: 'I am unable to SSH into my production web server (prod-web-01). The connection times out. I have confirmed my firewall rules allow port 22 from my IP. Please investigate.',
         customerId: 'user123',
         customerName: 'Demo Customer Alpha',
+        resellerName: 'Partner Solutions Ltd.',
+        assignedAdminId: 'admin456',
+        assignedAdminName: 'Admin User',
         priority: 'High',
         department: 'Technical Support',
         requestType: 'Issue',
@@ -396,6 +399,7 @@ export const mockSupportTickets: SupportTicket[] = [
         description: 'My last invoice (INV-2024-003) seems to have an incorrect charge. Can you please review it?',
         customerId: 'user123',
         customerName: 'Demo Customer Alpha',
+        resellerName: 'Partner Solutions Ltd.',
         priority: 'Normal',
         department: 'Billing Department',
         requestType: 'Inquiry'

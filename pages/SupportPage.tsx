@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, Button, Modal, FormField, Icon, CollapsibleSection, SearchableSelect, Pagination } from '@/components/ui';
+import { Card, Button, Modal, FormField, Icon, CollapsibleSection, SearchableSelect, Pagination, StatCard } from '@/components/ui';
 import { useAuth } from '@/context';
 import type { SupportTicket, TicketAttachment, SupportTicketComment, User, SupportTicketProduct, SupportTicketRequestType, SupportTicketPriority, SupportTicketDepartment, KnowledgeBaseArticle } from '@/types';
-import { mockSupportTickets, MOCK_KB_ARTICLES, getAllMockCustomers } from '@/data';
+import { mockSupportTickets, MOCK_KB_ARTICLES, getAllMockCustomers, getAllMockInternalUsers } from '@/data';
 
 interface CreateTicketModalProps {
     isOpen: boolean;
@@ -15,7 +15,7 @@ interface CreateTicketModalProps {
 const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ isOpen, onClose, onSubmit }) => {
     const initialFormState = {
         product: 'General Inquiry' as SupportTicketProduct,
-        requestType: 'Issue' as SupportTicketRequestType,
+        requestType: 'Inquiry' as SupportTicketRequestType,
         priority: 'Normal' as SupportTicketPriority,
         department: 'Technical Support' as SupportTicketDepartment,
         subject: '',
@@ -89,9 +89,23 @@ const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ isOpen, onClose, 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Create New Support Ticket" size="2xl">
             <div className="space-y-4">
-                <FormField id="product" name="product" label="Product/Service" as="select" value={formData.product} onChange={handleFormChange}>
-                    {productOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </FormField>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField id="product" name="product" label="Product/Service" as="select" value={formData.product} onChange={handleFormChange}>
+                        {productOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </FormField>
+                    
+                    <FormField id="requestType" name="requestType" label="Request Type" as="select" value={formData.requestType} onChange={handleFormChange}>
+                        <option value="Task">Request</option>
+                        <option value="Inquiry">General Inquiry</option>
+                        <option value="Feature Request">Feature Request</option>
+                    </FormField>
+
+                    <FormField id="priority" name="priority" label="Priority" as="select" value={formData.priority} onChange={handleFormChange}>
+                        <option value="Low">Low</option>
+                        <option value="Normal">Medium</option>
+                        <option value="High">High</option>
+                    </FormField>
+                </div>
 
                 <FormField id="subject" name="subject" label="Subject" value={formData.subject} onChange={handleFormChange} required />
                 <FormField id="description" name="description" label="Description" as="textarea" rows={5} value={formData.description} onChange={handleFormChange} required />
@@ -766,6 +780,60 @@ const CustomerSupportFilterPanel: React.FC<CustomerSupportFilterPanelProps> = ({
     );
 };
 
+const AssignTicketModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    onAssign: (adminId: string, adminName: string) => void;
+    staffOptions: { value: string; label: string }[];
+}> = ({ isOpen, onClose, onAssign, staffOptions }) => {
+    const [selectedAdminId, setSelectedAdminId] = useState('');
+
+    const handleAssign = () => {
+        const admin = staffOptions.find(opt => opt.value === selectedAdminId);
+        if (admin) {
+            onAssign(admin.value, admin.label);
+        }
+    };
+
+    return (
+        <Modal isOpen={isOpen} onClose={onClose} title="Assign Ticket to Staff" size="md">
+            <div className="space-y-4 min-h-[350px]">
+                <SearchableSelect
+                    id="admin-assignment"
+                    label="Internal Staff Member"
+                    options={staffOptions}
+                    value={selectedAdminId}
+                    onChange={setSelectedAdminId}
+                    placeholder="Select an admin or reseller..."
+                    listHeight="max-h-72"
+                />
+                <div className="flex justify-end gap-2 pt-4 border-t dark:border-gray-700 absolute bottom-4 right-4 left-4">
+                    <Button variant="ghost" onClick={onClose}>Cancel</Button>
+                    <Button onClick={handleAssign} disabled={!selectedAdminId}>Assign Staff</Button>
+                </div>
+            </div>
+        </Modal>
+    );
+};
+
+const AdminStats: React.FC<{ tickets: SupportTicket[] }> = ({ tickets }) => {
+    const stats = useMemo(() => ({
+        open: tickets.filter(t => t.status === 'Open').length,
+        inProgress: tickets.filter(t => t.status === 'In Progress').length,
+        resolved: tickets.filter(t => t.status === 'Resolved').length,
+        highPriority: tickets.filter(t => t.priority === 'High' || t.priority === 'Urgent').length,
+    }), [tickets]);
+
+    return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <StatCard title="Open Tickets" metric={stats.open.toString()} iconName="fas fa-envelope-open" iconColor="text-blue-500" />
+            <StatCard title="In Progress" metric={stats.inProgress.toString()} iconName="fas fa-spinner" iconColor="text-yellow-500" />
+            <StatCard title="Resolved" metric={stats.resolved.toString()} iconName="fas fa-check-circle" iconColor="text-green-500" />
+            <StatCard title="High Priority" metric={stats.highPriority.toString()} iconName="fas fa-exclamation-triangle" iconColor="text-red-500" />
+        </div>
+    );
+};
+
 
 export const SupportPage: React.FC = () => {
     const { user } = useAuth();
@@ -776,6 +844,9 @@ export const SupportPage: React.FC = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isKbModalOpen, setIsKbModalOpen] = useState(false);
     const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+    const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+    const [ticketToAssign, setTicketToAssign] = useState<SupportTicket | null>(null);
+    
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -805,11 +876,18 @@ export const SupportPage: React.FC = () => {
         dateFrom: '',
         dateTo: '',
     });
-    const [allCustomers] = useState<User[]>(getAllMockCustomers);
+    
+    const allCustomers = useMemo(() => getAllMockCustomers(), []);
+    const internalStaff = useMemo(() => getAllMockInternalUsers(), []);
 
     const customerOptions = useMemo(() => 
         allCustomers.map(c => ({ value: c.id, label: `${c.fullName} (${c.companyName})` })),
         [allCustomers]
+    );
+
+    const staffOptions = useMemo(() => 
+        internalStaff.map(s => ({ value: s.id, label: s.fullName })),
+        [internalStaff]
     );
 
     const filteredTickets = useMemo(() => {
@@ -938,6 +1016,18 @@ export const SupportPage: React.FC = () => {
         setIsCreateModalOpen(false);
     };
 
+    const handleAssignTicket = (adminId: string, adminName: string) => {
+        if (ticketToAssign) {
+            setTickets(prev => prev.map(t => 
+                t.id === ticketToAssign.id 
+                    ? { ...t, assignedAdminId: adminId, assignedAdminName: adminName, lastUpdate: new Date().toISOString() } 
+                    : t
+            ));
+            setIsAssignModalOpen(false);
+            setTicketToAssign(null);
+        }
+    };
+
     const getStatusChipClass = (status: SupportTicket['status']) => {
         const baseClasses = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full';
         switch (status) {
@@ -962,6 +1052,7 @@ export const SupportPage: React.FC = () => {
     
     return (
         <>
+            {isAdmin && <AdminStats tickets={filteredTickets} />}
             <Card title="Support Center" titleActions={
                 <div className="flex items-center gap-2">
                     <Button
@@ -988,7 +1079,11 @@ export const SupportPage: React.FC = () => {
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Ticket ID</th>
                                 {isAdmin && (
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Customer Name</th>
+                                    <>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Customer</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Reseller</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Assign To</th>
+                                    </>
                                 )}
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Subject</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Product</th>
@@ -1010,7 +1105,28 @@ export const SupportPage: React.FC = () => {
                                         </button>
                                     </td>
                                     {isAdmin && (
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{ticket.customerName}</td>
+                                        <>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{ticket.customerName}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{ticket.resellerName || 'N/A'}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                                {ticket.assignedAdminName ? (
+                                                    <button 
+                                                        onClick={() => { setTicketToAssign(ticket); setIsAssignModalOpen(true); }}
+                                                        className="text-gray-700 dark:text-gray-200 hover:text-[#679a41] dark:hover:text-emerald-400 hover:underline flex items-center gap-1.5 font-medium transition-colors"
+                                                    >
+                                                        {ticket.assignedAdminName}
+                                                        <Icon name="fas fa-pencil-alt" className="text-[10px]" />
+                                                    </button>
+                                                ) : (
+                                                    <button 
+                                                        onClick={() => { setTicketToAssign(ticket); setIsAssignModalOpen(true); }}
+                                                        className="text-[#679a41] dark:text-emerald-400 hover:underline font-bold transition-all"
+                                                    >
+                                                        Pickup
+                                                    </button>
+                                                )}
+                                            </td>
+                                        </>
                                     )}
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{ticket.subject}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{ticket.product}</td>
@@ -1063,7 +1179,7 @@ export const SupportPage: React.FC = () => {
                             ))}
                               {filteredTickets.length === 0 && (
                                 <tr>
-                                    <td colSpan={isAdmin ? 8 : 7} className="text-center py-10 text-gray-500 dark:text-gray-400">
+                                    <td colSpan={isAdmin ? 10 : 7} className="text-center py-10 text-gray-500 dark:text-gray-400">
                                         No tickets found.
                                     </td>
                                 </tr>
@@ -1101,6 +1217,13 @@ export const SupportPage: React.FC = () => {
                 ticket={selectedTicket}
                 onUpdateTicket={handleUpdateTicket}
                 currentUser={user}
+            />
+
+            <AssignTicketModal
+                isOpen={isAssignModalOpen}
+                onClose={() => { setIsAssignModalOpen(false); setTicketToAssign(null); }}
+                onAssign={handleAssignTicket}
+                staffOptions={staffOptions}
             />
             
             {isAdmin ? (
