@@ -1,8 +1,4 @@
 
-
-
-
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, Button, Modal, FormField, Icon, CollapsibleSection, SearchableSelect, Pagination } from '@/components/ui';
@@ -26,7 +22,6 @@ const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ isOpen, onClose, 
         description: '',
     };
     const [formData, setFormData] = useState(initialFormState);
-    // FIX: Change state to store TicketAttachment[] directly for consistency and type safety.
     const [attachments, setAttachments] = useState<TicketAttachment[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -35,7 +30,6 @@ const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ isOpen, onClose, 
         setFormData(prev => ({ ...prev, [name]: value }));
     };
     
-    // FIX: Refactor file handling to be robust and async, creating TicketAttachment objects immediately.
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const files = Array.from(e.target.files);
@@ -84,9 +78,7 @@ const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ isOpen, onClose, 
             return;
         }
 
-        // FIX: Attachments are now already in the correct format.
         onSubmit({ ...formData, attachments });
-        // Reset form state after submission
         setFormData(initialFormState);
         setAttachments([]);
         onClose();
@@ -173,7 +165,6 @@ const ViewTicketModal: React.FC<ViewTicketModalProps> = ({ isOpen, onClose, tick
 
     const isUserAdminOrReseller = currentUser?.role === 'admin' || currentUser?.role === 'reseller';
 
-    // FIX: Refactor file handling to use Promise.all for robustness, which may resolve cascading type errors.
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const files = Array.from(e.target.files);
@@ -254,11 +245,9 @@ const ViewTicketModal: React.FC<ViewTicketModalProps> = ({ isOpen, onClose, tick
             }
         }
         
-        // Admin/Reseller can always set the status.
         if (isStatusChanged && isUserAdminOrReseller && newStatus) {
             updatedTicket.status = newStatus;
         } 
-        // If a customer adds a comment to a resolved/closed ticket, reopen it.
         else if (isCommentAdded && currentUser?.role === 'customer' && (updatedTicket.status === 'Resolved' || updatedTicket.status === 'Closed')) {
             updatedTicket.status = 'In Progress';
         }
@@ -295,11 +284,36 @@ const ViewTicketModal: React.FC<ViewTicketModalProps> = ({ isOpen, onClose, tick
     
     const Comment: React.FC<{ comment: SupportTicketComment, isInternal?: boolean, onDelete: () => void }> = ({ comment, isInternal, onDelete }) => {
         const canDelete = currentUser?.role === 'admin' && (currentUser.fullName === comment.author || comment.author === 'Support Staff');
+        const isCustomerComment = !isInternal && comment.author === ticket.customerName;
+
+        let bgColor = 'bg-gray-50 dark:bg-slate-700/50';
+        let borderColor = 'border-transparent';
+        let roleLabel = 'Staff';
+        let roleIcon = 'fas fa-user-tie';
+
+        if (isInternal) {
+            bgColor = 'bg-yellow-50 dark:bg-yellow-900/20';
+            borderColor = 'border-yellow-400';
+            roleLabel = 'Internal Note';
+            roleIcon = 'fas fa-sticky-note';
+        } else if (isCustomerComment) {
+            // Customer Comments: Grey but darker, and primary color left stroke
+            bgColor = 'bg-gray-200/50 dark:bg-slate-700'; 
+            borderColor = 'border-[#679a41] dark:border-emerald-500';
+            roleLabel = 'Customer';
+            roleIcon = 'fas fa-user';
+        }
 
         return (
-            <div className={`p-4 rounded-lg ${isInternal ? 'bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400' : 'bg-gray-50 dark:bg-slate-700/50'}`}>
+            <div className={`p-4 rounded-lg border-l-4 transition-colors ${bgColor} ${borderColor}`}>
                 <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
-                    <p className="font-semibold text-sm text-[#293c51] dark:text-gray-200">{comment.author}</p>
+                    <div className="flex items-center gap-2">
+                        <Icon name={roleIcon} className="text-[#679a41] dark:text-emerald-400" />
+                        <p className="font-semibold text-sm text-[#293c51] dark:text-gray-200">{comment.author}</p>
+                        <span className="px-1.5 py-0.5 rounded bg-white/50 dark:bg-black/20 border dark:border-white/10 font-bold uppercase tracking-tighter text-[10px]">
+                            {roleLabel}
+                        </span>
+                    </div>
                     <div className="flex items-center space-x-2">
                         <p>{new Date(comment.timestamp).toLocaleString()}</p>
                         {canDelete && (
@@ -326,17 +340,17 @@ const ViewTicketModal: React.FC<ViewTicketModalProps> = ({ isOpen, onClose, tick
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={`Ticket: ${ticket.id}`} size="3xl">
-            <div className="flex flex-col max-h-[75vh]">
-                {/* --- Pinned Section --- */}
-                <div className="flex-shrink-0 pr-4 space-y-4">
+        <Modal isOpen={isOpen} onClose={onClose} title={`Ticket: ${ticket.id}`} size="w80">
+            <div className="flex flex-col h-[80vh]">
+                <div className="flex-shrink-0 pr-4 pb-4 border-b dark:border-gray-700 space-y-4">
                     <div className="flex justify-between items-center">
                         <h3 className="text-xl font-bold text-[#293c51] dark:text-gray-100">{ticket.subject}</h3>
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusChipClass(ticket.status)}`}>{ticket.status}</span>
                     </div>
                     
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                        Product/Service: <span className="font-medium text-[#293c51] dark:text-gray-300">{ticket.product}</span>
+                    <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-4">
+                        <span>Product/Service: <span className="font-medium text-[#293c51] dark:text-gray-300">{ticket.product}</span></span>
+                        <span>Priority: <span className="font-medium text-[#293c51] dark:text-gray-300">{ticket.priority}</span></span>
                     </div>
 
                     <div className="p-4 bg-gray-100 dark:bg-slate-700 rounded-lg">
@@ -350,11 +364,10 @@ const ViewTicketModal: React.FC<ViewTicketModalProps> = ({ isOpen, onClose, tick
                     </div>
                 </div>
 
-                {/* --- Scrollable Section --- */}
-                <div className="flex-grow overflow-y-auto pr-4 mt-4 pt-4 border-t dark:border-gray-700">
+                <div className="flex-grow overflow-y-auto pr-4 pt-4">
                     <div className="space-y-4">
                         {isUserAdminOrReseller && (
-                            <div className="border-b border-gray-200 dark:border-gray-700">
+                            <div className="border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-slate-800 z-10">
                                 <nav className="-mb-px flex space-x-8" aria-label="Tabs">
                                     <button onClick={() => setActiveTab('customer')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'customer' ? 'border-[#679a41] text-[#679a41] dark:border-emerald-400 dark:text-emerald-400' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
                                         Customer Comments
@@ -366,7 +379,7 @@ const ViewTicketModal: React.FC<ViewTicketModalProps> = ({ isOpen, onClose, tick
                             </div>
                         )}
                         
-                        <div className="space-y-3">
+                        <div className="space-y-3 pb-4">
                             {activeTab === 'customer' && (
                                 ticket.comments && ticket.comments.length > 0
                                 ? ticket.comments.map((comment, i) => <div className="group" key={`cust-${i}`}><Comment comment={comment} onDelete={() => handleDeleteComment(comment, false)} /></div>)
@@ -378,53 +391,64 @@ const ViewTicketModal: React.FC<ViewTicketModalProps> = ({ isOpen, onClose, tick
                                 : <p className="text-sm text-center text-gray-500 dark:text-gray-400 py-4">No internal notes yet.</p>
                             )}
                         </div>
+                    </div>
+                </div>
 
-                        <div className="pt-4 border-t dark:border-gray-600">
-                            <h4 className="font-semibold text-lg mb-2">Add Reply / Update Status</h4>
-                            <FormField
-                                id="new-comment"
-                                label=""
-                                as="textarea"
-                                rows={3}
-                                value={newComment}
-                                onChange={(e) => setNewComment(e.target.value)}
-                                placeholder="Type your reply here..."
+                <div className="flex-shrink-0 pt-4 mt-4 border-t dark:border-gray-700 bg-gray-50/80 dark:bg-slate-900/60 -mx-4 -mb-4 px-4 pb-4">
+                    <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-semibold text-sm text-[#293c51] dark:text-gray-200">Add Reply / Update Status</h4>
+                        <span className="text-[10px] uppercase font-bold text-gray-400">Fixed Reply Panel</span>
+                    </div>
+                    <FormField
+                        id="new-comment"
+                        label=""
+                        as="textarea"
+                        rows={2}
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        placeholder="Type your reply here..."
+                        wrapperClassName="mb-3"
+                        inputClassName="!text-sm"
+                    />
+                    
+                    {newAttachments.length > 0 && (
+                        <div className="mb-3 flex flex-wrap gap-2">
+                            {newAttachments.map((att, i) => (
+                                <AttachmentChip key={i} attachment={att} onRemove={() => removeAttachment(att.name)} />
+                            ))}
+                        </div>
+                    )}
+                    
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                leftIconName="fas fa-paperclip"
+                                onClick={() => fileInputRef.current?.click()}
+                                className="h-8 !text-xs"
+                            >
+                                Attach Files
+                            </Button>
+                            <input
+                                type="file"
+                                multiple
+                                ref={fileInputRef}
+                                onChange={handleFileChange}
+                                className="hidden"
                             />
                             
-                            <div className="mt-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    leftIconName="fas fa-paperclip"
-                                    onClick={() => fileInputRef.current?.click()}
-                                >
-                                    Attach Files
-                                </Button>
-                                <input
-                                    type="file"
-                                    multiple
-                                    ref={fileInputRef}
-                                    onChange={handleFileChange}
-                                    className="hidden"
-                                />
-                            </div>
-                            {newAttachments.length > 0 && (
-                                <div className="mt-2 flex flex-wrap gap-2">
-                                    {newAttachments.map((att, i) => (
-                                        <AttachmentChip key={i} attachment={att} onRemove={() => removeAttachment(att.name)} />
-                                    ))}
-                                </div>
-                            )}
-                            
                             {isUserAdminOrReseller && (
-                                <div className="mt-4">
+                                <div className="w-40">
                                     <FormField
                                         id="ticket-status"
                                         name="status"
-                                        label="Change Ticket Status"
+                                        label=""
                                         as="select"
                                         value={newStatus}
                                         onChange={(e) => setNewStatus(e.target.value as SupportTicket['status'])}
+                                        wrapperClassName="mb-0"
+                                        inputClassName="!py-1 h-8 !text-xs"
                                     >
                                         <option value="Open">Open</option>
                                         <option value="In Progress">In Progress</option>
@@ -433,18 +457,18 @@ const ViewTicketModal: React.FC<ViewTicketModalProps> = ({ isOpen, onClose, tick
                                     </FormField>
                                 </div>
                             )}
+                        </div>
 
-                            <div className="mt-4 flex justify-end items-center">
-                                <div className="space-x-2">
-                                    <Button variant="ghost" onClick={onClose}>Cancel</Button>
-                                    <Button 
-                                        onClick={handleTicketUpdate} 
-                                        disabled={(!newComment.trim() && newAttachments.length === 0) && (newStatus === ticket.status)}
-                                    >
-                                        Update Ticket
-                                    </Button>
-                                </div>
-                            </div>
+                        <div className="flex justify-end items-center gap-2">
+                            <Button variant="ghost" onClick={onClose} size="sm" className="h-8 !text-xs">Cancel</Button>
+                            <Button 
+                                onClick={handleTicketUpdate} 
+                                size="sm"
+                                className="h-8 !text-xs px-6"
+                                disabled={(!newComment.trim() && newAttachments.length === 0) && (newStatus === ticket.status)}
+                            >
+                                Update Ticket
+                            </Button>
                         </div>
                     </div>
                 </div>
@@ -495,6 +519,7 @@ const KnowledgeBaseModal: React.FC<{
                     id="kb-search"
                     label=""
                     placeholder="Search for keywords like 'billing', 'ssh', 'password'..."
+                    setSearchTerm={setSearchTerm}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -753,8 +778,22 @@ export const SupportPage: React.FC = () => {
     const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+    const kebabMenuRef = useRef<HTMLDivElement>(null);
     
     const isAdmin = user?.role === 'admin';
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (kebabMenuRef.current && !kebabMenuRef.current.contains(event.target as Node)) {
+                setOpenMenuId(null);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     const [filters, setFilters] = useState<SupportFilters>({
         customerId: '',
@@ -834,7 +873,7 @@ export const SupportPage: React.FC = () => {
         setFilters(prev => ({ 
             ...prev, 
             ...newFilters, 
-            customerId: '' // Ensure customerId is cleared for customer view
+            customerId: '' 
         }));
     };
 
@@ -856,6 +895,16 @@ export const SupportPage: React.FC = () => {
         if (ticket) {
             setSelectedTicket(ticket);
             setIsViewModalOpen(true);
+        }
+    };
+
+    const handleCloseTicket = (ticketId: string) => {
+        if (window.confirm(`Are you sure you want to close ticket ${ticketId}?`)) {
+            setTickets(prev => prev.map(t => 
+                t.id === ticketId 
+                    ? { ...t, status: 'Closed', lastUpdate: new Date().toISOString() } 
+                    : t
+            ));
         }
     };
     
@@ -890,11 +939,24 @@ export const SupportPage: React.FC = () => {
     };
 
     const getStatusChipClass = (status: SupportTicket['status']) => {
+        const baseClasses = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full';
         switch (status) {
-            case 'Open': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-            case 'In Progress': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-            case 'Resolved': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-            case 'Closed': return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+            case 'Open': return `${baseClasses} bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300`;
+            case 'In Progress': return `${baseClasses} bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300`;
+            case 'Resolved': return `${baseClasses} bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300`;
+            case 'Closed': return `${baseClasses} bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300`;
+            default: return `${baseClasses} bg-gray-100 text-gray-800`;
+        }
+    };
+
+    const getPriorityChipClass = (priority: SupportTicket['priority']) => {
+        const baseClasses = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full';
+        switch (priority) {
+            case 'Urgent': return `${baseClasses} bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300`;
+            case 'High': return `${baseClasses} bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300`;
+            case 'Normal': return `${baseClasses} bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300`;
+            case 'Low': return `${baseClasses} bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300`;
+            default: return `${baseClasses} bg-gray-100 text-gray-800`;
         }
     };
     
@@ -931,6 +993,7 @@ export const SupportPage: React.FC = () => {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Subject</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Product</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Status</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Priority</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Last Update</th>
                                 <th className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
                             </tr>
@@ -938,22 +1001,69 @@ export const SupportPage: React.FC = () => {
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                             {paginatedTickets.map(ticket => (
                                 <tr key={ticket.id}>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#293c51] dark:text-white">{ticket.id}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <button 
+                                            onClick={() => handleViewTicket(ticket.id)}
+                                            className="text-[#679a41] dark:text-emerald-400 hover:underline font-bold transition-all focus:outline-none"
+                                        >
+                                            {ticket.id}
+                                        </button>
+                                    </td>
                                     {isAdmin && (
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{ticket.customerName}</td>
                                     )}
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{ticket.subject}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{ticket.product}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm"><span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusChipClass(ticket.status)}`}>{ticket.status}</span></td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span className={getStatusChipClass(ticket.status)}>{ticket.status}</span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                        <span className={getPriorityChipClass(ticket.priority)}>{ticket.priority}</span>
+                                    </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{new Date(ticket.lastUpdate).toLocaleString()}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <Button size="sm" onClick={() => handleViewTicket(ticket.id)}>View Ticket</Button>
+                                        <div className="relative inline-block text-left" ref={openMenuId === ticket.id ? kebabMenuRef : null}>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setOpenMenuId(openMenuId === ticket.id ? null : ticket.id);
+                                                }}
+                                                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-800 focus:ring-[#679a41]"
+                                                aria-label="Actions"
+                                            >
+                                                <Icon name="fas fa-ellipsis-v" />
+                                            </button>
+                                            {openMenuId === ticket.id && (
+                                                <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-slate-700 rounded-md shadow-lg z-10 ring-1 ring-black ring-opacity-5 dark:ring-slate-600 overflow-hidden">
+                                                    <ul className="py-1">
+                                                        <li>
+                                                            <button 
+                                                                onClick={() => { handleViewTicket(ticket.id); setOpenMenuId(null); }}
+                                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-600 flex items-center gap-2"
+                                                            >
+                                                                <Icon name="fas fa-eye" className="text-gray-400" /> View Ticket
+                                                            </button>
+                                                        </li>
+                                                        {ticket.status !== 'Closed' && (
+                                                            <li>
+                                                                <button 
+                                                                    onClick={() => { handleCloseTicket(ticket.id); setOpenMenuId(null); }}
+                                                                    className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                                                                >
+                                                                    <Icon name="fas fa-times-circle" /> Close Ticket
+                                                                </button>
+                                                            </li>
+                                                        )}
+                                                    </ul>
+                                                </div>
+                                            )}
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
                               {filteredTickets.length === 0 && (
                                 <tr>
-                                    <td colSpan={isAdmin ? 7 : 6} className="text-center py-10 text-gray-500 dark:text-gray-400">
+                                    <td colSpan={isAdmin ? 8 : 7} className="text-center py-10 text-gray-500 dark:text-gray-400">
                                         No tickets found.
                                     </td>
                                 </tr>

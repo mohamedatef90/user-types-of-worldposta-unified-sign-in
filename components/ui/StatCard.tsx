@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card } from './Card';
 import { Icon } from './Icon';
@@ -21,10 +22,10 @@ export const StatCard: React.FC<StatCardProps> = ({ title, metric, change, iconN
   return (
     <Card className={`p-4 flex items-center justify-between ${className}`}>
         <div className="flex items-center">
-            <Icon name={iconName} className={`text-4xl w-10 text-center ${iconColor}`} />
-            <div className="ml-4">
-              <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">{title}</p>
-              <p className="text-2xl font-bold text-[#293c51] dark:text-gray-100">{metric}</p>
+            <Icon name={iconName} className={`text-2xl w-8 text-center ${iconColor}`} />
+            <div className="ml-3">
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{title}</p>
+              <p className="text-xl font-bold text-[#293c51] dark:text-gray-100">{metric}</p>
             </div>
         </div>
         {change && (

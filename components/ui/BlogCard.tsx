@@ -39,7 +39,6 @@ export const BlogCard: React.FC<BlogCardProps> = ({ blog, isExpanded, onToggleEx
                 >
                     {blog.title}
                 </h3>
-                {/* line-clamp-2 becomes line-clamp-4, adding two lines of content */}
                 <p className={`text-sm text-gray-600 dark:text-gray-400 flex-grow transition-all duration-300 ${isExpanded ? 'line-clamp-4' : 'line-clamp-2'}`}>
                     {blog.subtitle}
                 </p>
