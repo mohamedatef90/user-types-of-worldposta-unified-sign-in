@@ -1,9 +1,11 @@
 
+
+
 import React, { useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, Button, FormField, SearchableSelect, Icon } from '@/components/ui';
 import { getAllMockCustomers, mockSupportTickets } from '@/data';
-import type { User, SupportTicket, SupportTicketPriority, SupportTicketDepartment, SupportTicketRequestType, SupportTicketProduct } from '@/types';
+import type { User, SupportTicket, SupportTicketPriority, SupportTicketDepartment, SupportTicketRequestType } from '@/types';
 
 export const CreateTicketPage: React.FC = () => {
     const navigate = useNavigate();
@@ -11,8 +13,9 @@ export const CreateTicketPage: React.FC = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [formData, setFormData] = useState({
-        product: 'General Inquiry' as SupportTicketProduct,
+        // FIX: 'Incident' is not a valid SupportTicketRequestType. Changed to 'Issue'.
         requestType: 'Issue' as SupportTicketRequestType,
+        // FIX: 'Medium' is not a valid SupportTicketPriority. Changed to 'Normal'.
         priority: 'Normal' as SupportTicketPriority,
         customerId: '',
         subject: '',
@@ -59,7 +62,7 @@ export const CreateTicketPage: React.FC = () => {
         const newTicket: SupportTicket = {
             id: `TKT-${Math.floor(Math.random() * 90000) + 10000}`,
             subject: formData.subject,
-            product: formData.product,
+            product: 'General Inquiry',
             status: 'Open',
             lastUpdate: new Date().toISOString(),
             description: formData.description,
@@ -83,38 +86,9 @@ export const CreateTicketPage: React.FC = () => {
 
     const isSubmitDisabled = !formData.customerId || !formData.subject || !formData.description;
 
-    const productOptions: SupportTicketProduct[] = ['CloudEdge', 'Posta Email', 'Subscriptions', 'General Inquiry'];
-
     return (
         <Card title="Create New Support Ticket">
             <form onSubmit={handleSubmit} className="space-y-4 max-w-3xl mx-auto">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                        id="product"
-                        name="product"
-                        label="Product/Service"
-                        as="select"
-                        value={formData.product}
-                        onChange={handleFormChange}
-                        required
-                    >
-                        {productOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                    </FormField>
-                    <FormField
-                        id="department"
-                        name="department"
-                        label="Department"
-                        as="select"
-                        value={formData.department}
-                        onChange={handleFormChange}
-                        required
-                    >
-                        <option value="Technical Support">Technical Support</option>
-                        <option value="Billing Department">Billing Department</option>
-                        <option value="Sales Inquiry">Sales Inquiry</option>
-                    </FormField>
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                         id="requestType"
@@ -125,6 +99,7 @@ export const CreateTicketPage: React.FC = () => {
                         onChange={handleFormChange}
                         required
                     >
+                        {/* FIX: Changed 'Incident' to 'Issue' to match type definition */}
                         <option value="Issue">Issue</option>
                         <option value="Inquiry">Inquiry</option>
                         <option value="Task">Task</option>
@@ -140,6 +115,7 @@ export const CreateTicketPage: React.FC = () => {
                         required
                     >
                         <option value="Low">Low</option>
+                        {/* FIX: Changed 'Medium' to 'Normal' to match type definition */}
                         <option value="Normal">Normal</option>
                         <option value="High">High</option>
                         <option value="Urgent">Urgent</option>
@@ -154,6 +130,20 @@ export const CreateTicketPage: React.FC = () => {
                     onChange={handleCustomerChange}
                     placeholder="Search and select a customer..."
                 />
+                
+                <FormField
+                    id="department"
+                    name="department"
+                    label="Department"
+                    as="select"
+                    value={formData.department}
+                    onChange={handleFormChange}
+                    required
+                >
+                    <option value="Technical Support">Technical Support</option>
+                    <option value="Billing Department">Billing Department</option>
+                    <option value="Sales Inquiry">Sales Inquiry</option>
+                </FormField>
                 
                 <FormField
                     id="subject"

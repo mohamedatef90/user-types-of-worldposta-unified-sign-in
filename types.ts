@@ -130,9 +130,6 @@ export interface SupportTicket {
     priority: SupportTicketPriority;
     department: SupportTicketDepartment;
     requestType: SupportTicketRequestType;
-    resellerName?: string;
-    assignedAdminId?: string;
-    assignedAdminName?: string;
 }
 
 export interface KnowledgeBaseArticle {
@@ -285,11 +282,6 @@ export interface PricingPlan {
 export interface Feature {
   name:string;
   availability: { [planId: string]: boolean | string };
-}
-
-export interface FeatureCategory {
-  name: string;
-  features: Feature[];
 }
 
 export interface FeatureCategory {

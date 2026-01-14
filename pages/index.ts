@@ -1,4 +1,3 @@
-
 export * from './ActionLogsPage';
 export * from './AllNotificationsPage';
 export * from './cloud-edge/CloudEdgeLayout';
@@ -38,6 +37,8 @@ export * from './dashboard/ResellerDashboardPage';
 export * from './dashboard/EmailAdminSmtpLogsPage';
 export * from './dashboard/EmailAdminSuiteDashboardPage';
 export * from './dashboard/BlogsCenterPage';
+// Fix: Added missing export for BlogDetailsPage
+export * from './dashboard/BlogDetailsPage';
 export * from './dashboard/email_admin_suite/PlaceholderPage';
 export * from './dashboard/email_admin_suite/OrgsAndDomainsPage';
 export * from './dashboard/email_admin_suite/MailboxesPage';

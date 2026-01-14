@@ -1,4 +1,6 @@
 
+
+
 import type { User, UserGroup, Invoice, SupportTicket, LogEntry, SupportTicketProduct, InvoiceLineItem, StaffGroup, SmtpLogEntry, KnowledgeBaseArticle, KubernetesCluster, LoadBalancer, FirewallRule, StorageBucket, SecurityAlert, BackupJob, Mailbox, MailboxPlan, DistributionList, SharedContact, Rule, PstLogEntry, RunningTask } from './types';
 
 // Mock User Data
@@ -366,28 +368,12 @@ export const mockSupportTickets: SupportTicket[] = [
         description: 'I am unable to SSH into my production web server (prod-web-01). The connection times out. I have confirmed my firewall rules allow port 22 from my IP. Please investigate.',
         customerId: 'user123',
         customerName: 'Demo Customer Alpha',
-        resellerName: 'Partner Solutions Ltd.',
-        assignedAdminId: 'admin456',
-        assignedAdminName: 'Admin User',
         priority: 'High',
         department: 'Technical Support',
         requestType: 'Issue',
         comments: [
-            { author: 'Demo Customer Alpha', timestamp: new Date(Date.now() - 3600000 * 24).toISOString(), content: 'This is urgent, my website is down.' },
-            { author: 'Support Staff', timestamp: new Date(Date.now() - 3600000 * 23).toISOString(), content: 'We are looking into the issue and will update you shortly.' },
-            { author: 'Demo Customer Alpha', timestamp: new Date(Date.now() - 3600000 * 22).toISOString(), content: 'Still no update? Customers are complaining.' },
-            { author: 'Support Staff', timestamp: new Date(Date.now() - 3600000 * 21).toISOString(), content: 'Investigating the core router logs. It appears to be a localized routing loop.' },
-            { author: 'Demo Customer Alpha', timestamp: new Date(Date.now() - 3600000 * 20).toISOString(), content: 'Understood. Is there a workaround I can apply on my firewall?' },
-            { author: 'Support Staff', timestamp: new Date(Date.now() - 3600000 * 19).toISOString(), content: 'No workaround needed, we are re-routing traffic through the secondary gateway now.' },
-            { author: 'Demo Customer Alpha', timestamp: new Date(Date.now() - 3600000 * 18).toISOString(), content: 'The secondary gateway is up, but latency is extremely high.' },
-            { author: 'Support Staff', timestamp: new Date(Date.now() - 3600000 * 17).toISOString(), content: 'Latency is expected during the failover convergence. It should stabilize in 5 minutes.' },
-            { author: 'Demo Customer Alpha', timestamp: new Date(Date.now() - 3600000 * 16).toISOString(), content: 'Convergence finished. Performance is back to normal. Thank you.' },
-            { author: 'Support Staff', timestamp: new Date(Date.now() - 3600000 * 15).toISOString(), content: 'Excellent. We are now investigating why the primary gateway failed.' },
-            { author: 'Demo Customer Alpha', timestamp: new Date(Date.now() - 3600000 * 14).toISOString(), content: 'Will there be a post-mortem report for this incident?' },
-            { author: 'Support Staff', timestamp: new Date(Date.now() - 3600000 * 13).toISOString(), content: 'Yes, an RCA (Root Cause Analysis) will be provided within 24 hours.' },
-            { author: 'Demo Customer Alpha', timestamp: new Date(Date.now() - 3600000 * 12).toISOString(), content: 'Great. Please also check the backup replication status, it seems stuck.' },
-            { author: 'Support Staff', timestamp: new Date(Date.now() - 3600000 * 11).toISOString(), content: 'Checking backup replication... Fixed. The route change temporarily disrupted the sync.' },
-            { author: 'Demo Customer Alpha', timestamp: new Date(Date.now() - 3600000 * 10).toISOString(), content: 'Confirmed. Sync is back online. Closing the follow-up question.' }
+            { author: 'Demo Customer Alpha', timestamp: new Date(Date.now() - 3600000 * 2).toISOString(), content: 'This is urgent, my website is down.' },
+            { author: 'Support Staff', timestamp: new Date(Date.now() - 3600000 * 1).toISOString(), content: 'We are looking into the issue and will update you shortly.' }
         ]
     },
     {
@@ -399,7 +385,6 @@ export const mockSupportTickets: SupportTicket[] = [
         description: 'My last invoice (INV-2024-003) seems to have an incorrect charge. Can you please review it?',
         customerId: 'user123',
         customerName: 'Demo Customer Alpha',
-        resellerName: 'Partner Solutions Ltd.',
         priority: 'Normal',
         department: 'Billing Department',
         requestType: 'Inquiry'
