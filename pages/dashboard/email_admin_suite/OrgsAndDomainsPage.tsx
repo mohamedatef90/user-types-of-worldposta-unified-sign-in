@@ -324,6 +324,15 @@ export const OrgsAndDomainsPage: React.FC = () => {
         const domainNameDisplay = domain ? domain.domainName : (formState.domainToConfigure || 'your domain');
         const hStatus: 'healthy' | 'warning' | 'unhealthy' = domain ? domain.healthStatus : (isVerified ? 'healthy' : 'warning');
         
+        const [verifyingSections, setVerifyingSections] = useState<Record<string, boolean>>({});
+
+        const handleVerifySection = (sectionId: string) => {
+            setVerifyingSections(prev => ({ ...prev, [sectionId]: true }));
+            setTimeout(() => {
+                setVerifyingSections(prev => ({ ...prev, [sectionId]: false }));
+            }, 1500);
+        };
+
         // Logic mapping:
         // Healthy: All Success
         // Warning (CHECK): Mixed (some success, some warning)
@@ -348,11 +357,23 @@ export const OrgsAndDomainsPage: React.FC = () => {
 
                 {/* MX RECORDS SECTION */}
                 <div className="space-y-6">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-[#679a41] text-white flex items-center justify-center text-sm font-bold">1</div>
-                        <p className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-tight">
-                            Configure MX Records: Essential for receiving emails
-                        </p>
+                    <div className="flex items-center justify-between gap-2 border-b border-gray-100 dark:border-slate-800 pb-2">
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-[#679a41] text-white flex items-center justify-center text-sm font-bold">1</div>
+                            <p className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-tight">
+                                Configure MX Records: Essential for receiving emails
+                            </p>
+                        </div>
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => handleVerifySection('mx')} 
+                            isLoading={verifyingSections['mx']}
+                            disabled={hStatus === 'healthy'}
+                            leftIconName="fas fa-check-double"
+                        >
+                            Verify
+                        </Button>
                     </div>
                     <div className="overflow-x-auto bg-white dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm">
                         <table className="min-w-full text-left">
@@ -378,11 +399,23 @@ export const OrgsAndDomainsPage: React.FC = () => {
 
                 {/* SPF RECORD SECTION */}
                 <div className="space-y-6">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-[#679a41] text-white flex items-center justify-center text-sm font-bold">2</div>
-                        <p className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-tight">
-                            Configure SPF Record: Prevents others from spoofing your domain
-                        </p>
+                    <div className="flex items-center justify-between gap-2 border-b border-gray-100 dark:border-slate-800 pb-2">
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-[#679a41] text-white flex items-center justify-center text-sm font-bold">2</div>
+                            <p className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-tight">
+                                Configure SPF Record: Prevents others from spoofing your domain
+                            </p>
+                        </div>
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => handleVerifySection('spf')} 
+                            isLoading={verifyingSections['spf']}
+                            disabled={hStatus === 'healthy'}
+                            leftIconName="fas fa-check-double"
+                        >
+                            Verify
+                        </Button>
                     </div>
                     <div className="overflow-x-auto bg-white dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm">
                         <table className="min-w-full text-left">
@@ -402,11 +435,23 @@ export const OrgsAndDomainsPage: React.FC = () => {
 
                 {/* DKIM RECORD SECTION */}
                 <div className="space-y-6">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-[#679a41] text-white flex items-center justify-center text-sm font-bold">3</div>
-                        <p className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-tight">
-                            Configure DKIM Record: Cryptographic signing for outbound mail
-                        </p>
+                    <div className="flex items-center justify-between gap-2 border-b border-gray-100 dark:border-slate-800 pb-2">
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-[#679a41] text-white flex items-center justify-center text-sm font-bold">3</div>
+                            <p className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-tight">
+                                Configure DKIM Record: Cryptographic signing for outbound mail
+                            </p>
+                        </div>
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => handleVerifySection('dkim')} 
+                            isLoading={verifyingSections['dkim']}
+                            disabled={hStatus === 'healthy'}
+                            leftIconName="fas fa-check-double"
+                        >
+                            Verify
+                        </Button>
                     </div>
                     <div className="overflow-x-auto bg-white dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm">
                         <table className="min-w-full text-left">
@@ -427,11 +472,23 @@ export const OrgsAndDomainsPage: React.FC = () => {
 
                 {/* DMARC RECORD SECTION */}
                 <div className="space-y-6">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-[#679a41] text-white flex items-center justify-center text-sm font-bold">4</div>
-                        <p className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-tight">
-                            Configure DMARC Record: Instructions for receiving servers
-                        </p>
+                    <div className="flex items-center justify-between gap-2 border-b border-gray-100 dark:border-slate-800 pb-2">
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-[#679a41] text-white flex items-center justify-center text-sm font-bold">4</div>
+                            <p className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-tight">
+                                Configure DMARC Record: Instructions for receiving servers
+                            </p>
+                        </div>
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => handleVerifySection('dmarc')} 
+                            isLoading={verifyingSections['dmarc']}
+                            disabled={hStatus === 'healthy'}
+                            leftIconName="fas fa-check-double"
+                        >
+                            Verify
+                        </Button>
                     </div>
                     <div className="overflow-x-auto bg-white dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm">
                         <table className="min-w-full text-left">
@@ -453,7 +510,7 @@ export const OrgsAndDomainsPage: React.FC = () => {
                 <div className="flex flex-col items-center gap-4 pt-8">
                      {onVerify && (
                         <Button onClick={onVerify} isLoading={isVerifying} disabled={isVerified} size="lg" className="px-12 font-bold shadow-lg shadow-green-500/20">
-                            {isVerified ? 'Records Verified!' : 'Verify DNS Records'}
+                            {isVerified ? 'Records Verified!' : 'Verify All DNS Records'}
                         </Button>
                     )}
                     <div className="flex gap-4">
