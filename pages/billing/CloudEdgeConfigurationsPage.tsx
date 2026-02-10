@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, Card, Icon, Stepper, Modal } from '@/components/ui';
 import type { CloudEdgeConfiguration } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
@@ -183,7 +183,6 @@ const EstimateSummaryCard: React.FC<{ configurations: CloudEdgeConfiguration[] }
       <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
           {configurations.map(config => {
               const details = getConfigDetails(config);
-              // Take key details only for summary (first 2-3 items usually cover type/template/specs)
               const summaryDetails = details.slice(0, 3); 
               
               return (
@@ -223,7 +222,6 @@ const EstimateSummaryCard: React.FC<{ configurations: CloudEdgeConfiguration[] }
   );
 };
 
-
 const PaymentStep: React.FC<{
     configurations: CloudEdgeConfiguration[], 
     onBack: () => void, 
@@ -257,7 +255,6 @@ const PaymentStep: React.FC<{
                                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                         {config.billingMode === 'payg_wallet' ? 'PAYG (Wallet)' : 'Subscription'}
                                     </p>
-                                    {/* Brief summary for payment review */}
                                     <p className="text-xs text-gray-500 dark:text-gray-400">
                                         {config.type === 'instance' ? 'Virtual Machine' : config.type === 'vdc' ? 'Virtual Data Center' : 'Ready Plan'}
                                     </p>
