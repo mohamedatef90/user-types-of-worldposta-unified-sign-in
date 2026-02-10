@@ -1,6 +1,9 @@
 
+
+
+
 import React, { useState, useEffect, useMemo } from 'react';
-import { NavLink, useLocation, Link, useSearchParams } from 'react-router-dom';
+import { NavLink, useLocation, Link } from 'react-router-dom';
 import { Icon, Modal, Button, FormField } from '@/components/ui';
 import { useAuth } from '@/context';
 
@@ -24,7 +27,6 @@ interface EmailAdminSidebarProps {
 export const EmailAdminSidebar: React.FC<EmailAdminSidebarProps> = ({ isCollapsed, isOpen, onClose }) => {
     const { user } = useAuth();
     const location = useLocation();
-    const [searchParams] = useSearchParams();
     const [openSections, setOpenSections] = useState<string[]>([]);
     const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
     const [rating, setRating] = useState(0);
@@ -33,16 +35,6 @@ export const EmailAdminSidebar: React.FC<EmailAdminSidebarProps> = ({ isCollapse
     const [comments, setComments] = useState('');
     const [submitted, setSubmitted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-
-    // Maintain "View As" mode state across links
-    const impersonationQuery = useMemo(() => {
-        const viewAsUser = searchParams.get('viewAsUser');
-        const returnTo = searchParams.get('returnTo');
-        if (viewAsUser && returnTo) {
-            return `?viewAsUser=${viewAsUser}&returnTo=${encodeURIComponent(returnTo)}`;
-        }
-        return '';
-    }, [searchParams]);
 
     const baseTextColor = "text-gray-700 dark:text-gray-300";
     const hoverBgColor = "hover:bg-gray-200 dark:hover:bg-slate-700";
@@ -89,7 +81,6 @@ export const EmailAdminSidebar: React.FC<EmailAdminSidebarProps> = ({ isCollapse
                     { name: 'White & Black Lists', path: '/app/email-admin-suite/admin/lists' },
                     { name: 'Sister Companies', path: '/app/email-admin-suite/admin/sister-companies' },
                     { name: 'White & Black IP', path: '/app/email-admin-suite/admin/ip-lists' },
-                    { name: 'Billing', path: '/app/email-admin-suite/admin/billing' },
                 ]
             },
             { name: 'Migrations', path: '/app/email-admin-suite/migrations', icon: 'fas fa-exchange-alt' },
@@ -126,6 +117,7 @@ export const EmailAdminSidebar: React.FC<EmailAdminSidebarProps> = ({ isCollapse
 
     const handleOpenFeedback = () => {
         setIsFeedbackModalOpen(true);
+        // Reset state when opening
         setRating(0);
         setHoverRating(0);
         setCategory('General Feedback');
@@ -143,12 +135,14 @@ export const EmailAdminSidebar: React.FC<EmailAdminSidebarProps> = ({ isCollapse
             return;
         }
         setIsLoading(true);
+        
+        // Simulate API call
         setTimeout(() => {
             setIsLoading(false);
             setSubmitted(true);
             setTimeout(() => {
                 handleCloseFeedback();
-            }, 3000);
+            }, 3000); // Close modal after 3 seconds
         }, 1500);
     };
 
@@ -189,7 +183,7 @@ export const EmailAdminSidebar: React.FC<EmailAdminSidebarProps> = ({ isCollapse
                        lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen 
                        ${isCollapsed ? 'w-20' : 'w-64'}`}>
             <div className={`flex items-center justify-between p-4 h-16 border-b border-gray-200 dark:border-slate-700 ${isCollapsed ? 'lg:justify-center' : ''}`}>
-                <Link to={`/app/email-admin-suite${impersonationQuery}`} className="flex items-center gap-2">
+                <Link to="/app/email-admin-suite" className="flex items-center gap-2">
                     <img src="https://www.worldposta.com/assets/Posta-Logo.png" alt="Posta Logo" className="h-7 w-auto" />
                     {!isCollapsed && <span className="font-semibold text-gray-500 text-sm">Suite</span>}
                 </Link>
@@ -220,7 +214,7 @@ export const EmailAdminSidebar: React.FC<EmailAdminSidebarProps> = ({ isCollapse
                                                 <ul className="pt-1 space-y-1">
                                                     {item.subItems.map(subItem => (
                                                         <li key={subItem.name}>
-                                                            <NavLink to={`${subItem.path}${impersonationQuery}`}
+                                                            <NavLink to={subItem.path}
                                                                 className={({isActive}) => `block py-2.5 pr-3 pl-11 text-sm rounded-md ${isActive ? `${activeBgColor} ${activeTextColor}` : `text-gray-600 dark:text-gray-400 ${hoverBgColor} ${hoverTextColor}`}`}
                                                             >
                                                                 {subItem.name}
@@ -234,7 +228,7 @@ export const EmailAdminSidebar: React.FC<EmailAdminSidebarProps> = ({ isCollapse
                                 })()
                             ) : (
                                 <NavLink 
-                                    to={`${item.path}${impersonationQuery}`} 
+                                    to={item.path} 
                                     title={isCollapsed ? item.name : undefined}
                                     end={item.path === '/app/email-admin-suite'}
                                     className={({isActive}) => `flex items-center py-2.5 rounded-md text-sm font-medium transition-colors duration-150 ease-in-out group ${isCollapsed ? 'px-3 justify-center' : 'px-3'} ${isActive ? `${activeBgColor} ${activeTextColor}` : `${baseTextColor} ${hoverBgColor} ${hoverTextColor}`}`}
@@ -257,7 +251,7 @@ export const EmailAdminSidebar: React.FC<EmailAdminSidebarProps> = ({ isCollapse
                             <Icon name="fas fa-bullhorn" fixedWidth className={`mr-3 text-lg ${iconBaseColor}`} />
                             Give Feedback
                         </button>
-                        <Link to={`/app/dashboard${impersonationQuery}`} className={`w-full text-left flex items-center p-3 rounded-md text-sm font-medium ${baseTextColor} ${hoverBgColor} ${hoverTextColor}`}>
+                        <Link to="/app/dashboard" className={`w-full text-left flex items-center p-3 rounded-md text-sm font-medium ${baseTextColor} ${hoverBgColor} ${hoverTextColor}`}>
                             <Icon name="fas fa-sign-out-alt" fixedWidth className={`mr-3 text-lg ${iconBaseColor}`} />
                             Exit Suite
                         </Link>

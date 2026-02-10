@@ -1,7 +1,5 @@
 
-
-
-import type { User, UserGroup, Invoice, SupportTicket, LogEntry, SupportTicketProduct, InvoiceLineItem, StaffGroup, SmtpLogEntry, KnowledgeBaseArticle, KubernetesCluster, LoadBalancer, FirewallRule, StorageBucket, SecurityAlert, BackupJob, Mailbox, MailboxPlan, DistributionList, SharedContact, Rule, PstLogEntry, RunningTask } from './types';
+import type { User, UserGroup, Invoice, SupportTicket, LogEntry, SupportTicketProduct, InvoiceLineItem, StaffGroup, SmtpLogEntry, KnowledgeBaseArticle, KubernetesCluster, LoadBalancer, FirewallRule, StorageBucket, SecurityAlert, BackupJob, Mailbox, MailboxPlan, DistributionList, SharedContact, Rule, PstLogEntry, RunningTask, Subscription } from './types';
 
 // Mock User Data
 export const MOCK_USERS: { [email: string]: User & { passwordHash: string } } = {
@@ -500,4 +498,76 @@ export const mockBackupJobs: BackupJob[] = [
     { id: 'job-1', name: 'Daily DB Backups', resource: 'prod-db-01', schedule: 'Daily at 2:00 AM UTC', lastRunStatus: 'Success', lastRunDate: new Date(Date.now() - 86400000).toISOString() },
     { id: 'job-2', name: 'Weekly Web Server Snapshot', resource: 'prod-web-cluster', schedule: 'Weekly on Sunday at 4:00 AM UTC', lastRunStatus: 'Success', lastRunDate: new Date(Date.now() - 86400000 * 3).toISOString() },
     { id: 'job-3', name: 'Staging Volume Backup', resource: 'vol-staging-data', schedule: 'Daily at 3:00 AM UTC', lastRunStatus: 'Failed', lastRunDate: new Date(Date.now() - 86400000).toISOString() },
+];
+
+export const mockSubscriptions: Subscription[] = [
+    {
+        id: 'sub-ce-001',
+        productName: 'CloudEdge - Production Web Cluster',
+        category: 'cloudedge',
+        status: 'active',
+        billingMode: 'subscription',
+        subscribeDate: '2023-01-15T10:00:00Z',
+        endDate: '2024-01-15T10:00:00Z',
+        infraTier: 'Type I',
+    },
+    {
+        id: 'sub-posta-001',
+        productName: 'Posta Business Plan',
+        category: 'posta',
+        status: 'active',
+        billingMode: 'subscription',
+        subscribeDate: '2023-05-20T14:00:00Z',
+        endDate: '2024-05-20T14:00:00Z',
+    },
+    {
+        id: 'sub-ce-002',
+        productName: 'CloudEdge - GPU Workload',
+        category: 'cloudedge',
+        status: 'active',
+        billingMode: 'payg_wallet',
+        subscribeDate: '2023-08-01T09:00:00Z',
+        endDate: 'N/A',
+        infraTier: 'Type II',
+    },
+    {
+        id: 'sub-ce-003',
+        productName: 'CloudEdge - Dev/Test Environment',
+        category: 'cloudedge',
+        status: 'active',
+        billingMode: 'subscription',
+        subscribeDate: '2023-09-10T09:00:00Z',
+        endDate: '2024-09-10T09:00:00Z',
+        infraTier: 'Type I',
+    },
+    {
+        id: 'sub-ce-004',
+        productName: 'CloudEdge - Data Analytics Cluster',
+        category: 'cloudedge',
+        status: 'active',
+        billingMode: 'payg_wallet',
+        subscribeDate: '2023-11-05T14:30:00Z',
+        endDate: 'N/A',
+        infraTier: 'Type II',
+    },
+    {
+        id: 'sub-ce-005',
+        productName: 'CloudEdge - Backup Server',
+        category: 'cloudedge',
+        status: 'active',
+        billingMode: 'subscription',
+        subscribeDate: '2023-06-15T08:00:00Z',
+        endDate: '2024-06-15T08:00:00Z',
+        infraTier: 'Type I',
+    },
+    {
+        id: 'sub-ce-006',
+        productName: 'CloudEdge - AI Training Node',
+        category: 'cloudedge',
+        status: 'active',
+        billingMode: 'payg_wallet',
+        subscribeDate: '2023-12-01T10:00:00Z',
+        endDate: 'N/A',
+        infraTier: 'Type II',
+    }
 ];

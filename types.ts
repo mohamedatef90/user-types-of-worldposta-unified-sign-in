@@ -163,7 +163,7 @@ export interface EmailCartItem {
 }
 
 export type CloudEdgeComponentType = 'instance' | 'vdc' | 'ready-plan';
-export type MachineType = 'performance-01' | 'performance-02' | 'performance-03';
+export type MachineType = 'Type I' | 'Type II';
 export type ProvisioningModel = 'regular' | 'spot';
 export type SubscriptionTermUnit = 'hr' | 'week' | 'month' | 'year';
 
@@ -192,9 +192,16 @@ export interface CloudEdgeConfiguration {
     // Advanced/Optional
     provisioningModel?: ProvisioningModel;
     confidentialVM?: boolean;
-    addGPUs?: boolean;
-    gpuType?: string;
-    gpuCount?: number;
+    
+    // Billing & GPU Model
+    billingMode?: 'payg_wallet' | 'subscription';
+    expectedRuntimeHours?: number;
+    paygCapValue?: number;
+    paygCapType?: 'amount' | 'hours';
+    gpuEnabled?: boolean;
+    gpuFamily?: 'tesla' | 'h100';
+    teslaOptionId?: string;
+    h100Slices?: number;
 
     // Other resources
     staticPublicIPs?: number;
@@ -205,6 +212,11 @@ export interface CloudEdgeConfiguration {
     linuxEnterpriseLicenses?: number;
     cortexXDREndpoints?: number;
     loadBalancerInstances?: number;
+    
+    // Flash Disk Add-on
+    flashDiskEnabled?: boolean;
+    flashDiskType?: 'NVMe' | 'SSD';
+    flashDiskGB?: number;
     
     // Add-ons
     advancedFirewall?: boolean;
@@ -354,6 +366,7 @@ export interface SecurityAlert {
   description: string;
   resource: string;
   timestamp: string;
+  // ... existing code ...
 }
 
 // Backup & DR
@@ -456,4 +469,15 @@ export interface BlogPost {
   content: ReactNode;
   sourceUrl?: string;
   sourceName?: string;
+}
+
+export interface Subscription {
+  id: string;
+  productName: string;
+  category: 'cloudedge' | 'posta';
+  status: 'active' | 'pending' | 'expired';
+  billingMode: 'payg_wallet' | 'subscription';
+  subscribeDate: string;
+  endDate: string;
+  infraTier?: string;
 }

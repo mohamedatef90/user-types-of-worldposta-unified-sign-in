@@ -110,7 +110,13 @@ export const InvoiceDetailPage: React.FC = () => {
                             <tbody>
                                 {invoice.lineItems.map((item, i) => (
                                     <tr key={i} className="border-b dark:border-gray-700">
-                                        <td className="py-3 pr-4 text-sm font-medium">{item.description}</td>
+                                        <td className="py-3 pr-4 text-sm font-medium">
+                                            {item.description.split('\n').map((line, index) => (
+                                                <div key={index} className={index === 0 ? "text-[#293c51] dark:text-gray-200" : "text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-normal"}>
+                                                    {line}
+                                                </div>
+                                            ))}
+                                        </td>
                                         <td className="py-3 px-4 text-right text-sm">{item.units}</td>
                                         <td className="py-3 pl-4 text-right text-sm font-medium">${item.amount.toFixed(2)}</td>
                                     </tr>

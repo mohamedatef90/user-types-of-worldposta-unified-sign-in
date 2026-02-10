@@ -306,8 +306,9 @@ const ConfirmationStep: React.FC<ConfirmationStepProps> = ({ onManageSubscriptio
     );
 };
 
-
-export const EmailAdminSubscriptionsPage: React.FC = () => {
+export const EmailAdminSubscriptionsContent: React.FC<{
+    onClose?: () => void;
+}> = ({ onClose }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isNewDemoUser = user?.email === 'new.user@worldposta.com';
@@ -368,7 +369,8 @@ export const EmailAdminSubscriptionsPage: React.FC = () => {
   }, [activeOrderConfiguration]);
 
   const handleManageSubscriptions = () => {
-    navigate('/app/billing');
+    if (onClose) onClose();
+    else navigate('/app/billing');
   };
 
   const handleConfigureEmail = () => {
@@ -443,4 +445,9 @@ export const EmailAdminSubscriptionsPage: React.FC = () => {
       )}
     </div>
   );
+};
+
+export const EmailAdminSubscriptionsPage: React.FC = () => {
+    const navigate = useNavigate();
+    return <EmailAdminSubscriptionsContent onClose={() => navigate('/app/billing')} />;
 };
