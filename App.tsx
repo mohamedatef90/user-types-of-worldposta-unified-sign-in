@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation, Outlet, useSearchParams, Link } from 'react-router-dom';
 import { AuthProvider, ThemeProvider, useAuth, AppLayoutContext } from '@/context';
 import type { User, AuthContextType, NavItem, UserGroup, ApplicationCardData } from '@/types';
-import { Navbar, Sidebar, Spinner, Breadcrumbs, Footer, Icon, Button, Chatbot, FeedbackSystem } from '@/components/ui'; 
+import { Navbar, Sidebar, BillingSidebar, Spinner, Breadcrumbs, Footer, Icon, Button, Chatbot, FeedbackSystem } from '@/components/ui'; 
 import { getMockUserById } from '@/data';
 import { 
     LandingPage, 
@@ -73,7 +74,10 @@ import {
     BlogsCenterPage,
     OsImagesPage,
     BlogDetailsPage,
-    ManageSubscriptionPage
+    ManageSubscriptionPage,
+    SubscriptionsListView,
+    PaymentAndDetailsView,
+    AdminToolsView
 } from '@/pages';
 
 
@@ -82,7 +86,6 @@ const ProtectedRoute: React.FC<{
     isAuthenticated: boolean;
     isLoading: boolean;
     allowedRoles?: User['role'][];
-    // Fix: Added children to props to support HOC usage in AppRoutes
     children?: React.ReactNode;
 }> = ({ user, isAuthenticated, isLoading, allowedRoles, children }) => {
     const location = useLocation();
@@ -103,7 +106,6 @@ const ProtectedRoute: React.FC<{
         return <Navigate to="/app/dashboard" replace />;
     }
 
-    // Fix: Render children if provided, otherwise use Outlet for nested routing
     return children ? <>{children}</> : <Outlet />;
 };
 
@@ -130,7 +132,7 @@ const getNavItems = (role: User['role']): NavItem[] => {
       return [
         { name: 'Dashboard', path: '/app/dashboard', iconName: 'fas fa-home' },
         { name: 'Users Management', path: '/app/team-management', iconName: 'fas fa-users-cog' },
-        { name: 'Subscriptions', path: '/app/billing', iconName: 'fas fa-wallet' },
+        { name: 'Billing and Subscriptions', path: '/app/billing', iconName: 'fas fa-wallet' },
       ];
   }
 };
@@ -163,7 +165,7 @@ const getAppLauncherItems = (role: User['role'] | undefined): ApplicationCardDat
     const customerApps: ApplicationCardData[] = [
         { 
             id: 'billing', 
-            name: 'Subscriptions', 
+            name: 'Billing and Subscriptions', 
             description: 'Oversee your subscriptions and add new services.', 
             iconName: 'fas fa-wallet', 
             launchUrl: '/app/billing',
@@ -173,7 +175,7 @@ const getAppLauncherItems = (role: User['role'] | undefined): ApplicationCardDat
             name: 'Invoice History', 
             description: 'View and download past invoices for your records.', 
             iconName: 'fas fa-file-invoice', 
-            launchUrl: '/app/billing?tab=invoices',
+            launchUrl: '/app/billing/invoices',
         },
         {
             id: 'support',
@@ -217,15 +219,16 @@ const AppLayout: React.FC = () => {
     const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
     const [isDesktopSidebarCollapsed, setDesktopSidebarCollapsed] = useState(() => {
         const isEmailAdmin = location.pathname.startsWith('/app/email-admin-suite');
-        const storageKey = isEmailAdmin ? 'emailAdminSidebarCollapsed' : 'sidebarCollapsed';
+        const isBilling = location.pathname.startsWith('/app/billing');
+        const storageKey = isEmailAdmin ? 'emailAdminSidebarCollapsed' : isBilling ? 'billingSidebarCollapsed' : 'sidebarCollapsed';
         return localStorage.getItem(storageKey) === 'true';
     });
     const [isSearchPanelOpen, setSearchPanelOpen] = useState(false);
 
     const isEmailAdminSuite = location.pathname.startsWith('/app/email-admin-suite');
+    const isBillingCenter = location.pathname.startsWith('/app/billing');
     const isNewDemoUser = user?.email === 'new.user@worldposta.com';
     
-    // State for the new status banner in Email Admin Suite
     const [isStatusBannerVisible, setStatusBannerVisible] = useState(true);
     const [domainStatus, setDomainStatus] = useState({ isDomainVerified: false, isMxSpfVerified: false });
     const [planSelectionVersion, setPlanSelectionVersion] = useState(0);
@@ -240,13 +243,12 @@ const AppLayout: React.FC = () => {
         };
     }, []);
     
-    // Memoize the check for demo user plan selection to avoid showing status bar on plan page
     const planSelectedForDemo = useMemo(() => {
         if (isNewDemoUser) {
             return sessionStorage.getItem('demoUserPlanSelected') === 'true';
         }
-        return true; // Default to true for non-demo users or if not applicable
-    }, [isNewDemoUser, planSelectionVersion]); // Re-check when plan selection event fires
+        return true; 
+    }, [isNewDemoUser, planSelectionVersion]);
 
     const showStatusBar = isEmailAdminSuite && isStatusBannerVisible && isNewDemoUser && planSelectedForDemo;
 
@@ -276,7 +278,7 @@ const AppLayout: React.FC = () => {
     }, [isNewDemoUser]);
 
     useEffect(() => {
-        updateBannerStatus(); // Initial check on mount and location change
+        updateBannerStatus(); 
     
         window.addEventListener('domainStateChange', updateBannerStatus);
         
@@ -286,9 +288,9 @@ const AppLayout: React.FC = () => {
     }, [location, updateBannerStatus]);
 
     useEffect(() => {
-        const storageKey = isEmailAdminSuite ? 'emailAdminSidebarCollapsed' : 'sidebarCollapsed';
+        const storageKey = isEmailAdminSuite ? 'emailAdminSidebarCollapsed' : isBillingCenter ? 'billingSidebarCollapsed' : 'sidebarCollapsed';
         localStorage.setItem(storageKey, String(isDesktopSidebarCollapsed));
-    }, [isDesktopSidebarCollapsed, isEmailAdminSuite]);
+    }, [isDesktopSidebarCollapsed, isEmailAdminSuite, isBillingCenter]);
 
     const viewAsUserId = searchParams.get('viewAsUser');
     const returnToPath = searchParams.get('returnTo');
@@ -298,7 +300,6 @@ const AppLayout: React.FC = () => {
 
     
     const navItems = useMemo(() => {
-        // Always show the logged-in user's navigation items.
         return user ? getNavItems(user.role) : [];
     }, [user]);
     
@@ -317,11 +318,15 @@ const AppLayout: React.FC = () => {
             'team-management': 'Users Management',
             'add': 'Add User',
             'edit': 'Edit User',
-            'billing': 'Billings',
+            'billing': 'Billing and Subscriptions',
             'email-subscriptions': 'Email Subscriptions',
             'email-configurations': 'Email Configurations',
             'cloudedge-configurations': 'CloudEdge Configurations',
             'invoices': 'Invoices',
+            'subscriptions': 'My Subscriptions',
+            'provisioning': 'CloudEdge Provisioning',
+            'posta': 'Posta Subscriptions',
+            'wallet': 'Payment & Wallet',
             'action-logs': 'Action Logs',
             'support': 'Support Center',
             'create': 'Create Ticket',
@@ -344,7 +349,6 @@ const AppLayout: React.FC = () => {
             'rules': 'Rules',
             'bulk-module': 'Bulk Module',
             'blogs-center': 'Blogs Center',
-            'subscriptions': 'Subscriptions',
             'manage': 'Manage',
             'orgs-and-domains': 'Orgs And Domains'
         };
@@ -353,13 +357,11 @@ const AppLayout: React.FC = () => {
             return BREADCRUMB_LABELS[value] || value.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
         };
 
-        // "View As" mode breadcrumbs for admin/reseller
         if (viewAsUserId && returnToPath && user && (user.role === 'admin' || user.role === 'reseller')) {
             const viewedUser = getMockUserById(viewAsUserId);
             if (!viewedUser) return [];
 
             const adminHomePath = user.role === 'admin' ? '/app/admin-dashboard' : '/app/reseller-dashboard';
-            // Fix: explicitly type crumbs to allow optional path property to solve type errors during manipulation
             const crumbs: { label: string; path?: string }[] = [{ label: 'Dashboard', path: adminHomePath }];
 
             let returnLabel = getLabel(returnToPath.split('/').pop() || '');
@@ -395,7 +397,6 @@ const AppLayout: React.FC = () => {
             return crumbs;
         }
 
-        // Original breadcrumb logic for other cases
         if (pathnames[0] !== 'app') return [];
 
         let homePath = '/app/dashboard';
@@ -403,7 +404,6 @@ const AppLayout: React.FC = () => {
         if (user?.role === 'reseller') homePath = '/app/reseller-dashboard';
         if (isEmailAdminSuite) homePath = '/app/email-admin-suite';
 
-        // Fix: explicitly type crumbs to allow optional path property
         const crumbs: { label: string; path?: string }[] = [{ label: 'Home', path: homePath }];
         
         let segmentsToProcess = pathnames.slice(1);
@@ -420,7 +420,6 @@ const AppLayout: React.FC = () => {
         segmentsToProcess.forEach((value, index) => {
             if (value === 'admin' || value.endsWith('-dashboard')) return;
 
-            // When in email admin suite, if a view is selected, remove the container tab.
             if (isEmailAdminSuite && (value === 'exchange' || value === 'admin') && index < segmentsToProcess.length - 1) {
                 return;
             }
@@ -435,9 +434,7 @@ const AppLayout: React.FC = () => {
             }
         });
 
-        // Specific sub-view breadcrumb logic for Orgs and Domains -> DNS Configuration
         if (location.pathname.endsWith('orgs-and-domains') && searchParams.get('view') === 'dns') {
-            // Fix: No more type error here as path is optional in the crumbs array type
             crumbs.push({ label: 'DNS Configuration' });
         }
 
@@ -446,13 +443,12 @@ const AppLayout: React.FC = () => {
         }
 
         return crumbs;
-    }, [location, user, searchParams, isEmailAdminSuite]);
+    }, [location, user, searchParams, isEmailAdminSuite, isBillingCenter]);
 
     if (!user) {
         return <Navigate to="/login" replace />;
     }
 
-    // Special layout for CloudEdge
     if (location.pathname.startsWith('/app/cloud-edge')) {
         return (
             <CloudEdgeLayout>
@@ -469,7 +465,13 @@ const AppLayout: React.FC = () => {
     return (
         <AppLayoutContext.Provider value={appLayoutContextValue}>
             <div className={`flex h-screen bg-gray-100 dark:bg-slate-900 overflow-hidden`}>
-                {isEmailAdminSuite ? (
+                {isBillingCenter ? (
+                    <BillingSidebar 
+                         isCollapsed={isDesktopSidebarCollapsed}
+                         isOpen={isMobileSidebarOpen} 
+                         onClose={() => setMobileSidebarOpen(false)}
+                    />
+                ) : isEmailAdminSuite ? (
                     <EmailAdminSidebar 
                          isCollapsed={isDesktopSidebarCollapsed}
                          isOpen={isMobileSidebarOpen} 
@@ -525,11 +527,14 @@ const AppLayout: React.FC = () => {
                                 </button>
                             </div>
                         )}
-                        {location.pathname !== '/app/admin-dashboard' && location.pathname !== '/app/email-admin-suite' && <Breadcrumbs items={breadcrumbItems} />}
+                        {location.pathname !== '/app/admin-dashboard' && 
+                         location.pathname !== '/app/email-admin-suite' && 
+                         location.pathname !== '/app/billing' && 
+                         <Breadcrumbs items={breadcrumbItems} />}
                         <Outlet />
                     </main>
                 </div>
-                {isCustomerView && !isEmailAdminSuite && <FeedbackSystem position="raised" />}
+                {isCustomerView && !isEmailAdminSuite && !isBillingCenter && <FeedbackSystem position="raised" />}
                 <Chatbot />
             </div>
         </AppLayoutContext.Provider>
@@ -540,9 +545,7 @@ const AppLayout: React.FC = () => {
 const AppIndexRedirect: React.FC = () => {
     const { user } = useAuth();
   
-    // This component is rendered within ProtectedRoute, so user should exist.
     if (!user) {
-      // This is a fallback, should not be reached in normal flow.
       return <Navigate to="/login" replace />; 
     }
   
@@ -557,7 +560,6 @@ const AppIndexRedirect: React.FC = () => {
     }
 };
 
-// Fix: Added the missing AppRoutes component to define all application routes and handle role-based redirection.
 const AppRoutes: React.FC = () => {
     const { user, isAuthenticated, isLoading } = useAuth();
 
@@ -572,19 +574,30 @@ const AppRoutes: React.FC = () => {
             <Route path="/app" element={<ProtectedRoute user={user} isAuthenticated={isAuthenticated} isLoading={isLoading} />}>
                 <Route index element={<AppIndexRedirect />} />
                 <Route element={<AppLayout />}>
-                    {/* Customer Routes */}
                     <Route path="dashboard" element={<DashboardPage />} />
                     <Route path="team-management" element={<CustomerTeamManagementPage />} />
                     <Route path="team-management/add" element={<AddTeamUserPage />} />
                     <Route path="team-management/edit/:userId" element={<EditTeamUserPage />} />
-                    <Route path="billing" element={<BillingSettingsPage />} />
-                    <Route path="billing/email-subscriptions" element={<EmailAdminSubscriptionsPage />} />
-                    <Route path="billing/cloudedge-configurations" element={<CloudEdgeConfigurationsPage />} />
-                    <Route path="billing/cloudedge-configurations/add" element={<AddCloudEdgeConfigurationPage />} />
-                    <Route path="billing/cloudedge-configurations/edit/:configId" element={<AddCloudEdgeConfigurationPage />} />
-                    <Route path="billing/cloudedge-configurations/os-images" element={<OsImagesPage />} />
-                    <Route path="billing/subscriptions/manage/:subscriptionId" element={<ManageSubscriptionPage />} />
-                    <Route path="invoices" element={<InvoiceHistoryPage />} />
+                    
+                    {/* Billing Center Standalone App */}
+                    <Route path="billing">
+                        <Route index element={<Navigate to="subscriptions" replace />} />
+                        <Route path="subscriptions" element={<SubscriptionsListView />} />
+                        <Route path="invoices" element={<InvoiceHistoryPage />} />
+                        <Route path="provisioning" element={<CloudEdgeConfigurationsPage />} />
+                        <Route path="posta" element={<EmailAdminSubscriptionsPage />} />
+                        <Route path="wallet" element={<PaymentAndDetailsView />} />
+                        <Route path="admin" element={<ProtectedRoute user={user} isAuthenticated={isAuthenticated} isLoading={isLoading} allowedRoles={['admin']}><AdminToolsView /></ProtectedRoute>} />
+                        
+                        <Route path="cloudedge-configurations" element={<Navigate to="../provisioning" replace />} />
+                        <Route path="cloudedge-configurations/add" element={<AddCloudEdgeConfigurationPage />} />
+                        <Route path="cloudedge-configurations/edit/:configId" element={<AddCloudEdgeConfigurationPage />} />
+                        <Route path="cloudedge-configurations/os-images" element={<OsImagesPage />} />
+                        <Route path="subscriptions/manage/:subscriptionId" element={<ManageSubscriptionPage />} />
+                        <Route path="email-subscriptions" element={<Navigate to="../posta" replace />} />
+                    </Route>
+
+                    <Route path="invoices" element={<Navigate to="/app/billing/invoices" replace />} />
                     <Route path="invoices/:invoiceId" element={<InvoiceDetailPage />} />
                     <Route path="action-logs" element={<ActionLogsPage />} />
                     <Route path="support" element={<SupportPage />} />
@@ -592,7 +605,6 @@ const AppRoutes: React.FC = () => {
                     <Route path="blogs-center" element={<BlogsCenterPage />} />
                     <Route path="blogs-center/:blogId" element={<BlogDetailsPage />} />
                     
-                    {/* Admin Routes */}
                     <Route path="admin-dashboard" element={<ProtectedRoute user={user} isAuthenticated={isAuthenticated} isLoading={isLoading} allowedRoles={['admin']}><AdminDashboardPage /></ProtectedRoute>} />
                     <Route path="admin" element={<ProtectedRoute user={user} isAuthenticated={isAuthenticated} isLoading={isLoading} allowedRoles={['admin']}><AdminRouterPage /></ProtectedRoute>}>
                         <Route path="staff" element={<StaffManagementPage />} />
@@ -602,12 +614,10 @@ const AppRoutes: React.FC = () => {
                         <Route path="support/create" element={<CreateTicketPage />} />
                     </Route>
 
-                    {/* Reseller Routes */}
                     <Route path="reseller-dashboard" element={<ProtectedRoute user={user} isAuthenticated={isAuthenticated} isLoading={isLoading} allowedRoles={['reseller']}><ResellerDashboardPage /></ProtectedRoute>} />
                     <Route path="reseller/customers" element={<ProtectedRoute user={user} isAuthenticated={isAuthenticated} isLoading={isLoading} allowedRoles={['reseller']}><ResellerCustomersPage /></ProtectedRoute>} />
                     <Route path="reseller/program" element={<ProtectedRoute user={user} isAuthenticated={isAuthenticated} isLoading={isLoading} allowedRoles={['reseller']}><ResellerProgramPage /></ProtectedRoute>} />
 
-                    {/* Shared Apps/Modules */}
                     <Route path="kubernetes" element={<KubernetesPage />} />
                     <Route path="networking" element={<NetworkingPage />} />
                     <Route path="storage" element={<StoragePage />} />
@@ -621,7 +631,6 @@ const AppRoutes: React.FC = () => {
                         <Route path="notifications" element={<PlaceholderPage />} />
                     </Route>
 
-                    {/* Email Admin Suite */}
                     <Route path="email-admin-suite">
                         <Route index element={<EmailAdminSuiteDashboardPage />} />
                         <Route path="orgs-and-domains" element={<OrgsAndDomainsPage />} />
@@ -647,7 +656,6 @@ const AppRoutes: React.FC = () => {
                         <Route path="old-version" element={<OldVersionPage />} />
                     </Route>
 
-                    {/* CloudEdge specific sub-routes (CloudEdgeLayout is handled in AppLayout return) */}
                     <Route path="cloud-edge">
                         <Route index element={<CloudEdgeDashboardPage />} />
                         <Route path="firewall/groups" element={<GroupsPage />} />

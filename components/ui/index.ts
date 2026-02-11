@@ -33,3 +33,4 @@ export * from './Pagination';
 export * from './DashboardCustomizationMenu';
 export * from './FloatingActionMenu';
 export * from './BlogCard';
+export * from './BillingSidebar';

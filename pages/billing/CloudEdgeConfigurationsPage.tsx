@@ -110,115 +110,54 @@ const getConfigDetails = (config: CloudEdgeConfiguration): string[] => {
     return details;
 };
 
-interface ConfigurationItemCardProps {
+interface ConfigurationItemRowProps {
   config: CloudEdgeConfiguration;
   onEdit: (configId: string) => void;
   onRemove: (configId: string) => void;
 }
 
-const ConfigurationItemCard: React.FC<ConfigurationItemCardProps> = ({ config, onEdit, onRemove }) => {
+const ConfigurationItemRow: React.FC<ConfigurationItemRowProps> = ({ config, onEdit, onRemove }) => {
   const details = getConfigDetails(config);
 
   return (
-    <Card className="mb-4">
-      <div className="flex justify-between items-start">
-        <div className="flex-grow">
-          <div className="flex items-center gap-2 mb-2">
-            <h3 className="text-lg font-semibold text-[#293c51] dark:text-gray-100">{config.name}</h3>
-            {config.billingMode === 'payg_wallet' && (
-                <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold uppercase">PAYG</span>
-            )}
-            {config.billingMode === 'subscription' && (
-                <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-bold uppercase">Sub</span>
-            )}
-            <span className="text-xs text-gray-500 bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded-full">Qty: {config.quantity}</span>
-          </div>
-          
-          <div className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
-             {details.map((detail, idx) => (
-                 <div key={idx} className="flex items-start gap-2">
-                    <Icon name="fas fa-angle-right" className="text-gray-400 mt-1 text-xs" />
-                    <span>{detail}</span>
-                 </div>
-             ))}
-          </div>
+    <div className="flex flex-col md:flex-row justify-between items-start md:items-center py-5 border-b last:border-b-0 dark:border-slate-700 animate-fade-in group">
+      <div className="flex-grow">
+        <div className="flex items-center gap-2 mb-2">
+          <h3 className="text-lg font-bold text-[#293c51] dark:text-gray-100">{config.name}</h3>
+          {config.billingMode === 'payg_wallet' ? (
+              <span className="text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-black uppercase">PAYG</span>
+          ) : (
+              <span className="text-[9px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-black uppercase">Subscription</span>
+          )}
         </div>
         
-        <div className="flex flex-col items-end gap-2 ml-4">
-            <div className="flex space-x-2">
-                <Button size="icon" variant="ghost" onClick={() => onEdit(config.id)} title="Edit">
-                    <Icon name="fas fa-pencil-alt" aria-label="Edit configuration" />
-                </Button>
-                <Button size="icon" variant="ghost" onClick={() => onRemove(config.id)} title="Remove">
-                    <Icon name="fas fa-trash-alt" className="text-red-500 dark:text-red-400" aria-label="Remove configuration"/>
-                </Button>
-            </div>
-             <p className="text-right font-semibold text-lg text-[#679a41] dark:text-emerald-400">
-                ${config.unitSubtotalMonthly.toFixed(2)} <span className="text-xs text-gray-500 dark:text-gray-400">/mo {config.billingMode === 'payg_wallet' ? '(est.)' : ''}</span>
-            </p>
+        <div className="flex flex-wrap gap-x-4 gap-y-1">
+           {details.map((detail, idx) => (
+               <div key={idx} className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                  <div className="w-1 h-1 rounded-full bg-gray-300 dark:bg-slate-600" />
+                  <span>{detail}</span>
+               </div>
+           ))}
         </div>
       </div>
-    </Card>
-  );
-};
-
-const EstimateSummaryCard: React.FC<{ configurations: CloudEdgeConfiguration[] }> = ({ configurations }) => {
-  const totalMonthlyEstimate = useMemo(() => {
-    return configurations.reduce((sum, config) => sum + config.unitSubtotalMonthly, 0);
-  }, [configurations]);
-  
-  const paygTotal = configurations.filter(c => c.billingMode === 'payg_wallet').reduce((sum, config) => sum + config.unitSubtotalMonthly, 0);
-  const upfrontTotal = configurations.filter(c => c.billingMode !== 'payg_wallet').reduce((sum, config) => sum + config.unitSubtotalMonthly, 0);
-
-  if (configurations.length === 0) {
-    return (
-      <Card title="Estimate Summary">
-        <p className="text-gray-500 dark:text-gray-400">No configurations added to estimate.</p>
-      </Card>
-    );
-  }
-
-  return (
-    <Card title="Estimate Summary" className="sticky top-20">
-      <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
-          {configurations.map(config => {
-              const details = getConfigDetails(config);
-              const summaryDetails = details.slice(0, 3); 
-              
-              return (
-                <div key={config.id} className="py-3 border-b dark:border-gray-700 last:border-b-0">
-                  <div className="flex justify-between items-start mb-1">
-                    <span className="text-sm font-bold text-[#293c51] dark:text-gray-200">{config.name} <span className="text-xs font-normal text-gray-500">x{config.quantity}</span></span>
-                    <span className="text-sm font-medium text-[#293c51] dark:text-gray-100">${config.unitSubtotalMonthly.toFixed(2)}</span>
-                  </div>
-                  <ul className="text-xs text-gray-500 dark:text-gray-400 space-y-0.5">
-                      {summaryDetails.map((d, i) => <li key={i}>• {d}</li>)}
-                      {details.length > 3 && <li>...and {details.length - 3} more</li>}
-                  </ul>
-                </div>
-              );
-          })}
+      
+      <div className="flex items-center gap-6 mt-4 md:mt-0 ml-0 md:ml-6 flex-shrink-0">
+          <div className="text-right">
+              <p className="font-bold text-lg text-[#679a41] dark:text-emerald-400">
+                  ${config.unitSubtotalMonthly.toFixed(2)}
+              </p>
+              <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">per month {config.billingMode === 'payg_wallet' ? '(est.)' : ''}</p>
+          </div>
+          <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button size="icon" variant="ghost" onClick={() => onEdit(config.id)} title="Edit">
+                  <Icon name="fas fa-pencil-alt" className="text-gray-400 hover:text-sky-500" />
+              </Button>
+              <Button size="icon" variant="ghost" onClick={() => onRemove(config.id)} title="Remove">
+                  <Icon name="fas fa-trash-alt" className="text-red-400 hover:text-red-600" />
+              </Button>
+          </div>
       </div>
-
-      <div className="mt-4 pt-4 border-t dark:border-gray-700 space-y-2">
-        {upfrontTotal > 0 && (
-             <div className="flex justify-between font-bold text-sm text-[#293c51] dark:text-gray-200">
-                <span>Due Now (Subscription):</span>
-                <span>${upfrontTotal.toFixed(2)}</span>
-            </div>
-        )}
-        {paygTotal > 0 && (
-             <div className="flex justify-between font-bold text-sm text-gray-600 dark:text-gray-400">
-                <span>Monthly Estimate (PAYG):</span>
-                <span>${paygTotal.toFixed(2)}</span>
-            </div>
-        )}
-        <div className="flex justify-between font-bold text-2xl text-[#293c51] dark:text-gray-100 pt-2 border-t dark:border-gray-700">
-          <span>Total:</span>
-          <span>${totalMonthlyEstimate.toFixed(2)}</span>
-        </div>
-      </div>
-    </Card>
+    </div>
   );
 };
 
@@ -403,79 +342,111 @@ export const CloudEdgeConfigurationsContent: React.FC<{
       setCurrentStep(1);
   };
   
-  const hasPayg = configurations.some(c => c.billingMode === 'payg_wallet');
+  const totalMonthlyEstimate = useMemo(() => {
+    return configurations.reduce((sum, config) => sum + config.unitSubtotalMonthly, 0);
+  }, [configurations]);
+  
+  const paygTotal = configurations.filter(c => c.billingMode === 'payg_wallet').reduce((sum, config) => sum + config.unitSubtotalMonthly, 0);
   const upfrontTotal = configurations.filter(c => c.billingMode !== 'payg_wallet').reduce((sum, config) => sum + config.unitSubtotalMonthly, 0);
+
+  const hasPayg = configurations.some(c => c.billingMode === 'payg_wallet');
   const isOnlyPayg = hasPayg && upfrontTotal === 0;
 
   const steps = [
-    { name: 'Summary' },
+    { name: 'Configurations and summary' },
     { name: isOnlyPayg ? 'Confirm Deployment' : 'Payment' },
     { name: 'Confirmation' },
   ];
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-[#293c51] dark:text-gray-100">CloudEdge Configurations</h1>
+      <h1 className="text-3xl font-extrabold text-[#293c51] dark:text-gray-100 tracking-tight">CloudEdge Configurations</h1>
       
       <div className="w-full md:w-3/4 lg:w-1/2 mx-auto">
         <Stepper steps={steps} currentStep={currentStep} className="my-8" />
       </div>
 
       {currentStep === 0 && (
-        <>
-            <div className="flex flex-col lg:flex-row gap-6">
-                <div className="lg:w-3/5">
-                    <Card>
-                        <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
-                            <h2 className="text-xl font-semibold text-[#293c51] dark:text-gray-100">Your Configurations</h2>
-                            <div className="flex items-center gap-4">
-                                <Button onClick={openAddPage} leftIconName="fas fa-plus">Add Configuration</Button>
+        <div className="max-w-5xl mx-auto space-y-6">
+            <Card title="Configuration Summary" titleActions={
+                <Button onClick={openAddPage} size="sm" leftIconName="fas fa-plus">Add Configuration</Button>
+            }>
+                <div className="divide-y dark:divide-slate-700">
+                    {configurations.length === 0 ? (
+                        <div className="text-center py-12">
+                            <div className="w-16 h-16 bg-gray-50 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Icon name="fas fa-shopping-cart" className="text-2xl text-gray-300" />
                             </div>
+                            <p className="text-gray-500 dark:text-gray-400 font-medium">
+                                No configurations added yet. Click "Add Configuration" to build your estimate.
+                            </p>
                         </div>
-                        
-                        <div className="mt-4 pt-4 border-t dark:border-slate-700">
-                            {configurations.length === 0 ? (
-                                <p className="text-gray-500 dark:text-gray-400 py-4 text-center">
-                                    No configurations added yet. Click "Add Configuration" to get started.
-                                </p>
-                            ) : (
-                                <div className="space-y-4">
-                                    {configurations.map(config => (
-                                        <ConfigurationItemCard key={config.id} config={config} onEdit={handleEditConfiguration} onRemove={handleRemoveConfiguration} />
-                                    ))}
+                    ) : (
+                        <>
+                            <div className="pb-4">
+                                {configurations.map(config => (
+                                    <ConfigurationItemRow key={config.id} config={config} onEdit={handleEditConfiguration} onRemove={handleRemoveConfiguration} />
+                                ))}
+                            </div>
+                            
+                            <div className="pt-8 space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-3">
+                                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Pricing Model Breakdown</h4>
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between items-center text-sm">
+                                                <span className="text-gray-600 dark:text-gray-400">Total Upfront (Subscription)</span>
+                                                <span className="font-bold text-[#293c51] dark:text-gray-100">${upfrontTotal.toFixed(2)}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-sm">
+                                                <span className="text-gray-600 dark:text-gray-400">Estimated Monthly (PAYG)</span>
+                                                <span className="font-bold text-[#293c51] dark:text-gray-100">${paygTotal.toFixed(2)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="p-6 bg-[#679a41]/5 dark:bg-emerald-900/10 rounded-2xl border border-[#679a41]/20 flex flex-col items-center justify-center">
+                                        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Total Monthly Estimate</p>
+                                        <p className="text-4xl font-black text-[#679a41] dark:text-emerald-400">${totalMonthlyEstimate.toFixed(2)}</p>
+                                        {hasPayg && <p className="text-[10px] text-gray-400 mt-2 italic">* PAYG costs vary based on actual hourly usage.</p>}
+                                    </div>
                                 </div>
-                            )}
-                        </div>
-                    </Card>
+                            </div>
+                        </>
+                    )}
                 </div>
-                <div className="lg:w-2/5">
-                    <EstimateSummaryCard configurations={configurations} />
-                </div>
-            </div>
+            </Card>
                 
-            <div className="mt-8 flex justify-end pt-4 border-t dark:border-slate-700">
-                <Button 
-                    onClick={handleProceed} 
-                    disabled={configurations.length === 0}
-                    leftIconName={isOnlyPayg ? "fas fa-rocket" : "fas fa-credit-card"}
-                    leftIconClassName="w-5 h-5"
-                >
-                    {isOnlyPayg ? "Deploy Resources" : "Proceed to Payment"}
-                </Button>
-            </div>
-        </>
+            {configurations.length > 0 && (
+                <div className="flex justify-end pt-4">
+                    <Button 
+                        onClick={handleProceed} 
+                        size="lg"
+                        className="px-10 h-14 text-base font-bold shadow-xl shadow-green-500/20"
+                        leftIconName={isOnlyPayg ? "fas fa-rocket" : "fas fa-credit-card"}
+                        leftIconClassName="w-5 h-5"
+                    >
+                        {isOnlyPayg ? "Deploy Resources" : "Proceed to Payment"}
+                    </Button>
+                </div>
+            )}
+        </div>
     )}
 
       {currentStep === 1 && (
-        <PaymentStep
-            configurations={configurations}
-            onBack={() => setCurrentStep(0)}
-            onPay={() => setCurrentStep(2)}
-        />
+        <div className="max-w-5xl mx-auto">
+            <PaymentStep
+                configurations={configurations}
+                onBack={() => setCurrentStep(0)}
+                onPay={() => setCurrentStep(2)}
+            />
+        </div>
       )}
 
       {currentStep === 2 && (
-          <ConfirmationStep onFinish={resetFlow} />
+          <div className="max-w-2xl mx-auto">
+              <ConfirmationStep onFinish={resetFlow} />
+          </div>
       )}
 
       <Modal 
@@ -518,11 +489,6 @@ export const CloudEdgeConfigurationsContent: React.FC<{
                     <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
                         Fixed monthly or yearly terms. Best for predictable production workloads and reserved capacity.
                     </p>
-                    <div className={`mt-4 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                        selectedBillingMode === 'subscription' ? 'bg-[#679a41] text-white' : 'bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-gray-400'
-                    }`}>
-                        Reserved Capacity
-                    </div>
                 </button>
 
                 {/* PAYG Option */}
@@ -548,11 +514,6 @@ export const CloudEdgeConfigurationsContent: React.FC<{
                     <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
                         Hourly billing deducted from your wallet. Perfect for dev/test nodes and variable traffic demands.
                     </p>
-                    <div className={`mt-4 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                        selectedBillingMode === 'payg_wallet' ? 'bg-[#679a41] text-white' : 'bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-gray-400'
-                    }`}>
-                        Maximum Flexibility
-                    </div>
                 </button>
             </div>
             {selectedBillingMode === 'payg_wallet' && (

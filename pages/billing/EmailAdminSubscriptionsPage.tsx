@@ -395,7 +395,7 @@ export const EmailAdminSubscriptionsContent: React.FC<{
                         Compare Plans
                     </Button>
                 </div>
-                <div className="grid grid-cols-1 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {emailPlans.map(plan => (
                     <PlanCard 
                         key={plan.id} 

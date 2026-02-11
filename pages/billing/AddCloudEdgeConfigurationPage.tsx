@@ -70,7 +70,7 @@ const nicOptions = [
 const SectionHeader: React.FC<{ step: number; title: string; subtitle?: string }> = ({ step, title, subtitle }) => (
     <div className="mb-6">
         <div className="flex items-center gap-3 mb-1">
-            <span className="flex-shrink-0 w-8 h-8 rounded-lg bg-[#679a41] text-white flex items-center justify-center font-bold text-sm shadow-sm shadow-green-500/20">
+            <span className="flex-shrink-0 w-8 h-8 rounded-lg bg-[#679a41] text-white flex items-center justify-center font-bold text-sm">
                 {step}
             </span>
             <h3 className="text-xl font-bold text-[#293c51] dark:text-gray-100">{title}</h3>
@@ -90,14 +90,14 @@ interface VisualCardProps {
     statusBadge?: string;
 }
 
-const VisualCard = ({ active, disabled, onClick, icon, title, description, price, statusBadge }: VisualCardProps) => (
+const VisualCard: React.FC<VisualCardProps> = ({ active, disabled, onClick, icon, title, description, price, statusBadge }) => (
     <div 
         onClick={!disabled ? onClick : undefined}
         className={`relative flex flex-col p-5 border-2 rounded-xl transition-all duration-300 group ${
             disabled 
             ? 'border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/20 opacity-50 grayscale cursor-not-allowed'
             : active 
-                ? 'cursor-pointer border-[#679a41] bg-green-50/30 dark:bg-emerald-900/10 ring-1 ring-[#679a41]/30 shadow-md' 
+                ? 'cursor-pointer border-[#679a41] bg-green-50/30 dark:bg-emerald-900/10' 
                 : 'cursor-pointer border-gray-200 dark:border-slate-700 hover:border-[#679a41]/50 hover:bg-gray-50 dark:hover:bg-slate-800/50 bg-white dark:bg-slate-800'
         }`}
     >
@@ -107,7 +107,7 @@ const VisualCard = ({ active, disabled, onClick, icon, title, description, price
             </div>
         )}
         <div className="flex justify-between items-start mb-4">
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors duration-300 ${active ? 'bg-[#679a41] text-white shadow-lg shadow-green-500/30' : 'bg-gray-100 dark:bg-slate-700 text-gray-500 group-hover:bg-gray-200 dark:group-hover:bg-slate-600'}`}>
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors duration-300 ${active ? 'bg-[#679a41] text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-500 group-hover:bg-gray-200 dark:group-hover:bg-slate-600'}`}>
                 <Icon name={icon} className="text-2xl" />
             </div>
             {price && (
@@ -291,7 +291,7 @@ export const AddCloudEdgeConfigurationPage: React.FC = () => {
                     {!isEditing && <div className="h-8 w-px bg-gray-200 dark:bg-slate-700 hidden md:block"></div>}
                     {!isEditing && (
                         <div className="px-3 py-1 bg-green-50 dark:bg-emerald-900/20 text-[#679a41] dark:text-emerald-400 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-[#679a41] animate-pulse"></span>
+                            <span className="w-2 h-2 rounded-full bg-[#679a41]"></span>
                             Live Estimator Active
                         </div>
                     )}
@@ -497,7 +497,7 @@ export const AddCloudEdgeConfigurationPage: React.FC = () => {
                                                 key={os.id} 
                                                 type="button"
                                                 onClick={() => handleUpdate({ osSoftware: os.id })}
-                                                className={`flex items-center gap-4 p-4 border rounded-xl transition-all ${config.osSoftware === os.id ? 'border-[#679a41] bg-green-50/50 dark:bg-emerald-900/10 shadow-sm ring-1 ring-[#679a41]/20' : 'bg-white dark:bg-slate-800 hover:border-gray-300'}`}
+                                                className={`flex items-center gap-4 p-4 border rounded-xl transition-all ${config.osSoftware === os.id ? 'border-[#679a41] bg-green-50/50 dark:bg-emerald-900/10 ring-1 ring-[#679a41]/20' : 'bg-white dark:bg-slate-800 hover:border-gray-300'}`}
                                             >
                                                 <Icon name={os.icon} className={`text-2xl ${config.osSoftware === os.id ? 'text-[#679a41]' : 'text-gray-400'}`} />
                                                 <span className={`text-sm font-bold ${config.osSoftware === os.id ? 'text-[#293c51] dark:text-gray-100' : 'text-gray-600 dark:text-gray-400'}`}>{os.name}</span>
@@ -655,7 +655,7 @@ export const AddCloudEdgeConfigurationPage: React.FC = () => {
                                         size="lg" 
                                         onClick={handleSave}
                                         disabled={!config.name || (config.billingMode === 'payg_wallet' && grandTotal > walletBalance)}
-                                        className="h-14 text-base shadow-xl shadow-green-500/30 font-bold uppercase tracking-widest"
+                                        className="h-14 text-base font-bold uppercase tracking-widest"
                                     >
                                         {isEditing ? 'Save Configuration' : (config.quantity! > 1 ? 'Configure Multi-Node' : 'Validate & Deploy')}
                                     </Button>
@@ -698,7 +698,7 @@ export const AddCloudEdgeConfigurationPage: React.FC = () => {
                         </div>
                         <div className="p-8 border-t bg-gray-50 dark:bg-slate-800/50 flex justify-between gap-4">
                             <Button variant="ghost" onClick={() => setPageStep(1)}>Return to Config</Button>
-                            <Button onClick={handleFinalSubmit} className="shadow-lg shadow-green-500/20 px-10">Confirm All & Provision</Button>
+                            <Button onClick={handleFinalSubmit} className="px-10">Confirm All & Provision</Button>
                         </div>
                     </Card>
                 </div>

@@ -1,5 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { Card, Stepper, FormField, Button, Icon, Tooltip, ToggleSwitch } from '@/components/ui';
+
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { Card, Stepper, FormField, Button, Icon, Tooltip, ToggleSwitch, Modal } from '@/components/ui';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from '@/context';
 import { useSearchParams, Link } from 'react-router-dom';
@@ -169,6 +170,11 @@ export const OrgsAndDomainsPage: React.FC = () => {
     const [activeOrgId, setActiveOrgId] = useState<string | null>(null);
     const [currentStep, setCurrentStep] = useState(0);
     
+    // UI state for menus and deletions
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+    const [domainToDelete, setDomainToDelete] = useState<DomainInfo | null>(null);
+    const menuRef = useRef<HTMLDivElement>(null);
+
     const view = (searchParams.get('view') as 'table' | 'stepper' | 'dns' | 'org-settings') || 'table';
     const selectedDomainId = searchParams.get('domainId');
 
@@ -236,11 +242,22 @@ export const OrgsAndDomainsPage: React.FC = () => {
         }
     }, [isNewDemoUser, searchParams, setSearchParams]);
 
+    // Handle outside clicks for kabab menu
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setOpenMenuId(null);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     const activeOrg = useMemo(() => {
         return organizations.find(o => o.id === activeOrgId) || null;
     }, [organizations, activeOrgId]);
 
-    const selectedDomainForDns = useMemo(() => {
+    const selectedDomainIdForDns = useMemo(() => {
         if (!selectedDomainId) return null;
         for (const org of organizations) {
             const dom = org.domains.find(d => d.id === selectedDomainId);
@@ -320,6 +337,32 @@ export const OrgsAndDomainsPage: React.FC = () => {
         setSearchParams({ view: 'org-settings' });
     };
 
+    const handleDeleteDomainRequest = (domain: DomainInfo) => {
+        setDomainToDelete(domain);
+        setOpenMenuId(null);
+    };
+
+    const handleConfirmDeleteDomain = () => {
+        if (domainToDelete && activeOrgId) {
+            const updatedOrgs = organizations.map(o => {
+                if (o.id === activeOrgId) {
+                    return {
+                        ...o,
+                        domains: o.domains.filter(d => d.id !== domainToDelete.id)
+                    };
+                }
+                return o;
+            });
+            setOrganizations(updatedOrgs);
+            if (isNewDemoUser) {
+                const org = updatedOrgs.find(o => o.id === activeOrgId);
+                localStorage.setItem(DOMAIN_STORAGE_KEY, JSON.stringify(org?.domains || []));
+                window.dispatchEvent(new CustomEvent('domainStateChange'));
+            }
+            setDomainToDelete(null);
+        }
+    };
+
     const DNSConfigView = ({ domain, onBack, isVerified, onVerify, isVerifying, onSkip }: { domain: DomainInfo | null, onBack: () => void, isVerified?: boolean, onVerify?: () => void, isVerifying?: boolean, onSkip?: () => void }) => {
         const domainNameDisplay = domain ? domain.domainName : (formState.domainToConfigure || 'your domain');
         const hStatus: 'healthy' | 'warning' | 'unhealthy' = domain ? domain.healthStatus : (isVerified ? 'healthy' : 'warning');
@@ -333,14 +376,9 @@ export const OrgsAndDomainsPage: React.FC = () => {
             }, 1500);
         };
 
-        // Logic mapping:
-        // Healthy: All Success
-        // Warning (CHECK): Mixed (some success, some warning)
-        // Unhealthy (VERIFY NOW): All Error
         const getRecStatus = (index: number): VerificationStatus => {
             if (hStatus === 'healthy') return 'success' as VerificationStatus;
             if (hStatus === 'unhealthy') return 'error' as VerificationStatus;
-            // For mixed status (warning/CHECK)
             return (index % 2 === 0 ? 'success' : 'warning') as VerificationStatus;
         };
 
@@ -355,7 +393,6 @@ export const OrgsAndDomainsPage: React.FC = () => {
                     </p>
                 </div>
 
-                {/* MX RECORDS SECTION */}
                 <div className="space-y-6">
                     <div className="flex items-center justify-between gap-2 border-b border-gray-100 dark:border-slate-800 pb-2">
                         <div className="flex items-center gap-2">
@@ -397,7 +434,6 @@ export const OrgsAndDomainsPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* SPF RECORD SECTION */}
                 <div className="space-y-6">
                     <div className="flex items-center justify-between gap-2 border-b border-gray-100 dark:border-slate-800 pb-2">
                         <div className="flex items-center gap-2">
@@ -433,7 +469,6 @@ export const OrgsAndDomainsPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* DKIM RECORD SECTION */}
                 <div className="space-y-6">
                     <div className="flex items-center justify-between gap-2 border-b border-gray-100 dark:border-slate-800 pb-2">
                         <div className="flex items-center gap-2">
@@ -470,7 +505,6 @@ export const OrgsAndDomainsPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* DMARC RECORD SECTION */}
                 <div className="space-y-6">
                     <div className="flex items-center justify-between gap-2 border-b border-gray-100 dark:border-slate-800 pb-2">
                         <div className="flex items-center gap-2">
@@ -614,7 +648,6 @@ export const OrgsAndDomainsPage: React.FC = () => {
 
     const TableView = () => (
         <div className="flex flex-col lg:flex-row gap-8 items-start animate-fade-in">
-            {/* Left Sidebar: Organizations as list tabs */}
             <div className="w-full lg:w-72 flex-shrink-0">
                 <div className="space-y-1 max-h-[calc(100vh-280px)] overflow-y-auto pr-2 custom-scrollbar">
                     {organizations.map(org => (
@@ -636,7 +669,6 @@ export const OrgsAndDomainsPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Right Side: Domains */}
             <div className="flex-grow w-full">
                 <div className="overflow-x-auto bg-white dark:bg-slate-900/40 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm">
                     <table className="min-w-full">
@@ -644,9 +676,8 @@ export const OrgsAndDomainsPage: React.FC = () => {
                             <tr className="bg-gray-50/50 dark:bg-slate-800/50 text-gray-500 text-xs font-bold uppercase tracking-wider">
                                 <th className="px-6 py-5 text-left">Domain Name</th>
                                 <th className="px-6 py-5 text-left">Creation Date</th>
-                                <th className="px-6 py-5 text-left">Subdomain</th>
                                 <th className="px-6 py-5 text-left">Health check</th>
-                                <th className="px-6 py-5 text-right"></th>
+                                <th className="px-6 py-5 text-right w-16"></th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
@@ -655,7 +686,6 @@ export const OrgsAndDomainsPage: React.FC = () => {
                                     <tr key={domain.id} className="text-gray-700 dark:text-gray-300 text-sm hover:bg-gray-50/30 dark:hover:bg-slate-800/20 transition-colors group">
                                         <td className="px-6 py-5 font-medium">{domain.domainName}</td>
                                         <td className="px-6 py-5 text-gray-500">{domain.creationDate || '-'}</td>
-                                        <td className="px-6 py-5 text-gray-500">{domain.subDomainCount || '-'}</td>
                                         <td className="px-6 py-5">
                                             <button 
                                                 onClick={() => handleHealthClick(domain)}
@@ -680,15 +710,33 @@ export const OrgsAndDomainsPage: React.FC = () => {
                                             </button>
                                         </td>
                                         <td className="px-6 py-5 text-right">
-                                            <button className="text-gray-300 hover:text-[#293c51] dark:hover:text-white p-2 transition-colors">
-                                                <Icon name="fas fa-ellipsis-v" />
-                                            </button>
+                                            <div className="relative inline-block" ref={openMenuId === domain.id ? menuRef : null}>
+                                                <button 
+                                                    onClick={() => setOpenMenuId(openMenuId === domain.id ? null : domain.id)}
+                                                    className="text-gray-300 hover:text-[#293c51] dark:hover:text-white p-2 transition-colors focus:outline-none"
+                                                >
+                                                    <Icon name="fas fa-ellipsis-v" />
+                                                </button>
+                                                {openMenuId === domain.id && (
+                                                    <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-slate-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-50 overflow-hidden">
+                                                        <div className="py-1">
+                                                            <button 
+                                                                onClick={() => handleDeleteDomainRequest(domain)}
+                                                                className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left"
+                                                            >
+                                                                <Icon name="fas fa-trash-alt" className="mr-3 w-4 text-red-500" />
+                                                                Delete Domain
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={5} className="text-center py-24">
+                                    <td colSpan={4} className="text-center py-24">
                                         <div className="flex flex-col items-center justify-center opacity-40">
                                             <Icon name="fas fa-globe" className="text-4xl mb-3 text-gray-400" />
                                             <p className="text-sm font-medium italic text-gray-500">
@@ -720,8 +768,37 @@ export const OrgsAndDomainsPage: React.FC = () => {
         <Card title="Organizations" titleActions={titleActions} className="!p-8 shadow-lg border border-gray-100 dark:border-slate-800">
             {view === 'stepper' && <StepperView />}
             {view === 'table' && <TableView />}
-            {view === 'dns' && <div className="max-w-5xl mx-auto"><DNSConfigView domain={selectedDomainForDns} onBack={handleBackToTable} /></div>}
+            {view === 'dns' && <div className="max-w-5xl mx-auto"><DNSConfigView domain={selectedDomainIdForDns} onBack={handleBackToTable} /></div>}
             {view === 'org-settings' && <OrgSettingsView />}
+
+            {/* Delete Domain Confirmation Modal */}
+            {domainToDelete && (
+                <Modal
+                    isOpen={!!domainToDelete}
+                    onClose={() => setDomainToDelete(null)}
+                    title="Delete Domain"
+                    size="md"
+                    footer={
+                        <div className="flex gap-2 justify-end">
+                            <Button variant="ghost" onClick={() => setDomainToDelete(null)}>Cancel</Button>
+                            <Button variant="danger" onClick={handleConfirmDeleteDomain}>Delete Domain</Button>
+                        </div>
+                    }
+                >
+                    <div className="space-y-4">
+                        <div className="p-3 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 rounded-r-md">
+                            <p className="text-sm text-red-800 dark:text-red-200">
+                                <Icon name="fas fa-exclamation-triangle" className="mr-2" />
+                                <strong>Warning:</strong> Deleting a domain is permanent.
+                            </p>
+                        </div>
+                        <p className="text-sm text-gray-700 dark:text-gray-300">
+                            Are you sure you want to delete the domain <strong>{domainToDelete.domainName}</strong> from the organization <strong>{activeOrg?.name}</strong>? 
+                            This will stop all email traffic for this domain immediately.
+                        </p>
+                    </div>
+                </Modal>
+            )}
         </Card>
     );
 };
