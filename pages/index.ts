@@ -58,6 +58,7 @@ export * from './dashboard/email_admin_suite/DemoPlanSelectionPage';
 export * from './dashboard/email_admin_suite/DemoPlanConfirmationPage';
 export * from './dashboard/email_admin_suite/DemoPlanDetailsPage';
 export * from './dashboard/email_admin_suite/DemoBillingPage';
+export * from './dashboard/email_admin_suite/EmailMigrationPage';
 
 export * from './reseller/ResellerCustomersPage';
 export * from './reseller/ResellerProgramPage';

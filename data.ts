@@ -1,5 +1,5 @@
 
-import type { User, UserGroup, Invoice, SupportTicket, LogEntry, SupportTicketProduct, InvoiceLineItem, StaffGroup, SmtpLogEntry, KnowledgeBaseArticle, KubernetesCluster, LoadBalancer, FirewallRule, StorageBucket, SecurityAlert, BackupJob, Mailbox, MailboxPlan, DistributionList, SharedContact, Rule, PstLogEntry, RunningTask, Subscription } from './types';
+import type { User, UserGroup, Invoice, SupportTicket, LogEntry, SupportTicketProduct, InvoiceLineItem, StaffGroup, SmtpLogEntry, KnowledgeBaseArticle, KubernetesCluster, LoadBalancer, FirewallRule, StorageBucket, SecurityAlert, BackupJob, Mailbox, MailboxPlan, DistributionList, SharedContact, Rule, PstLogEntry, RunningTask, Subscription, EmailMigrationProject, EmailMigrationAccount } from './types';
 
 // Mock User Data
 export const MOCK_USERS: { [email: string]: User & { passwordHash: string } } = {
@@ -570,4 +570,25 @@ export const mockSubscriptions: Subscription[] = [
         endDate: 'N/A',
         infraTier: 'Type II',
     }
+];
+
+export const mockEmailMigrationProjects: EmailMigrationProject[] = [
+    {
+        id: 'proj-1',
+        projectName: 'Legacy G-Suite Migration',
+        sourceProvider: 'google',
+        sourceConnection: { username: 'admin@legacy-company.com' },
+        destinationProvider: 'worldposta',
+        destinationConnection: { username: 'admin@new-worldposta.com', server: 'imap.worldposta.com' },
+        mailboxesToMigrate: 25,
+        status: 'completed',
+        progress: 100,
+        createdAt: '2023-11-15T10:00:00Z',
+        migrationMode: 'bulk'
+    }
+];
+
+export const mockEmailMigrationAccounts: EmailMigrationAccount[] = [
+    { id: 'acc-1', destination: 'john.doe@worldposta.com', source: 'j.doe@google.com', status: 'Completed', note: 'All items synced.', progress: 100, total: 1540, processed: 1540, failed: 0, removed: 0 },
+    { id: 'acc-2', destination: 'jane.smith@worldposta.com', source: 'jane.s@google.com', status: 'In Progress', note: 'Syncing Sent Items...', progress: 45, total: 2200, processed: 990, failed: 2, removed: 0 },
 ];

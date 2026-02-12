@@ -77,7 +77,8 @@ import {
     ManageSubscriptionPage,
     SubscriptionsListView,
     PaymentAndDetailsView,
-    AdminToolsView
+    AdminToolsView,
+    EmailMigrationPage
 } from '@/pages';
 
 
@@ -350,7 +351,8 @@ const AppLayout: React.FC = () => {
             'bulk-module': 'Bulk Module',
             'blogs-center': 'Blogs Center',
             'manage': 'Manage',
-            'orgs-and-domains': 'Orgs And Domains'
+            'orgs-and-domains': 'Orgs And Domains',
+            'migrations': 'Migrations'
         };
         
         const getLabel = (value: string) => {
@@ -652,7 +654,7 @@ const AppRoutes: React.FC = () => {
                         <Route path="admin/lists" element={<PlaceholderPage />} />
                         <Route path="admin/sister-companies" element={<PlaceholderPage />} />
                         <Route path="admin/ip-lists" element={<PlaceholderPage />} />
-                        <Route path="migrations" element={<PlaceholderPage />} />
+                        <Route path="migrations" element={<EmailMigrationPage />} />
                         <Route path="old-version" element={<OldVersionPage />} />
                     </Route>
 

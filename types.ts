@@ -481,3 +481,71 @@ export interface Subscription {
   endDate: string;
   infraTier?: string;
 }
+
+// --- EMAIL MIGRATION TYPES ---
+
+export type EmailProvider = 'google' | 'worldposta' | 'onpremises' | 'yahoo' | 'zoho' | 'imap' | 'other';
+export type MigrationMode = 'single' | 'bulk';
+export type MigrationItem = 'emails' | 'contacts' | 'calendar' | 'tasks';
+export type MigrationStatus = 'not_started' | 'analyzing' | 'ready' | 'in_progress' | 'completed' | 'error' | 'cancelled';
+
+export interface ConnectionDetails {
+    useOAuth?: boolean;
+    username?: string;
+    password?: string;
+    useSsl?: boolean;
+    server?: string;
+    port?: number;
+    tokenJson?: string;
+}
+
+export interface EmailMigrationProject {
+    id: string;
+    projectName: string;
+    sourceProvider: EmailProvider;
+    sourceConnection: ConnectionDetails;
+    destinationProvider: EmailProvider;
+    destinationConnection: ConnectionDetails;
+    mailboxesToMigrate: number;
+    status: MigrationStatus;
+    progress: number;
+    createdAt: string;
+    isIncrementalSyncEnabled?: boolean;
+    migrationWindow?: 'all' | 'recent' | 'unread';
+    migrationMode: MigrationMode;
+    itemsToMigrate?: string[];
+    backupWithVeeam?: boolean;
+    folderOptions?: {
+        selection: string;
+        excludeInbox: boolean;
+        includeSpamTrash: boolean;
+    };
+    dateRange?: {
+        type: 'all' | 'specific';
+        from: string;
+        to: string;
+    };
+    maxErrors?: string;
+    addHeader?: boolean;
+    labelsPolicy?: 'keep-existing' | 'apply-new' | 'ignore';
+    maxMessageSizeMB?: number;
+    report?: {
+        transferredEmails: number;
+        failedItems: { retryable: boolean }[];
+    };
+}
+
+export type EmailMigrationAccountStatus = 'New' | 'In Progress' | 'Completed' | 'Failed' | 'Cancelled';
+
+export interface EmailMigrationAccount {
+    id: string;
+    destination: string;
+    source: string;
+    status: EmailMigrationAccountStatus;
+    note: string;
+    progress: number;
+    total: number;
+    processed: number;
+    failed: number;
+    removed: number;
+}
