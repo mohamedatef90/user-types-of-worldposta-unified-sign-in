@@ -163,7 +163,7 @@ export interface EmailCartItem {
 }
 
 export type CloudEdgeComponentType = 'instance' | 'vdc' | 'ready-plan';
-export type MachineType = 'Type I' | 'Type II';
+export type MachineType = 'performance-01' | 'performance-02' | 'performance-03';
 export type ProvisioningModel = 'regular' | 'spot';
 export type SubscriptionTermUnit = 'hr' | 'week' | 'month' | 'year';
 
@@ -192,16 +192,9 @@ export interface CloudEdgeConfiguration {
     // Advanced/Optional
     provisioningModel?: ProvisioningModel;
     confidentialVM?: boolean;
-    
-    // Billing & GPU Model
-    billingMode?: 'payg_wallet' | 'subscription';
-    expectedRuntimeHours?: number;
-    paygCapValue?: number;
-    paygCapType?: 'amount' | 'hours';
-    gpuEnabled?: boolean;
-    gpuFamily?: 'tesla' | 'h100';
-    teslaOptionId?: string;
-    h100Slices?: number;
+    addGPUs?: boolean;
+    gpuType?: string;
+    gpuCount?: number;
 
     // Other resources
     staticPublicIPs?: number;
@@ -212,11 +205,6 @@ export interface CloudEdgeConfiguration {
     linuxEnterpriseLicenses?: number;
     cortexXDREndpoints?: number;
     loadBalancerInstances?: number;
-    
-    // Flash Disk Add-on
-    flashDiskEnabled?: boolean;
-    flashDiskType?: 'NVMe' | 'SSD';
-    flashDiskGB?: number;
     
     // Add-ons
     advancedFirewall?: boolean;
@@ -366,7 +354,6 @@ export interface SecurityAlert {
   description: string;
   resource: string;
   timestamp: string;
-  // ... existing code ...
 }
 
 // Backup & DR
@@ -469,83 +456,4 @@ export interface BlogPost {
   content: ReactNode;
   sourceUrl?: string;
   sourceName?: string;
-}
-
-export interface Subscription {
-  id: string;
-  productName: string;
-  category: 'cloudedge' | 'posta';
-  status: 'active' | 'pending' | 'expired';
-  billingMode: 'payg_wallet' | 'subscription';
-  subscribeDate: string;
-  endDate: string;
-  infraTier?: string;
-}
-
-// --- EMAIL MIGRATION TYPES ---
-
-export type EmailProvider = 'google' | 'worldposta' | 'onpremises' | 'yahoo' | 'zoho' | 'imap' | 'other';
-export type MigrationMode = 'single' | 'bulk';
-export type MigrationItem = 'emails' | 'contacts' | 'calendar' | 'tasks';
-export type MigrationStatus = 'not_started' | 'analyzing' | 'ready' | 'in_progress' | 'completed' | 'error' | 'cancelled';
-
-export interface ConnectionDetails {
-    useOAuth?: boolean;
-    username?: string;
-    password?: string;
-    useSsl?: boolean;
-    server?: string;
-    port?: number;
-    tokenJson?: string;
-}
-
-export interface EmailMigrationProject {
-    id: string;
-    projectName: string;
-    sourceProvider: EmailProvider;
-    sourceConnection: ConnectionDetails;
-    destinationProvider: EmailProvider;
-    destinationConnection: ConnectionDetails;
-    mailboxesToMigrate: number;
-    status: MigrationStatus;
-    progress: number;
-    createdAt: string;
-    isIncrementalSyncEnabled?: boolean;
-    migrationWindow?: 'all' | 'recent' | 'unread';
-    migrationMode: MigrationMode;
-    itemsToMigrate?: string[];
-    backupWithVeeam?: boolean;
-    folderOptions?: {
-        selection: string;
-        excludeInbox: boolean;
-        includeSpamTrash: boolean;
-    };
-    dateRange?: {
-        type: 'all' | 'specific';
-        from: string;
-        to: string;
-    };
-    maxErrors?: string;
-    addHeader?: boolean;
-    labelsPolicy?: 'keep-existing' | 'apply-new' | 'ignore';
-    maxMessageSizeMB?: number;
-    report?: {
-        transferredEmails: number;
-        failedItems: { retryable: boolean }[];
-    };
-}
-
-export type EmailMigrationAccountStatus = 'New' | 'In Progress' | 'Completed' | 'Failed' | 'Cancelled';
-
-export interface EmailMigrationAccount {
-    id: string;
-    destination: string;
-    source: string;
-    status: EmailMigrationAccountStatus;
-    note: string;
-    progress: number;
-    total: number;
-    processed: number;
-    failed: number;
-    removed: number;
 }

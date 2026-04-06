@@ -8,7 +8,12 @@ import { Link } from 'react-router-dom';
 import { useAppLayout, useAuth } from '@/context';
 
 
-// Fix: Removed global initialization to ensure a fresh GoogleGenAI instance is created right before usage as per coding guidelines.
+let ai: GoogleGenAI | null = null;
+try {
+  ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+} catch (e) {
+  console.error("Gemini API key not found. AI features will be disabled.", e);
+}
 
 
 const SMTP_ACTIONS: SmtpLogAction[] = ['PASS', 'DELIVER', 'ARCHIVE', 'QUARANTINE', 'REJECT'];
@@ -351,8 +356,7 @@ export const EmailAdminSmtpLogsPage: React.FC = () => {
     };
 
     const handleAnalyzeLogs = async () => {
-        // Fix: Use process.env.API_KEY directly as required by coding guidelines
-        if (!process.env.API_KEY) {
+        if (!ai) {
             alert("AI features are not available. Please check your API key.");
             return;
         }
@@ -380,10 +384,8 @@ export const EmailAdminSmtpLogsPage: React.FC = () => {
 
             const prompt = `As a senior email security analyst, analyze the following SMTP log data. Provide a concise summary, identify key trends, point out notable security events, and give actionable recommendations. The data is:\n\n${logsString}`;
             
-            // Fix: Initialize GoogleGenAI instance right before the call
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const response = await ai.models.generateContent({
-                model: "gemini-3-flash-preview",
+                model: "gemini-2.5-flash",
                 contents: prompt,
                 config: {
                     responseMimeType: "application/json",
@@ -680,8 +682,7 @@ export const EmailAdminSmtpLogsPage: React.FC = () => {
                             <Button
                                 onClick={handleAnalyzeLogs}
                                 leftIconName="fas fa-wand-magic-sparkles"
-                                // Fix: Check for process.env.API_KEY availability
-                                disabled={isAnalyzing || !process.env.API_KEY || isDisabled}
+                                disabled={isAnalyzing || !ai || isDisabled}
                                 className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white border-transparent hover:shadow-lg hover:shadow-purple-500/50 transform hover:-translate-y-0.5 transition-all duration-300 ease-in-out"
                             >
                                 Analyze with AI

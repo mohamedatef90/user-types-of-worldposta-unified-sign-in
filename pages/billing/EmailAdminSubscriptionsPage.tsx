@@ -1,7 +1,7 @@
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Button, Card, FormField, CollapsibleSection, Stepper, Icon } from '@/components/ui'; 
+import { Button, Card, FormField, CollapsibleSection, Stepper, Icon, Spinner } from '@/components/ui'; 
 import type { EmailPlan, EmailPlanDuration } from '@/types';
 import { PLANS } from '../pricing/constants';
 import { useAuth } from '@/context';
@@ -17,6 +17,7 @@ const emailPlans: EmailPlan[] = PLANS.map(p => ({
 
 const ADVANCED_RULES_PRICE_MONTHLY = 2.00;
 
+// Represents a single configured plan in the order
 interface ConfiguredPlan {
   planId: string;
   quantity: number;
@@ -25,6 +26,7 @@ interface ConfiguredPlan {
   advancedRulesEnabled: boolean;
 }
 
+// Calculate total price for the entire order
 const calculateOrderTotal = (configuredPlans: ConfiguredPlan[]): number => {
   return configuredPlans.reduce((total, configuredPlan) => {
     const planDetails = emailPlans.find(p => p.id === configuredPlan.planId);
@@ -43,12 +45,14 @@ const calculateOrderTotal = (configuredPlans: ConfiguredPlan[]): number => {
         planTotal = monthlyPricePerUnit * configuredPlan.quantity * term;
         break;
       case 'yearly':
+        // Apply 17% discount for yearly, and multiply by term (number of years)
         planTotal = (monthlyPricePerUnit * 12 * configuredPlan.quantity * term) * 0.83; 
         break;
     }
     return total + planTotal;
   }, 0);
 };
+
 
 interface PlanCardProps {
   plan: EmailPlan;
@@ -215,8 +219,14 @@ const PaymentStep: React.FC<{
 
     const handlePaymentRedirect = () => {
         setIsPaying(true);
+        // Open Stripe in a new tab to simulate the redirection
         window.open('https://stripe.com/', '_blank', 'noopener,noreferrer');
-        setTimeout(() => { onPay(); }, 2000);
+        
+        // Simulate a delay for processing before moving to the next step
+        setTimeout(() => {
+            onPay();
+            // No need to setIsPaying(false) as the component will unmount
+        }, 2000); // Simulate network delay
     };
 
 
@@ -296,9 +306,8 @@ const ConfirmationStep: React.FC<ConfirmationStepProps> = ({ onManageSubscriptio
     );
 };
 
-export const EmailAdminSubscriptionsContent: React.FC<{
-    onClose?: () => void;
-}> = ({ onClose }) => {
+
+export const EmailAdminSubscriptionsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isNewDemoUser = user?.email === 'new.user@worldposta.com';
@@ -359,8 +368,7 @@ export const EmailAdminSubscriptionsContent: React.FC<{
   }, [activeOrderConfiguration]);
 
   const handleManageSubscriptions = () => {
-    if (onClose) onClose();
-    else navigate('/app/billing');
+    navigate('/app/billing');
   };
 
   const handleConfigureEmail = () => {
@@ -380,7 +388,7 @@ export const EmailAdminSubscriptionsContent: React.FC<{
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-[#293c51] dark:text-gray-100">Posta Email Subscriptions</h1>
+      <h1 className="text-3xl font-bold text-[#293c51] dark:text-gray-100">Manage Posta Email Subscriptions</h1>
       
       <div className="w-full md:w-3/4 lg:w-1/2 mx-auto">
         <Stepper steps={steps} currentStep={currentStep} className="my-8" />
@@ -395,7 +403,7 @@ export const EmailAdminSubscriptionsContent: React.FC<{
                         Compare Plans
                     </Button>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 gap-6">
                     {emailPlans.map(plan => (
                     <PlanCard 
                         key={plan.id} 
@@ -435,9 +443,4 @@ export const EmailAdminSubscriptionsContent: React.FC<{
       )}
     </div>
   );
-};
-
-export const EmailAdminSubscriptionsPage: React.FC = () => {
-    const navigate = useNavigate();
-    return <EmailAdminSubscriptionsContent onClose={() => navigate('/app/billing')} />;
 };

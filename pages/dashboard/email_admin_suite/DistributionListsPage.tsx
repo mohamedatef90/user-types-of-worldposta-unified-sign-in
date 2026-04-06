@@ -4,7 +4,7 @@ import type { DistributionList } from '@/types';
 // Fix: Import `mockDistributionLists` from data.ts
 import { mockMailboxDomains, mockDistributionLists } from '@/data';
 import { v4 as uuidv4 } from 'uuid';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAppLayout, useAuth } from '@/context';
 
 interface DlFilters {
@@ -62,72 +62,6 @@ const DlFilterPanel: React.FC<{
     );
 };
 
-const AddDlPanel: React.FC<{
-    isOpen: boolean;
-    onClose: () => void;
-    onSave: (list: DistributionList) => void;
-    listToEdit: DistributionList | null;
-}> = ({ isOpen, onClose, onSave, listToEdit }) => {
-    const initialForm = { displayName: '', emailUser: '', emailDomain: mockMailboxDomains[0], managerEmail: '' };
-    const [form, setForm] = useState(initialForm);
-
-    useEffect(() => {
-        if (isOpen) {
-            if (listToEdit) {
-                const [user, domain] = listToEdit.primaryEmail.split('@');
-                setForm({ displayName: listToEdit.displayName, emailUser: user, emailDomain: domain, managerEmail: listToEdit.managerEmail || '' });
-            } else {
-                setForm(initialForm);
-            }
-        }
-    }, [listToEdit, isOpen]);
-
-    const handleSubmit = () => {
-        if (!form.displayName || !form.emailUser) {
-            alert("Display Name and Email Address are required.");
-            return;
-        }
-        const newList: DistributionList = {
-            id: listToEdit?.id || uuidv4(),
-            displayName: form.displayName,
-            primaryEmail: `${form.emailUser}@${form.emailDomain}`,
-            creationDate: listToEdit?.creationDate || new Date().toISOString(),
-            managerEmail: form.managerEmail,
-        };
-        onSave(newList);
-    };
-
-    return (
-        <>
-            {isOpen && <div className="fixed inset-0 bg-black/60 z-[59]" onClick={onClose} aria-hidden="true" />}
-            <div className={`fixed top-0 right-0 h-full w-full max-w-lg bg-[#f8f8f8] dark:bg-slate-800 border-l border-gray-200 dark:border-slate-700 z-[60] transform transition-transform duration-300 ease-in-out flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-                <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-700">
-                    <h2 className="text-lg font-semibold">{listToEdit ? 'Edit' : 'Add'} Distribution List</h2>
-                    <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-slate-700"><Icon name="fas fa-times" /></button>
-                </div>
-                <div className="flex-grow p-6 space-y-4">
-                    <FormField id="displayName" name="displayName" label="Display Name" value={form.displayName} onChange={(e) => setForm({...form, displayName: e.target.value})} required />
-                     <div className="mb-4">
-                        <label htmlFor="emailUser" className="block text-sm font-medium mb-1">Primary Email Address <span className="text-red-500">*</span></label>
-                        <div className="flex items-center">
-                            <input id="emailUser" name="emailUser" type="text" value={form.emailUser} onChange={(e) => setForm({...form, emailUser: e.target.value})} className={`w-full px-3 py-2 border rounded-l-md focus:outline-none focus:ring-2 focus:ring-[#679a41] border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700`} />
-                            <span className="inline-flex items-center px-3 border-t border-b border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-500 text-sm">@</span>
-                            <select name="emailDomain" value={form.emailDomain} onChange={(e) => setForm({...form, emailDomain: e.target.value})} className="px-3 py-2 border rounded-r-md focus:outline-none focus:ring-2 focus:ring-[#679a41] border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700">
-                                {mockMailboxDomains.map(d => <option key={d} value={d}>{d}</option>)}
-                            </select>
-                        </div>
-                    </div>
-                    <FormField id="managerEmail" name="managerEmail" label="Manager Email" type="email" value={form.managerEmail} onChange={(e) => setForm({...form, managerEmail: e.target.value})} placeholder="manager@example.com" />
-                </div>
-                <div className="flex-shrink-0 p-4 border-t bg-white dark:bg-slate-800 dark:border-slate-700 flex justify-end gap-2">
-                    <Button variant="ghost" onClick={onClose}>Cancel</Button>
-                    <Button onClick={handleSubmit}>Save</Button>
-                </div>
-            </div>
-        </>
-    );
-};
-
 const VerificationRequiredRow: React.FC<{ colSpan: number }> = ({ colSpan }) => (
     <tr>
         <td colSpan={colSpan} className="text-center py-10">
@@ -146,6 +80,7 @@ const VerificationRequiredRow: React.FC<{ colSpan: number }> = ({ colSpan }) => 
 export const DistributionListsPage: React.FC = () => {
     const { isDomainVerifiedForDemo } = useAppLayout();
     const { user } = useAuth();
+    const navigate = useNavigate();
     const isNewDemoUser = user?.email === 'new.user@worldposta.com';
     const isDisabled = isNewDemoUser && !isDomainVerifiedForDemo;
 
@@ -154,8 +89,6 @@ export const DistributionListsPage: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
-    const [isAddPanelOpen, setIsAddPanelOpen] = useState(false);
-    const [editingList, setEditingList] = useState<DistributionList | null>(null);
 
     // State for selections and bulk actions
     const [selectedLists, setSelectedLists] = useState<string[]>([]);
@@ -184,23 +117,12 @@ export const DistributionListsPage: React.FC = () => {
 
     useEffect(() => { setCurrentPage(1); }, [filters, rowsPerPage]);
 
-    const handleOpenAddPanel = () => {
-        setEditingList(null);
-        setIsAddPanelOpen(true);
+    const handleOpenAddPage = () => {
+        navigate('/app/email-admin-suite/exchange/distribution-lists/add');
     };
 
-    const handleOpenEditPanel = (list: DistributionList) => {
-        setEditingList(list);
-        setIsAddPanelOpen(true);
-    };
-
-    const handleSaveList = (list: DistributionList) => {
-        if (editingList) {
-            setDistributionLists(prev => prev.map(l => l.id === list.id ? list : l));
-        } else {
-            setDistributionLists(prev => [list, ...prev]);
-        }
-        setIsAddPanelOpen(false);
+    const handleOpenEditPage = (listId: string) => {
+        navigate(`/app/email-admin-suite/exchange/distribution-lists/edit/${listId}`);
     };
 
     // --- Bulk Action Logic ---
@@ -231,7 +153,7 @@ export const DistributionListsPage: React.FC = () => {
     const DefaultToolbar = () => (
         <div className="flex items-center gap-2">
             <Button variant="outline" onClick={() => setIsFilterPanelOpen(true)} leftIconName="fas fa-filter" disabled={isDisabled}>Filters & Search</Button>
-            <Button leftIconName="fas fa-plus-circle" onClick={handleOpenAddPanel} disabled={isDisabled}>Add Distribution List</Button>
+            <Button leftIconName="fas fa-plus-circle" onClick={handleOpenAddPage} disabled={isDisabled}>Add Distribution List</Button>
         </div>
     );
     
@@ -277,7 +199,7 @@ export const DistributionListsPage: React.FC = () => {
                                     <td className="px-4 py-4 whitespace-nowrap text-sm">{new Date(list.creationDate).toLocaleDateString()}</td>
                                     <td className="px-4 py-4 whitespace-nowrap text-right text-sm">
                                         <div className="flex justify-end items-center">
-                                            <Button size="icon" variant="ghost" onClick={() => handleOpenEditPanel(list)} title="Edit" disabled={isDisabled}><Icon name="fas fa-pencil-alt" /></Button>
+                                            <Button size="icon" variant="ghost" onClick={() => handleOpenEditPage(list.id)} title="Edit" disabled={isDisabled}><Icon name="fas fa-pencil-alt" /></Button>
                                         </div>
                                     </td>
                                 </tr>
@@ -293,7 +215,6 @@ export const DistributionListsPage: React.FC = () => {
             </Modal>
             
             <DlFilterPanel isOpen={isFilterPanelOpen} onClose={() => setIsFilterPanelOpen(false)} onApply={setFilters} onClear={() => setFilters(initialDlFilters)} currentFilters={filters} />
-            <AddDlPanel isOpen={isAddPanelOpen} onClose={() => setIsAddPanelOpen(false)} onSave={handleSaveList} listToEdit={editingList} />
         </>
     );
 };

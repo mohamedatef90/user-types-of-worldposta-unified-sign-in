@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation, Outlet, useSearchParams, Link } from 'react-router-dom';
 import { AuthProvider, ThemeProvider, useAuth, AppLayoutContext } from '@/context';
 import type { User, AuthContextType, NavItem, UserGroup, ApplicationCardData } from '@/types';
-import { Navbar, Sidebar, BillingSidebar, Spinner, Breadcrumbs, Footer, Icon, Button, Chatbot, FeedbackSystem } from '@/components/ui'; 
+import { Navbar, Sidebar, Spinner, Breadcrumbs, Footer, Icon, Button, Chatbot, FeedbackSystem } from '@/components/ui'; 
 import { getMockUserById } from '@/data';
 import { 
     LandingPage, 
@@ -50,6 +50,7 @@ import {
     MailboxesPage,
     EditMailboxPage,
     DistributionListsPage,
+    EditDistributionListPage,
     SharedContactsPage,
     EditSharedContactPage,
     RulesPage,
@@ -73,12 +74,7 @@ import {
     IdsIpsMalwarePreventionPage,
     BlogsCenterPage,
     OsImagesPage,
-    BlogDetailsPage,
-    ManageSubscriptionPage,
-    SubscriptionsListView,
-    PaymentAndDetailsView,
-    AdminToolsView,
-    EmailMigrationPage
+    BlogDetailsPage
 } from '@/pages';
 
 
@@ -87,8 +83,7 @@ const ProtectedRoute: React.FC<{
     isAuthenticated: boolean;
     isLoading: boolean;
     allowedRoles?: User['role'][];
-    children?: React.ReactNode;
-}> = ({ user, isAuthenticated, isLoading, allowedRoles, children }) => {
+}> = ({ user, isAuthenticated, isLoading, allowedRoles }) => {
     const location = useLocation();
 
     if (isLoading) {
@@ -107,7 +102,7 @@ const ProtectedRoute: React.FC<{
         return <Navigate to="/app/dashboard" replace />;
     }
 
-    return children ? <>{children}</> : <Outlet />;
+    return <Outlet />;
 };
 
 const getNavItems = (role: User['role']): NavItem[] => {
@@ -133,7 +128,6 @@ const getNavItems = (role: User['role']): NavItem[] => {
       return [
         { name: 'Dashboard', path: '/app/dashboard', iconName: 'fas fa-home' },
         { name: 'Users Management', path: '/app/team-management', iconName: 'fas fa-users-cog' },
-        { name: 'Billing and Subscriptions', path: '/app/billing', iconName: 'fas fa-wallet' },
       ];
   }
 };
@@ -166,7 +160,7 @@ const getAppLauncherItems = (role: User['role'] | undefined): ApplicationCardDat
     const customerApps: ApplicationCardData[] = [
         { 
             id: 'billing', 
-            name: 'Billing and Subscriptions', 
+            name: 'Subscriptions', 
             description: 'Oversee your subscriptions and add new services.', 
             iconName: 'fas fa-wallet', 
             launchUrl: '/app/billing',
@@ -176,7 +170,7 @@ const getAppLauncherItems = (role: User['role'] | undefined): ApplicationCardDat
             name: 'Invoice History', 
             description: 'View and download past invoices for your records.', 
             iconName: 'fas fa-file-invoice', 
-            launchUrl: '/app/billing/invoices',
+            launchUrl: '/app/invoices',
         },
         {
             id: 'support',
@@ -218,16 +212,23 @@ const AppLayout: React.FC = () => {
     const location = useLocation();
     const [searchParams] = useSearchParams();
     const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+    
+    const isEmailAdminSuite = location.pathname.startsWith('/app/email-admin-suite');
+
     const [isDesktopSidebarCollapsed, setDesktopSidebarCollapsed] = useState(() => {
-        const isEmailAdmin = location.pathname.startsWith('/app/email-admin-suite');
-        const isBilling = location.pathname.startsWith('/app/billing');
-        const storageKey = isEmailAdmin ? 'emailAdminSidebarCollapsed' : isBilling ? 'billingSidebarCollapsed' : 'sidebarCollapsed';
+        const storageKey = isEmailAdminSuite ? 'emailAdminSidebarCollapsed' : 'sidebarCollapsed';
         return localStorage.getItem(storageKey) === 'true';
     });
+
+    // Sync collapse state when switching context
+    useEffect(() => {
+        const storageKey = isEmailAdminSuite ? 'emailAdminSidebarCollapsed' : 'sidebarCollapsed';
+        const storedValue = localStorage.getItem(storageKey) === 'true';
+        setDesktopSidebarCollapsed(storedValue);
+    }, [isEmailAdminSuite]);
+
     const [isSearchPanelOpen, setSearchPanelOpen] = useState(false);
 
-    const isEmailAdminSuite = location.pathname.startsWith('/app/email-admin-suite');
-    const isBillingCenter = location.pathname.startsWith('/app/billing');
     const isNewDemoUser = user?.email === 'new.user@worldposta.com';
     
     const [isStatusBannerVisible, setStatusBannerVisible] = useState(true);
@@ -279,19 +280,17 @@ const AppLayout: React.FC = () => {
     }, [isNewDemoUser]);
 
     useEffect(() => {
-        updateBannerStatus(); 
-    
+        updateBannerStatus();
         window.addEventListener('domainStateChange', updateBannerStatus);
-        
         return () => {
             window.removeEventListener('domainStateChange', updateBannerStatus);
         };
-    }, [location, updateBannerStatus]);
+    }, [location.pathname, updateBannerStatus]);
 
     useEffect(() => {
-        const storageKey = isEmailAdminSuite ? 'emailAdminSidebarCollapsed' : isBillingCenter ? 'billingSidebarCollapsed' : 'sidebarCollapsed';
+        const storageKey = isEmailAdminSuite ? 'emailAdminSidebarCollapsed' : 'sidebarCollapsed';
         localStorage.setItem(storageKey, String(isDesktopSidebarCollapsed));
-    }, [isDesktopSidebarCollapsed, isEmailAdminSuite, isBillingCenter]);
+    }, [isDesktopSidebarCollapsed, isEmailAdminSuite]);
 
     const viewAsUserId = searchParams.get('viewAsUser');
     const returnToPath = searchParams.get('returnTo');
@@ -299,7 +298,6 @@ const AppLayout: React.FC = () => {
     const isViewAsMode = !!(viewAsUserId && returnToPath && viewedUser && user && (user.role === 'admin' || user.role === 'reseller'));
     const isCustomerView = useMemo(() => user?.role === 'customer' && !isViewAsMode, [user, isViewAsMode]);
 
-    
     const navItems = useMemo(() => {
         return user ? getNavItems(user.role) : [];
     }, [user]);
@@ -307,8 +305,6 @@ const AppLayout: React.FC = () => {
     const appLauncherItems = useMemo(() => getAppLauncherItems(user?.role), [user]);
 
     const breadcrumbItems = useMemo(() => {
-        const viewAsUserId = searchParams.get('viewAsUser');
-        const returnToPath = searchParams.get('returnTo');
         const pathnames = location.pathname.split('/').filter(x => x);
 
         const BREADCRUMB_LABELS: { [key: string]: string } = {
@@ -319,15 +315,11 @@ const AppLayout: React.FC = () => {
             'team-management': 'Users Management',
             'add': 'Add User',
             'edit': 'Edit User',
-            'billing': 'Billing and Subscriptions',
+            'billing': 'Billings',
             'email-subscriptions': 'Email Subscriptions',
             'email-configurations': 'Email Configurations',
             'cloudedge-configurations': 'CloudEdge Configurations',
             'invoices': 'Invoices',
-            'subscriptions': 'My Subscriptions',
-            'provisioning': 'CloudEdge Provisioning',
-            'posta': 'Posta Subscriptions',
-            'wallet': 'Payment & Wallet',
             'action-logs': 'Action Logs',
             'support': 'Support Center',
             'create': 'Create Ticket',
@@ -339,32 +331,22 @@ const AppLayout: React.FC = () => {
             'customers': 'My Customers',
             'program': 'My Program',
             'email-admin-suite': 'Email Admin Suite',
-            'kubernetes': 'Kubernetes',
-            'networking': 'Networking',
-            'storage': 'Storage',
-            'monitoring': 'Monitoring & Security',
-            'backup': 'Backup & DR',
+            'exchange': 'Exchange',
             'mailboxes': 'Mailboxes',
             'distribution-lists': 'Distribution Lists',
             'shared-contacts': 'Shared Contacts',
             'rules': 'Rules',
             'bulk-module': 'Bulk Module',
             'blogs-center': 'Blogs Center',
-            'manage': 'Manage',
-            'orgs-and-domains': 'Orgs And Domains',
-            'migrations': 'Migrations'
         };
         
         const getLabel = (value: string) => {
             return BREADCRUMB_LABELS[value] || value.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
         };
 
-        if (viewAsUserId && returnToPath && user && (user.role === 'admin' || user.role === 'reseller')) {
-            const viewedUser = getMockUserById(viewAsUserId);
-            if (!viewedUser) return [];
-
+        if (isViewAsMode && viewedUser && returnToPath) {
             const adminHomePath = user.role === 'admin' ? '/app/admin-dashboard' : '/app/reseller-dashboard';
-            const crumbs: { label: string; path?: string }[] = [{ label: 'Dashboard', path: adminHomePath }];
+            const crumbs = [{ label: 'Dashboard', path: adminHomePath }];
 
             let returnLabel = getLabel(returnToPath.split('/').pop() || '');
             crumbs.push({ label: returnLabel, path: returnToPath });
@@ -373,29 +355,17 @@ const AppLayout: React.FC = () => {
             crumbs.push({ label: viewedUser.fullName, path: customerDashboardPath });
             
             let segmentsToProcess = pathnames.slice(1);
-            if (
-                segmentsToProcess.length === 3 &&
-                segmentsToProcess[0] === 'team-management' &&
-                segmentsToProcess[1] === 'edit'
-            ) {
-                segmentsToProcess = segmentsToProcess.slice(0, 2);
-            }
+            if (segmentsToProcess[0] === 'dashboard') segmentsToProcess = segmentsToProcess.slice(1);
 
             segmentsToProcess.forEach((value, index) => {
-                if (value === 'dashboard') return; 
-
                 const to = `/app/${pathnames.slice(1, index + 2).join('/')}?viewAsUser=${viewAsUserId}&returnTo=${encodeURIComponent(returnToPath)}`;
                 let label = getLabel(value);
-                if (value === 'add' && segmentsToProcess[index - 1] === 'cloudedge-configurations') {
-                    label = 'Add Configuration';
-                }
                 crumbs.push({ label, path: to });
             });
             
             if (crumbs.length > 1) {
                 delete crumbs[crumbs.length - 1].path;
             }
-
             return crumbs;
         }
 
@@ -406,46 +376,30 @@ const AppLayout: React.FC = () => {
         if (user?.role === 'reseller') homePath = '/app/reseller-dashboard';
         if (isEmailAdminSuite) homePath = '/app/email-admin-suite';
 
-        const crumbs: { label: string; path?: string }[] = [{ label: 'Home', path: homePath }];
+        const crumbs = [{ label: 'Home', path: homePath }];
         
         let segmentsToProcess = pathnames.slice(1);
-        if (
-            (segmentsToProcess.length === 3 &&
-            segmentsToProcess[0] === 'team-management' &&
-            segmentsToProcess[1] === 'edit') ||
-            (segmentsToProcess.length === 5 && segmentsToProcess[3] === 'edit') ||
-             (segmentsToProcess.length > 2 && segmentsToProcess[segmentsToProcess.length - 2] === 'edit')
-        ) {
-            segmentsToProcess = segmentsToProcess.slice(0, -1);
+        if (segmentsToProcess[0] === 'dashboard' || segmentsToProcess[0] === 'admin-dashboard' || segmentsToProcess[0] === 'reseller-dashboard') {
+            segmentsToProcess = segmentsToProcess.slice(1);
         }
 
         segmentsToProcess.forEach((value, index) => {
-            if (value === 'admin' || value.endsWith('-dashboard')) return;
-
+            // Filter out suite sub-folders for cleaner crumbs
             if (isEmailAdminSuite && (value === 'exchange' || value === 'admin') && index < segmentsToProcess.length - 1) {
                 return;
             }
-
             const to = `/app/${pathnames.slice(1, index + 2).join('/')}`;
             let label = getLabel(value);
-            if (value === 'add' && segmentsToProcess[index - 1] === 'cloudedge-configurations') {
-                label = 'Add Configuration';
-            }
-            if (label !== 'Dashboard' && label !== 'App' && label !== 'Home') {
+            if (label !== 'App' && label !== 'Home') {
                  crumbs.push({ label, path: to });
             }
         });
 
-        if (location.pathname.endsWith('orgs-and-domains') && searchParams.get('view') === 'dns') {
-            crumbs.push({ label: 'DNS Configuration' });
-        }
-
         if (crumbs.length > 1) {
             delete crumbs[crumbs.length - 1].path;
         }
-
         return crumbs;
-    }, [location, user, searchParams, isEmailAdminSuite, isBillingCenter]);
+    }, [location, user, isViewAsMode, viewedUser, returnToPath, isEmailAdminSuite, viewAsUserId]);
 
     if (!user) {
         return <Navigate to="/login" replace />;
@@ -467,13 +421,7 @@ const AppLayout: React.FC = () => {
     return (
         <AppLayoutContext.Provider value={appLayoutContextValue}>
             <div className={`flex h-screen bg-gray-100 dark:bg-slate-900 overflow-hidden`}>
-                {isBillingCenter ? (
-                    <BillingSidebar 
-                         isCollapsed={isDesktopSidebarCollapsed}
-                         isOpen={isMobileSidebarOpen} 
-                         onClose={() => setMobileSidebarOpen(false)}
-                    />
-                ) : isEmailAdminSuite ? (
+                {isEmailAdminSuite ? (
                     <EmailAdminSidebar 
                          isCollapsed={isDesktopSidebarCollapsed}
                          isOpen={isMobileSidebarOpen} 
@@ -531,160 +479,116 @@ const AppLayout: React.FC = () => {
                         )}
                         {location.pathname !== '/app/admin-dashboard' && 
                          location.pathname !== '/app/email-admin-suite' && 
-                         location.pathname !== '/app/billing' && 
+                         location.pathname !== '/app/dashboard' &&
+                         location.pathname !== '/app/reseller-dashboard' &&
                          <Breadcrumbs items={breadcrumbItems} />}
-                        <Outlet />
+                        <Routes>
+                            <Route element={<ProtectedRoute user={user} isAuthenticated={true} isLoading={false} />}>
+                                <Route path="/dashboard" element={<DashboardPage />} />
+                                <Route path="/admin-dashboard" element={<AdminDashboardPage />} />
+                                <Route path="/reseller-dashboard" element={<ResellerDashboardPage />} />
+                                <Route path="/team-management" element={<CustomerTeamManagementPage />} />
+                                <Route path="/team-management/add" element={<AddTeamUserPage />} />
+                                <Route path="/team-management/edit/:userId" element={<EditTeamUserPage />} />
+                                <Route path="/billing" element={<BillingSettingsPage />} />
+                                <Route path="/billing/email-subscriptions" element={<EmailAdminSubscriptionsPage />} />
+                                <Route path="/billing/email-configurations" element={<EmailConfigurationsPage />} />
+                                <Route path="/billing/cloudedge-configurations" element={<CloudEdgeConfigurationsPage />} />
+                                <Route path="/billing/cloudedge-configurations/add" element={<AddCloudEdgeConfigurationPage />} />
+                                <Route path="/billing/cloudedge-configurations/edit/:configId" element={<AddCloudEdgeConfigurationPage />} />
+                                <Route path="/billing/cloudedge-configurations/os-images" element={<OsImagesPage />} />
+                                <Route path="/invoices" element={<InvoiceRouterPage />}>
+                                    <Route index element={<InvoiceHistoryPage />} />
+                                    <Route path=":invoiceId" element={<InvoiceDetailPage />} />
+                                </Route>
+                                <Route path="/support" element={<SupportPage />} />
+                                <Route path="/admin/support" element={<SupportPage />} />
+                                <Route path="/action-logs" element={<ActionLogsPage />} />
+                                <Route path="/notifications" element={<AllNotificationsPage />} />
+                                <Route path="/blogs-center" element={<BlogsCenterPage />} />
+                                <Route path="/blogs-center/:blogId" element={<BlogDetailsPage />} />
+                                <Route path="/settings" element={<SettingsRouterPage />}>
+                                    <Route index element={<ProfilePage />} />
+                                    <Route path="account" element={<AccountSettingsPage />} />
+                                    <Route path="security" element={<SecuritySettingsPage />} />
+                                </Route>
+
+                                <Route path="/admin/users" element={<UserManagementPage />} />
+                                <Route path="/admin/users/add" element={<AddCustomerPage />} />
+                                <Route path="/admin/staff" element={<StaffManagementPage />} />
+                                <Route path="/admin/support/create" element={<CreateTicketPage />} />
+                                
+                                <Route path="/reseller/customers" element={<ResellerCustomersPage />} />
+                                <Route path="/reseller/program" element={<ResellerProgramPage />} />
+
+                                <Route path="/cloud-edge" element={<CloudEdgeDashboardPage />} />
+                                <Route path="/cloud-edge/firewall/groups" element={<GroupsPage />} />
+                                <Route path="/cloud-edge/firewall/policies" element={<PoliciesPage />} />
+                                <Route path="/cloud-edge/firewall/services" element={<ServicesPage />} />
+                                <Route path="/cloud-edge/security/distributed-firewall" element={<DistributedFirewallPage />} />
+                                <Route path="/cloud-edge/security/gateway-firewall" element={<GatewayFirewallPage />} />
+                                <Route path="/cloud-edge/security/ids-ips-malware-prevention" element={<IdsIpsMalwarePreventionPage />} />
+                                <Route path="/kubernetes" element={<KubernetesPage />} />
+                                <Route path="/networking" element={<NetworkingPage />} />
+                                <Route path="/storage" element={<StoragePage />} />
+                                <Route path="/monitoring" element={<MonitoringPage />} />
+                                <Route path="/backup" element={<BackupPage />} />
+
+                                <Route path="/email-admin-suite" element={<EmailAdminSuiteDashboardPage />} />
+                                <Route path="/email-admin-suite/orgs-and-domains" element={<OrgsAndDomainsPage />} />
+                                <Route path="/email-admin-suite/exchange/mailboxes" element={<MailboxesPage />} />
+                                <Route path="/email-admin-suite/exchange/mailboxes/edit/:mailboxId" element={<EditMailboxPage />} />
+                                <Route path="/email-admin-suite/exchange/distribution-lists" element={<DistributionListsPage />} />
+                                <Route path="/email-admin-suite/exchange/distribution-lists/add" element={<EditDistributionListPage />} />
+                                <Route path="/email-admin-suite/exchange/distribution-lists/edit/:dlId" element={<EditDistributionListPage />} />
+                                <Route path="/email-admin-suite/exchange/shared-contacts" element={<SharedContactsPage />} />
+                                <Route path="/email-admin-suite/exchange/shared-contacts/edit/:contactId" element={<EditSharedContactPage />} />
+                                <Route path="/email-admin-suite/exchange/rules" element={<RulesPage />} />
+                                <Route path="/email-admin-suite/exchange/rules/add" element={<RuleDetailsPage />} />
+                                <Route path="/email-admin-suite/exchange/rules/edit/:ruleId" element={<RuleDetailsPage />} />
+                                <Route path="/email-admin-suite/exchange/account-statistics" element={<AccountStatisticsPage />} />
+                                <Route path="/email-admin-suite/exchange/smtp-logs" element={<EmailAdminSmtpLogsPage />} />
+                                <Route path="/email-admin-suite/exchange/pst-logs" element={<PstLogsPage />} />
+                                <Route path="/email-admin-suite/exchange/bulk-module" element={<BulkModulePage />} />
+                                <Route path="/email-admin-suite/exchange/running-tasks" element={<RunningTasksPage />} />
+                                <Route path="/email-admin-suite/old-version" element={<OldVersionPage />} />
+                                <Route path="/email-admin-suite/exchange/mailbox-plans" element={<PlaceholderPage />} />
+                                <Route path="/email-admin-suite/admin/background-tasks" element={<PlaceholderPage />} />
+                                <Route path="/email-admin-suite/admin/lists" element={<PlaceholderPage />} />
+                                <Route path="/email-admin-suite/admin/sister-companies" element={<PlaceholderPage />} />
+                                <Route path="/email-admin-suite/admin/ip-lists" element={<PlaceholderPage />} />
+                                <Route path="/email-admin-suite/migrations" element={<PlaceholderPage />} />
+                                <Route path="/email-admin-suite/migrations/add" element={<PlaceholderPage />} />
+                                <Route path="/email-admin-suite/tickets" element={<PlaceholderPage />} />
+                                <Route path="/email-admin-suite/tickets/new" element={<PlaceholderPage />} />
+                                <Route path="/email-admin-suite/admin/billing" element={<DemoBillingPage />} />
+                            </Route>
+                        </Routes>
                     </main>
                 </div>
-                {isCustomerView && !isEmailAdminSuite && !isBillingCenter && <FeedbackSystem position="raised" />}
+                {isCustomerView && !isEmailAdminSuite && <FeedbackSystem position="raised" />}
                 <Chatbot />
             </div>
         </AppLayoutContext.Provider>
     );
 };
 
-
-const AppIndexRedirect: React.FC = () => {
-    const { user } = useAuth();
-  
-    if (!user) {
-      return <Navigate to="/login" replace />; 
-    }
-  
-    switch (user.role) {
-      case 'admin':
-        return <Navigate to="/app/admin-dashboard" replace />;
-      case 'reseller':
-        return <Navigate to="/app/reseller-dashboard" replace />;
-      case 'customer':
-      default:
-        return <Navigate to="/app/dashboard" replace />;
-    }
-};
-
-const AppRoutes: React.FC = () => {
-    const { user, isAuthenticated, isLoading } = useAuth();
-
-    return (
-        <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={!isAuthenticated ? <LoginPage /> : <Navigate to="/app" replace />} />
-            <Route path="/signup" element={!isAuthenticated ? <SignupPage /> : <Navigate to="/app" replace />} />
-            <Route path="/email-verification" element={<EmailVerificationPage />} />
-            <Route path="/posta-pricing" element={<PostaPricingPage />} />
-
-            <Route path="/app" element={<ProtectedRoute user={user} isAuthenticated={isAuthenticated} isLoading={isLoading} />}>
-                <Route index element={<AppIndexRedirect />} />
-                <Route element={<AppLayout />}>
-                    <Route path="dashboard" element={<DashboardPage />} />
-                    <Route path="team-management" element={<CustomerTeamManagementPage />} />
-                    <Route path="team-management/add" element={<AddTeamUserPage />} />
-                    <Route path="team-management/edit/:userId" element={<EditTeamUserPage />} />
-                    
-                    {/* Billing Center Standalone App */}
-                    <Route path="billing">
-                        <Route index element={<Navigate to="subscriptions" replace />} />
-                        <Route path="subscriptions" element={<SubscriptionsListView />} />
-                        <Route path="invoices" element={<InvoiceHistoryPage />} />
-                        <Route path="provisioning" element={<CloudEdgeConfigurationsPage />} />
-                        <Route path="posta" element={<EmailAdminSubscriptionsPage />} />
-                        <Route path="wallet" element={<PaymentAndDetailsView />} />
-                        <Route path="admin" element={<ProtectedRoute user={user} isAuthenticated={isAuthenticated} isLoading={isLoading} allowedRoles={['admin']}><AdminToolsView /></ProtectedRoute>} />
-                        
-                        <Route path="cloudedge-configurations" element={<Navigate to="../provisioning" replace />} />
-                        <Route path="cloudedge-configurations/add" element={<AddCloudEdgeConfigurationPage />} />
-                        <Route path="cloudedge-configurations/edit/:configId" element={<AddCloudEdgeConfigurationPage />} />
-                        <Route path="cloudedge-configurations/os-images" element={<OsImagesPage />} />
-                        <Route path="subscriptions/manage/:subscriptionId" element={<ManageSubscriptionPage />} />
-                        <Route path="email-subscriptions" element={<Navigate to="../posta" replace />} />
-                    </Route>
-
-                    <Route path="invoices" element={<Navigate to="/app/billing/invoices" replace />} />
-                    <Route path="invoices/:invoiceId" element={<InvoiceDetailPage />} />
-                    <Route path="action-logs" element={<ActionLogsPage />} />
-                    <Route path="support" element={<SupportPage />} />
-                    <Route path="notifications" element={<AllNotificationsPage />} />
-                    <Route path="blogs-center" element={<BlogsCenterPage />} />
-                    <Route path="blogs-center/:blogId" element={<BlogDetailsPage />} />
-                    
-                    <Route path="admin-dashboard" element={<ProtectedRoute user={user} isAuthenticated={isAuthenticated} isLoading={isLoading} allowedRoles={['admin']}><AdminDashboardPage /></ProtectedRoute>} />
-                    <Route path="admin" element={<ProtectedRoute user={user} isAuthenticated={isAuthenticated} isLoading={isLoading} allowedRoles={['admin']}><AdminRouterPage /></ProtectedRoute>}>
-                        <Route path="staff" element={<StaffManagementPage />} />
-                        <Route path="users" element={<UserManagementPage />} />
-                        <Route path="users/add" element={<AddCustomerPage />} />
-                        <Route path="support" element={<SupportPage />} />
-                        <Route path="support/create" element={<CreateTicketPage />} />
-                    </Route>
-
-                    <Route path="reseller-dashboard" element={<ProtectedRoute user={user} isAuthenticated={isAuthenticated} isLoading={isLoading} allowedRoles={['reseller']}><ResellerDashboardPage /></ProtectedRoute>} />
-                    <Route path="reseller/customers" element={<ProtectedRoute user={user} isAuthenticated={isAuthenticated} isLoading={isLoading} allowedRoles={['reseller']}><ResellerCustomersPage /></ProtectedRoute>} />
-                    <Route path="reseller/program" element={<ProtectedRoute user={user} isAuthenticated={isAuthenticated} isLoading={isLoading} allowedRoles={['reseller']}><ResellerProgramPage /></ProtectedRoute>} />
-
-                    <Route path="kubernetes" element={<KubernetesPage />} />
-                    <Route path="networking" element={<NetworkingPage />} />
-                    <Route path="storage" element={<StoragePage />} />
-                    <Route path="monitoring" element={<MonitoringPage />} />
-                    <Route path="backup" element={<BackupPage />} />
-
-                    <Route path="settings" element={<SettingsRouterPage />}>
-                        <Route index element={<Navigate to="account" replace />} />
-                        <Route path="account" element={<AccountSettingsPage />} />
-                        <Route path="security" element={<SecuritySettingsPage />} />
-                        <Route path="notifications" element={<PlaceholderPage />} />
-                    </Route>
-
-                    <Route path="email-admin-suite">
-                        <Route index element={<EmailAdminSuiteDashboardPage />} />
-                        <Route path="orgs-and-domains" element={<OrgsAndDomainsPage />} />
-                        <Route path="exchange/mailboxes" element={<MailboxesPage />} />
-                        <Route path="exchange/mailboxes/edit/:mailboxId" element={<EditMailboxPage />} />
-                        <Route path="exchange/distribution-lists" element={<DistributionListsPage />} />
-                        <Route path="exchange/shared-contacts" element={<SharedContactsPage />} />
-                        <Route path="exchange/shared-contacts/edit/:contactId" element={<EditSharedContactPage />} />
-                        <Route path="exchange/rules" element={<RulesPage />} />
-                        <Route path="exchange/rules/add" element={<RuleDetailsPage />} />
-                        <Route path="exchange/rules/edit/:ruleId" element={<RuleDetailsPage />} />
-                        <Route path="exchange/account-statistics" element={<AccountStatisticsPage />} />
-                        <Route path="exchange/smtp-logs" element={<EmailAdminSmtpLogsPage />} />
-                        <Route path="exchange/pst-logs" element={<PstLogsPage />} />
-                        <Route path="exchange/bulk-module" element={<BulkModulePage />} />
-                        <Route path="exchange/running-tasks" element={<RunningTasksPage />} />
-                        <Route path="exchange/mailbox-plans" element={<PlaceholderPage />} />
-                        <Route path="admin/background-tasks" element={<PlaceholderPage />} />
-                        <Route path="admin/lists" element={<PlaceholderPage />} />
-                        <Route path="admin/sister-companies" element={<PlaceholderPage />} />
-                        <Route path="admin/ip-lists" element={<PlaceholderPage />} />
-                        <Route path="migrations" element={<EmailMigrationPage />} />
-                        <Route path="old-version" element={<OldVersionPage />} />
-                    </Route>
-
-                    <Route path="cloud-edge">
-                        <Route index element={<CloudEdgeDashboardPage />} />
-                        <Route path="firewall/groups" element={<GroupsPage />} />
-                        <Route path="firewall/services" element={<ServicesPage />} />
-                        <Route path="firewall/policies" element={<PoliciesPage />} />
-                        <Route path="security/distributed-firewall" element={<DistributedFirewallPage />} />
-                        <Route path="security/gateway-firewall" element={<GatewayFirewallPage />} />
-                        <Route path="security/ids-ips-malware-prevention" element={<IdsIpsMalwarePreventionPage />} />
-                        <Route path="administration/organizations" element={<PlaceholderPage />} />
-                        <Route path="security/ids-ips" element={<PlaceholderPage />} />
-                        <Route path="security/suspicious-traffic" element={<PlaceholderPage />} />
-                        <Route path="security/filtering-analysis" element={<PlaceholderPage />} />
-                    </Route>
-                </Route>
-            </Route>
-
-            <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-    );
-};
-
-const MainApp: React.FC = () => (
+const App: React.FC = () => {
+  return (
     <ThemeProvider>
-        <AuthProvider>
-            <AppRoutes />
-        </AuthProvider>
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/email-verification" element={<EmailVerificationPage />} />
+          <Route path="/posta-pricing" element={<PostaPricingPage />} />
+          <Route path="/app/*" element={<AppLayout />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </AuthProvider>
     </ThemeProvider>
-);
+  );
+};
 
-export default MainApp;
+export default App;
