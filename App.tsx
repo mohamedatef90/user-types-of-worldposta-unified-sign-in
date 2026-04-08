@@ -640,7 +640,6 @@ const AppRoutes: React.FC = () => {
                         <Route path="exchange/mailboxes" element={<MailboxesPage />} />
                         <Route path="exchange/mailboxes/edit/:mailboxId" element={<EditMailboxPage />} />
                         <Route path="exchange/distribution-lists" element={<DistributionListsPage />} />
-                        <Route path="exchange/distribution-lists/add" element={<EditDistributionListPage />} />
                         <Route path="exchange/distribution-lists/edit/:dlId" element={<EditDistributionListPage />} />
                         <Route path="exchange/shared-contacts" element={<SharedContactsPage />} />
                         <Route path="exchange/shared-contacts/edit/:contactId" element={<EditSharedContactPage />} />

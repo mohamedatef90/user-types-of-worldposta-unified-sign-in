@@ -2,10 +2,11 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Card, Button, FormField, Icon, Pagination, Modal } from '@/components/ui';
 import type { DistributionList } from '@/types';
 // Fix: Import `mockDistributionLists` from data.ts
-import { mockMailboxDomains, mockDistributionLists } from '@/data';
+import { mockMailboxDomains, mockDistributionLists, mockMailboxes } from '@/data';
 import { v4 as uuidv4 } from 'uuid';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppLayout, useAuth } from '@/context';
+import type { Mailbox } from '@/types';
 
 interface DlFilters {
     displayName: string;
@@ -19,6 +20,218 @@ const initialDlFilters: DlFilters = {
     domain: 'ALL',
     dateFrom: '',
     dateTo: '',
+};
+
+const AddDistributionListPanel: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    onAdd: (list: DistributionList) => void;
+}> = ({ isOpen, onClose, onAdd }) => {
+    const [form, setForm] = useState({
+        displayName: '',
+        emailUser: '',
+        emailDomain: mockMailboxDomains[0],
+        managerEmail: '',
+        note: '',
+        hideFromAddressBook: false,
+    });
+
+    const [isManagerModalOpen, setIsManagerModalOpen] = useState(false);
+    const [managerSearchTerm, setManagerSearchTerm] = useState('');
+
+    useEffect(() => {
+        if (isOpen) {
+            setForm({
+                displayName: '',
+                emailUser: '',
+                emailDomain: mockMailboxDomains[0],
+                managerEmail: '',
+                note: '',
+                hideFromAddressBook: false,
+            });
+        }
+    }, [isOpen]);
+
+    const filteredMailboxes = mockMailboxes.filter(m => 
+        m.login.toLowerCase().includes(managerSearchTerm.toLowerCase()) ||
+        m.displayName.toLowerCase().includes(managerSearchTerm.toLowerCase())
+    );
+
+    const handleSave = () => {
+        if (!form.displayName || !form.emailUser) {
+            alert("Display Name and Email Address are required.");
+            return;
+        }
+
+        const newList: DistributionList = {
+            id: uuidv4(),
+            displayName: form.displayName,
+            primaryEmail: `${form.emailUser}@${form.emailDomain}`,
+            creationDate: new Date().toISOString(),
+            managerEmail: form.managerEmail,
+        };
+
+        onAdd(newList);
+        onClose();
+    };
+
+    return (
+        <>
+            {isOpen && <div className="fixed inset-0 bg-black/60 z-[44]" onClick={onClose} aria-hidden="true" />}
+            <div className={`fixed top-0 right-0 h-full w-full max-w-md bg-[#f8f8f8] dark:bg-slate-800 border-l border-gray-200 dark:border-slate-700 z-[45] transform transition-transform duration-300 ease-in-out flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+                <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-700">
+                    <h2 className="text-lg font-semibold">Add Distribution List</h2>
+                    <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-slate-700"><Icon name="fas fa-times" /></button>
+                </div>
+                <div className="flex-grow p-6 space-y-6 overflow-y-auto">
+                    <div className="space-y-4">
+                        <FormField 
+                            id="displayName" 
+                            name="displayName" 
+                            label="Display Name" 
+                            value={form.displayName} 
+                            onChange={(e) => setForm({...form, displayName: e.target.value})} 
+                            required 
+                            placeholder="e.g. Marketing Team"
+                        />
+                        <div className="mb-4">
+                            <label htmlFor="emailUser" className="block text-sm font-medium mb-1 text-[#293c51] dark:text-gray-300">
+                                Primary Email Address <span className="text-red-500">*</span>
+                            </label>
+                            <div className="flex items-center">
+                                <input 
+                                    id="emailUser" 
+                                    name="emailUser" 
+                                    type="text" 
+                                    value={form.emailUser} 
+                                    onChange={(e) => setForm({...form, emailUser: e.target.value})} 
+                                    placeholder="marketing"
+                                    className="w-full px-3 py-2 border rounded-l-md focus:outline-none focus:ring-2 focus:ring-[#679a41] border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white" 
+                                />
+                                <span className="inline-flex items-center px-3 border-t border-b border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-500 text-sm">@</span>
+                                <select 
+                                    name="emailDomain" 
+                                    value={form.emailDomain} 
+                                    onChange={(e) => setForm({...form, emailDomain: e.target.value})} 
+                                    className="px-3 py-2 border rounded-r-md focus:outline-none focus:ring-2 focus:ring-[#679a41] border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white"
+                                >
+                                    {mockMailboxDomains.map(d => <option key={d} value={d}>{d}</option>)}
+                                </select>
+                            </div>
+                        </div>
+                        <div className="flex items-end gap-2 mb-4">
+                            <div className="flex-1">
+                                <FormField 
+                                    id="managerEmail" 
+                                    name="managerEmail" 
+                                    label="Manager Email" 
+                                    type="email" 
+                                    value={form.managerEmail} 
+                                    onChange={(e) => setForm({...form, managerEmail: e.target.value})} 
+                                    placeholder="Select a manager..." 
+                                    readOnly
+                                />
+                            </div>
+                            <Button 
+                                variant="outline" 
+                                className="mb-4" 
+                                onClick={() => setIsManagerModalOpen(true)}
+                                title="Select Manager"
+                            >
+                                <Icon name="fas fa-search" />
+                            </Button>
+                        </div>
+                        <FormField 
+                            id="note" 
+                            name="note" 
+                            label="Note" 
+                            as="textarea" 
+                            rows={3} 
+                            value={form.note} 
+                            onChange={(e) => setForm({...form, note: e.target.value})} 
+                            placeholder="Optional notes about this list..."
+                        />
+                        <FormField 
+                            type="checkbox" 
+                            id="hideFromAddressBook" 
+                            name="hideFromAddressBook" 
+                            label="Hide from Address Book" 
+                            checked={form.hideFromAddressBook} 
+                            onChange={(e) => setForm({...form, hideFromAddressBook: (e.target as HTMLInputElement).checked})} 
+                        />
+                    </div>
+                </div>
+                <div className="flex-shrink-0 p-4 border-t bg-white dark:bg-slate-800 dark:border-slate-700 flex justify-end gap-2">
+                    <Button variant="ghost" onClick={onClose}>Cancel</Button>
+                    <Button onClick={handleSave}>Create List</Button>
+                </div>
+            </div>
+
+            <Modal
+                isOpen={isManagerModalOpen}
+                onClose={() => setIsManagerModalOpen(false)}
+                title="Select Manager Email"
+                size="2xl"
+            >
+                <div className="space-y-4">
+                    <div className="relative">
+                        <Icon name="fas fa-search" className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Search mailboxes..."
+                            className="w-full pl-10 pr-4 py-2 border rounded-md dark:bg-slate-700 dark:border-slate-600 dark:text-white focus:ring-2 focus:ring-[#679a41]"
+                            value={managerSearchTerm}
+                            onChange={(e) => setManagerSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    
+                    <div className="max-h-[400px] overflow-y-auto border rounded-md dark:border-slate-700">
+                        <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+                            <thead className="bg-gray-50 dark:bg-slate-800">
+                                <tr>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Display Name</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email</th>
+                                    <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white dark:bg-slate-900 divide-y divide-gray-200 dark:divide-slate-800">
+                                {filteredMailboxes.length > 0 ? (
+                                    filteredMailboxes.map((mailbox) => (
+                                        <tr key={mailbox.id} className="hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{mailbox.displayName}</td>
+                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{mailbox.login}</td>
+                                            <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                                                <Button 
+                                                    size="sm" 
+                                                    variant="ghost" 
+                                                    className="text-[#679a41] dark:text-emerald-400"
+                                                    onClick={() => {
+                                                        setForm({ ...form, managerEmail: mailbox.login });
+                                                        setIsManagerModalOpen(false);
+                                                    }}
+                                                >
+                                                    Select
+                                                </Button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan={3} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                                            No mailboxes found matching your search.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div className="mt-6 flex justify-end">
+                    <Button variant="ghost" onClick={() => setIsManagerModalOpen(false)}>Close</Button>
+                </div>
+            </Modal>
+        </>
+    );
 };
 
 const DlFilterPanel: React.FC<{
@@ -36,8 +249,8 @@ const DlFilterPanel: React.FC<{
 
     return (
         <>
-            {isOpen && <div className="fixed inset-0 bg-black/60 z-[59]" onClick={onClose} aria-hidden="true" />}
-            <div className={`fixed top-0 right-0 h-full w-full max-w-sm bg-[#f8f8f8] dark:bg-slate-800 border-l border-gray-200 dark:border-slate-700 z-[60] transform transition-transform duration-300 ease-in-out flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+            {isOpen && <div className="fixed inset-0 bg-black/60 z-[44]" onClick={onClose} aria-hidden="true" />}
+            <div className={`fixed top-0 right-0 h-full w-full max-w-sm bg-[#f8f8f8] dark:bg-slate-800 border-l border-gray-200 dark:border-slate-700 z-[45] transform transition-transform duration-300 ease-in-out flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
                 <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-700">
                     <h2 className="text-lg font-semibold">Filter Distribution Lists</h2>
                     <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-slate-700"><Icon name="fas fa-times" /></button>
@@ -89,6 +302,7 @@ export const DistributionListsPage: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+    const [isAddPanelOpen, setIsAddPanelOpen] = useState(false);
 
     // State for selections and bulk actions
     const [selectedLists, setSelectedLists] = useState<string[]>([]);
@@ -118,7 +332,15 @@ export const DistributionListsPage: React.FC = () => {
     useEffect(() => { setCurrentPage(1); }, [filters, rowsPerPage]);
 
     const handleOpenAddPanel = () => {
-        navigate('add');
+        setIsAddPanelOpen(true);
+    };
+
+    const handleAddList = (newList: DistributionList) => {
+        setDistributionLists(prev => [newList, ...prev]);
+        // Also update mockDistributionLists to simulate persistence if needed, 
+        // though usually we'd use a context or API.
+        mockDistributionLists.unshift(newList);
+        alert("Distribution List created successfully!");
     };
 
     const handleOpenEditPanel = (list: DistributionList) => {
@@ -215,6 +437,7 @@ export const DistributionListsPage: React.FC = () => {
             </Modal>
             
             <DlFilterPanel isOpen={isFilterPanelOpen} onClose={() => setIsFilterPanelOpen(false)} onApply={setFilters} onClear={() => setFilters(initialDlFilters)} currentFilters={filters} />
+            <AddDistributionListPanel isOpen={isAddPanelOpen} onClose={() => setIsAddPanelOpen(false)} onAdd={handleAddList} />
         </>
     );
 };

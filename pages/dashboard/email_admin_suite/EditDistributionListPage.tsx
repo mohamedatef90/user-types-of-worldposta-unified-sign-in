@@ -144,7 +144,8 @@ export const EditDistributionListPage: React.FC = () => {
                                 type="email" 
                                 value={form.managerEmail} 
                                 onChange={(e) => setForm({...form, managerEmail: e.target.value})} 
-                                placeholder="manager@example.com" 
+                                placeholder="Select a manager..." 
+                                readOnly
                             />
                         </div>
                         <Button 

@@ -13,6 +13,7 @@ interface FormFieldProps {
   required?: boolean;
   as?: 'textarea' | 'select';
   disabled?: boolean;
+  readOnly?: boolean;
   children?: React.ReactNode;
   inputClassName?: string;
   labelClassName?: string;
@@ -29,14 +30,14 @@ interface FormFieldProps {
 }
 
 export const FormField: React.FC<FormFieldProps> = ({ 
-  id, label, type = "text", value, onChange, onBlur, placeholder, error, required, as, disabled, children,
+  id, label, type = "text", value, onChange, onBlur, placeholder, error, required, as, disabled, readOnly, children,
   inputClassName, labelClassName, showPasswordToggle, rows = 4, min, max, step, hint, name, checked, wrapperClassName, maxLength
 }) => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const effectiveType = showPasswordToggle && type === 'password' ? (isPasswordVisible ? 'text' : 'password') : type;
 
   const baseLabelClasses = `block text-sm font-medium mb-1 ${disabled ? 'text-gray-400 dark:text-gray-500' : 'text-[#293c51] dark:text-gray-300'}`;
-  const baseInputClasses = `w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#679a41] dark:focus:ring-emerald-400 focus:border-[#679a41] dark:focus:border-emerald-400 ${error ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'} ${disabled ? 'bg-gray-100 dark:bg-gray-700 cursor-not-allowed' : 'bg-white dark:bg-gray-700 dark:text-white'} placeholder-gray-400 dark:placeholder-gray-500`;
+  const baseInputClasses = `w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#679a41] dark:focus:ring-emerald-400 focus:border-[#679a41] dark:focus:border-emerald-400 ${error ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'} ${disabled ? 'bg-gray-100 dark:bg-gray-700 cursor-not-allowed' : readOnly ? 'bg-gray-50 dark:bg-gray-800 cursor-default' : 'bg-white dark:bg-gray-700 dark:text-white'} placeholder-gray-400 dark:placeholder-gray-500`;
   
   const inputElement = () => {
     if (as === 'textarea') {
@@ -50,6 +51,7 @@ export const FormField: React.FC<FormFieldProps> = ({
           placeholder={placeholder}
           rows={rows}
           disabled={disabled}
+          readOnly={readOnly}
           maxLength={maxLength}
           className={`${baseInputClasses} ${inputClassName}`}
         />
@@ -91,6 +93,7 @@ export const FormField: React.FC<FormFieldProps> = ({
           onBlur={onBlur as (e: React.FocusEvent<HTMLInputElement>) => void}
           placeholder={placeholder}
           disabled={disabled}
+          readOnly={readOnly}
           min={min}
           max={max}
           step={step}
