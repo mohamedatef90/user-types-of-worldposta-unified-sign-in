@@ -62,7 +62,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ navItems, isOpen, isCollapsed,
           {isCollapsed ? (
              <Link to="/" className="flex items-center justify-center">
                 <img 
-                    src="https://www.worldposta.com/assets/Newhomeimgs/vds-vs-vms/icons/Asset%201.png" 
+                    src="https://www.worldposta.com/assets/WP-Logo.avif" 
                     alt="WorldPosta Collapsed Logo" 
                     className="h-7 w-auto"
                 />

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { GoogleGenAI, Chat, GenerateContentResponse } from '@google/genai';
 import { Icon } from './Icon';
@@ -10,24 +11,7 @@ interface Message {
   sender: 'user' | 'ai';
 }
 
-let ai: GoogleGenAI | null = null;
-try {
-  // This will be replaced by the build process
-  ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
-} catch (e) {
-  console.error("Gemini API key not found. Chatbot will be in a locked state.", e);
-}
-
-let chat: Chat | null = null;
-if (ai) {
-    chat = ai.chats.create({
-        model: 'gemini-2.5-flash',
-        config: {
-            systemInstruction: 'You are a friendly and helpful assistant for WorldPosta. Your goal is to assist users with their questions about products, billing, and support.',
-        },
-    });
-}
-
+// Fix: Removed global initialization of GoogleGenAI and Chat to comply with guidelines of creating a fresh instance before each API call.
 
 export const Chatbot: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -38,6 +22,9 @@ export const Chatbot: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    
+    // Fix: Using a ref to maintain chat context across messages within the component session
+    const chatRef = useRef<Chat | null>(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -54,7 +41,8 @@ export const Chatbot: React.FC = () => {
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
         const userMessage = inputValue.trim();
-        if (!userMessage || isLoading || !chat) return;
+        // Fix: Use process.env.API_KEY directly as required
+        if (!userMessage || isLoading || !process.env.API_KEY) return;
 
         const newUserMessage: Message = { id: Date.now().toString(), text: userMessage, sender: 'user' };
         setMessages(prev => [...prev, newUserMessage]);
@@ -66,9 +54,22 @@ export const Chatbot: React.FC = () => {
         setMessages(prev => [...prev, { id: aiMessageId, text: '', sender: 'ai' }]);
         
         try {
-            const responseStream = await chat.sendMessageStream({ message: userMessage });
+            // Fix: Create a new GoogleGenAI instance right before making the API call
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            
+            // Fix: Initialize the chat session if it doesn't exist for this component instance
+            if (!chatRef.current) {
+                chatRef.current = ai.chats.create({
+                    model: 'gemini-3-flash-preview',
+                    config: {
+                        systemInstruction: 'You are a friendly and helpful assistant for WorldPosta. Your goal is to assist users with their questions about products, billing, and support.',
+                    },
+                });
+            }
+
+            const responseStream = await chatRef.current.sendMessageStream({ message: userMessage });
             for await (const chunk of responseStream) {
-                const chunkText = chunk.text;
+                const chunkText = chunk.text || '';
                 setMessages(prev => prev.map(msg => 
                     msg.id === aiMessageId ? { ...msg, text: msg.text + chunkText } : msg
                 ));
@@ -83,7 +84,8 @@ export const Chatbot: React.FC = () => {
         }
     };
     
-    const isApiKeyMissing = !ai || !chat;
+    // Fix: Check for API Key availability to toggle locked state UI
+    const isApiKeyMissing = !process.env.API_KEY;
 
     return (
         <>

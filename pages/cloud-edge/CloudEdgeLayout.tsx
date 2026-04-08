@@ -26,7 +26,7 @@ const getAppLauncherItems = (role: User['role'] | undefined): ApplicationCardDat
             id: 'emailadmin', 
             name: 'Email Admin Suite', 
             description: 'Administer your email services, mailboxes, users, and domains with ease.',
-            iconName: "https://www.worldposta.com/assets/Posta-Logo.png", 
+            iconName: "https://www.worldposta.com/assets/Posta-Logo.avif", 
             launchUrl: '/app/email-admin-suite'
         }
     ];

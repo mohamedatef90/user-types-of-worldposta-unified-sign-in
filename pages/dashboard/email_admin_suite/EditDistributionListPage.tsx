@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Card, Button, FormField, Icon, Modal } from '@/components/ui';
-import { mockDistributionLists, mockMailboxDomains } from '@/data';
-import type { DistributionList } from '@/types';
+import { mockDistributionLists, mockMailboxDomains, mockMailboxes } from '@/data';
+import type { DistributionList, Mailbox } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
 export const EditDistributionListPage: React.FC = () => {
@@ -20,6 +20,13 @@ export const EditDistributionListPage: React.FC = () => {
     });
 
     const [activeTab, setActiveTab] = useState('general');
+    const [isManagerModalOpen, setIsManagerModalOpen] = useState(false);
+    const [managerSearchTerm, setManagerSearchTerm] = useState('');
+
+    const filteredMailboxes = mockMailboxes.filter(m => 
+        m.login.toLowerCase().includes(managerSearchTerm.toLowerCase()) ||
+        m.displayName.toLowerCase().includes(managerSearchTerm.toLowerCase())
+    );
 
     useEffect(() => {
         if (isEditing) {
@@ -128,15 +135,27 @@ export const EditDistributionListPage: React.FC = () => {
                             </select>
                         </div>
                     </div>
-                    <FormField 
-                        id="managerEmail" 
-                        name="managerEmail" 
-                        label="Manager Email" 
-                        type="email" 
-                        value={form.managerEmail} 
-                        onChange={(e) => setForm({...form, managerEmail: e.target.value})} 
-                        placeholder="manager@example.com" 
-                    />
+                    <div className="flex items-end gap-2 mb-4">
+                        <div className="flex-1">
+                            <FormField 
+                                id="managerEmail" 
+                                name="managerEmail" 
+                                label="Manager Email" 
+                                type="email" 
+                                value={form.managerEmail} 
+                                onChange={(e) => setForm({...form, managerEmail: e.target.value})} 
+                                placeholder="manager@example.com" 
+                            />
+                        </div>
+                        <Button 
+                            variant="outline" 
+                            className="mb-4" 
+                            onClick={() => setIsManagerModalOpen(true)}
+                            title="Select Manager"
+                        >
+                            <Icon name="fas fa-search" />
+                        </Button>
+                    </div>
                     <FormField 
                         id="note" 
                         name="note" 
@@ -208,6 +227,70 @@ export const EditDistributionListPage: React.FC = () => {
                     <Button onClick={handleSave}>{isEditing ? 'Save Changes' : 'Create List'}</Button>
                 </div>
             </Card>
+
+            <Modal
+                isOpen={isManagerModalOpen}
+                onClose={() => setIsManagerModalOpen(false)}
+                title="Select Manager Email"
+                size="2xl"
+            >
+                <div className="space-y-4">
+                    <div className="relative">
+                        <Icon name="fas fa-search" className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Search mailboxes..."
+                            className="w-full pl-10 pr-4 py-2 border rounded-md dark:bg-slate-700 dark:border-slate-600 dark:text-white focus:ring-2 focus:ring-[#679a41]"
+                            value={managerSearchTerm}
+                            onChange={(e) => setManagerSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    
+                    <div className="max-h-[500px] overflow-y-auto border rounded-md dark:border-slate-700">
+                        <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+                            <thead className="bg-gray-50 dark:bg-slate-800">
+                                <tr>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Display Name</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email</th>
+                                    <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white dark:bg-slate-900 divide-y divide-gray-200 dark:divide-slate-800">
+                                {filteredMailboxes.length > 0 ? (
+                                    filteredMailboxes.map((mailbox) => (
+                                        <tr key={mailbox.id} className="hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{mailbox.displayName}</td>
+                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{mailbox.login}</td>
+                                            <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                                                <Button 
+                                                    size="sm" 
+                                                    variant="ghost" 
+                                                    className="text-[#679a41] dark:text-emerald-400"
+                                                    onClick={() => {
+                                                        setForm({ ...form, managerEmail: mailbox.login });
+                                                        setIsManagerModalOpen(false);
+                                                    }}
+                                                >
+                                                    Select
+                                                </Button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan={3} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                                            No mailboxes found matching your search.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div className="mt-6 flex justify-end">
+                    <Button variant="ghost" onClick={() => setIsManagerModalOpen(false)}>Close</Button>
+                </div>
+            </Modal>
         </div>
     );
 };

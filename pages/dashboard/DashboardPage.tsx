@@ -687,7 +687,7 @@ export const DashboardPage: React.FC = () => { // This is the Customer Dashboard
           id: 'emailadmin', 
           name: 'Email Admin Suite', 
           description: 'Administer your email services, mailboxes, users, and domains with ease.', 
-          iconName: "https://www.worldposta.com/assets/Posta-Logo.png", 
+          iconName: "https://www.worldposta.com/assets/Posta-Logo.avif", 
           launchUrl: '/app/email-admin-suite',
           section: 'product',
         },
@@ -725,7 +725,7 @@ export const DashboardPage: React.FC = () => { // This is the Customer Dashboard
         },
         { 
           id: 'billing', 
-          name: 'Subscriptions', 
+          name: 'Billing and Subscriptions', 
           description: 'Oversee your subscriptions and add new services.', 
           iconName: 'fas fa-wallet', 
           launchUrl: '/app/billing',

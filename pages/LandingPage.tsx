@@ -25,7 +25,7 @@ const getAppLauncherItems = (role: User['role'] | undefined): ApplicationCardDat
             id: 'emailadmin', 
             name: 'Email Admin Suite', 
             description: 'Administer your email services, mailboxes, users, and domains with ease.',
-            iconName: "https://www.worldposta.com/assets/Posta-Logo.png", 
+            iconName: "https://www.worldposta.com/assets/Posta-Logo.avif", 
             launchUrl: '/app/email-admin-suite'
         }
     ];
@@ -431,7 +431,7 @@ const ResourceLibrary: React.FC = () => {
                     {articles.map(a => (
                         <a href={a.link} key={a.title} className="group block">
                             <Card className="h-full">
-                                <img src="https://www.worldposta.com/assets/WP-Logo.png" alt="WorldPosta Logo" className="w-full h-40 object-contain p-4 rounded-t-lg bg-gray-100 dark:bg-slate-700 mb-4" />
+                                <img src="https://www.worldposta.com/assets/WP-Logo.avif" alt="WorldPosta Logo" className="w-full h-40 object-contain p-4 rounded-t-lg bg-gray-100 dark:bg-slate-700 mb-4" />
                                 <h3 className="text-lg font-semibold mb-2 group-hover:text-[#679a41] dark:group-hover:text-emerald-400 transition-colors">{a.title}</h3>
                                 <span className="text-sm font-semibold text-[#679a41] dark:text-emerald-400 group-hover:underline">Read More &rarr;</span>
                             </Card>

@@ -1,11 +1,14 @@
 
+
+
+
+
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Card, StatCard, LineChart, Button, Icon, MultiSegmentDoughnutChart, Modal, FormField, DashboardCustomizationMenu, FloatingActionMenu } from '@/components/ui';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context';
 import { OldVersionPage } from './email_admin_suite/OldVersionPage';
 import { DemoPlanSelectionPage } from './email_admin_suite/DemoPlanSelectionPage';
-import { DemoPlanDetailsPage } from './email_admin_suite/DemoPlanDetailsPage';
 
 const topThreatSources = [
     { ip: '192.168.1.100', location: 'Unknown', attempts: 45, risk: 'High' },
@@ -342,17 +345,6 @@ export const EmailAdminSuiteDashboardPage: React.FC = () => {
     useEffect(() => {
         localStorage.setItem('emailAdminDashboardVisibility', JSON.stringify(cardVisibility));
     }, [cardVisibility]);
-
-    // Update locally when plan selection event fires
-    useEffect(() => {
-        const handlePlanSelected = () => {
-            setPlanSelectedForDemo(sessionStorage.getItem('demoUserPlanSelected') === 'true');
-        };
-        window.addEventListener('planSelectedForDemo', handlePlanSelected);
-        return () => {
-            window.removeEventListener('planSelectedForDemo', handlePlanSelected);
-        };
-    }, []);
 
     const visibleCards = useMemo(() => {
         return ALL_DASHBOARD_CARDS.filter(card => cardVisibility[card.id]);

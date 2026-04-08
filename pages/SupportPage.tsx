@@ -1,38 +1,14 @@
 
+
+
+
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { Card, Button, Modal, FormField, Icon, CollapsibleSection, SearchableSelect, Pagination, StatCard, Spinner } from '@/components/ui';
-import { useAuth, useAppLayout } from '@/context';
+import { useNavigate } from 'react-router-dom';
+import { Card, Button, Modal, FormField, Icon, CollapsibleSection, SearchableSelect, Pagination } from '@/components/ui';
+import { useAuth } from '@/context';
 import type { SupportTicket, TicketAttachment, SupportTicketComment, User, SupportTicketProduct, SupportTicketRequestType, SupportTicketPriority, SupportTicketDepartment, KnowledgeBaseArticle } from '@/types';
-import { mockSupportTickets, MOCK_KB_ARTICLES, getAllMockCustomers, getAllMockInternalUsers, mockMailboxDomains } from '@/data';
-
-// --- Shared Helper Functions ---
-
-const getStatusChipClass = (status: SupportTicket['status']) => {
-    const baseClasses = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full';
-    switch (status) {
-        case 'Open': return `${baseClasses} bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300`;
-        case 'In Progress': return `${baseClasses} bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300`;
-        case 'Resolved': return `${baseClasses} bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300`;
-        case 'Closed': return `${baseClasses} bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300`;
-        default: return `${baseClasses} bg-gray-100 text-gray-800`;
-    }
-};
-
-const getPriorityChipClass = (priority: SupportTicket['priority']) => {
-    const baseClasses = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full';
-    switch (priority) {
-        case 'Urgent': return `${baseClasses} bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300`;
-        case 'High': return `${baseClasses} bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300`;
-        case 'Normal': return `${baseClasses} bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300`;
-        case 'Low': return `${baseClasses} bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300`;
-        default: return `${baseClasses} bg-gray-100 text-gray-800`;
-    }
-};
-
-// Sort logic helpers
-const PRIORITY_WEIGHT = { 'Urgent': 4, 'High': 3, 'Normal': 2, 'Low': 1 };
-const STATUS_WEIGHT = { 'Open': 4, 'In Progress': 3, 'Resolved': 2, 'Closed': 1 };
+import { mockSupportTickets, MOCK_KB_ARTICLES, getAllMockCustomers } from '@/data';
 
 interface CreateTicketModalProps {
     isOpen: boolean;
@@ -43,13 +19,14 @@ interface CreateTicketModalProps {
 const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ isOpen, onClose, onSubmit }) => {
     const initialFormState = {
         product: 'General Inquiry' as SupportTicketProduct,
-        requestType: 'Inquiry' as SupportTicketRequestType,
+        requestType: 'Issue' as SupportTicketRequestType,
         priority: 'Normal' as SupportTicketPriority,
         department: 'Technical Support' as SupportTicketDepartment,
         subject: '',
         description: '',
     };
     const [formData, setFormData] = useState(initialFormState);
+    // FIX: Change state to store TicketAttachment[] directly for consistency and type safety.
     const [attachments, setAttachments] = useState<TicketAttachment[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -58,6 +35,7 @@ const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ isOpen, onClose, 
         setFormData(prev => ({ ...prev, [name]: value }));
     };
     
+    // FIX: Refactor file handling to be robust and async, creating TicketAttachment objects immediately.
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const files = Array.from(e.target.files);
@@ -106,7 +84,9 @@ const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ isOpen, onClose, 
             return;
         }
 
+        // FIX: Attachments are now already in the correct format.
         onSubmit({ ...formData, attachments });
+        // Reset form state after submission
         setFormData(initialFormState);
         setAttachments([]);
         onClose();
@@ -117,23 +97,9 @@ const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ isOpen, onClose, 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Create New Support Ticket" size="2xl">
             <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <FormField id="product" name="product" label="Product/Service" as="select" value={formData.product} onChange={handleFormChange}>
-                        {productOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                    </FormField>
-                    
-                    <FormField id="requestType" name="requestType" label="Request Type" as="select" value={formData.requestType} onChange={handleFormChange}>
-                        <option value="Task">Request</option>
-                        <option value="Inquiry">General Inquiry</option>
-                        <option value="Feature Request">Feature Request</option>
-                    </FormField>
-
-                    <FormField id="priority" name="priority" label="Priority" as="select" value={formData.priority} onChange={handleFormChange}>
-                        <option value="Low">Low</option>
-                        <option value="Normal">Medium</option>
-                        <option value="High">High</option>
-                    </FormField>
-                </div>
+                <FormField id="product" name="product" label="Product/Service" as="select" value={formData.product} onChange={handleFormChange}>
+                    {productOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                </FormField>
 
                 <FormField id="subject" name="subject" label="Subject" value={formData.subject} onChange={handleFormChange} required />
                 <FormField id="description" name="description" label="Description" as="textarea" rows={5} value={formData.description} onChange={handleFormChange} required />
@@ -189,7 +155,6 @@ const ViewTicketModal: React.FC<ViewTicketModalProps> = ({ isOpen, onClose, tick
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [activeTab, setActiveTab] = useState('customer');
     const [newStatus, setNewStatus] = useState<SupportTicket['status'] | undefined>();
-    const [isCloseConfirmationOpen, setIsCloseConfirmationOpen] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
@@ -201,7 +166,6 @@ const ViewTicketModal: React.FC<ViewTicketModalProps> = ({ isOpen, onClose, tick
             setNewAttachments([]);
             setActiveTab('customer');
             setNewStatus(undefined);
-            setIsCloseConfirmationOpen(false);
         }
     }, [isOpen, ticket]);
 
@@ -209,6 +173,7 @@ const ViewTicketModal: React.FC<ViewTicketModalProps> = ({ isOpen, onClose, tick
 
     const isUserAdminOrReseller = currentUser?.role === 'admin' || currentUser?.role === 'reseller';
 
+    // FIX: Refactor file handling to use Promise.all for robustness, which may resolve cascading type errors.
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const files = Array.from(e.target.files);
@@ -289,9 +254,11 @@ const ViewTicketModal: React.FC<ViewTicketModalProps> = ({ isOpen, onClose, tick
             }
         }
         
+        // Admin/Reseller can always set the status.
         if (isStatusChanged && isUserAdminOrReseller && newStatus) {
             updatedTicket.status = newStatus;
         } 
+        // If a customer adds a comment to a resolved/closed ticket, reopen it.
         else if (isCommentAdded && currentUser?.role === 'customer' && (updatedTicket.status === 'Resolved' || updatedTicket.status === 'Closed')) {
             updatedTicket.status = 'In Progress';
         }
@@ -302,18 +269,14 @@ const ViewTicketModal: React.FC<ViewTicketModalProps> = ({ isOpen, onClose, tick
         onClose();
     };
 
-    const handleStatusSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const val = e.target.value as SupportTicket['status'];
-        if (val === 'Closed' && ticket.status !== 'Closed') {
-            setIsCloseConfirmationOpen(true);
-        } else {
-            setNewStatus(val);
+    const getStatusChipClass = (status: SupportTicket['status']) => {
+        switch (status) {
+            case 'Open': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+            case 'In Progress': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+            case 'Resolved': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+            case 'Closed': return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+            default: return 'bg-gray-100 text-gray-800';
         }
-    };
-
-    const handleConfirmClose = () => {
-        setNewStatus('Closed');
-        setIsCloseConfirmationOpen(false);
     };
 
     const AttachmentChip: React.FC<{ attachment: TicketAttachment, onRemove?: () => void }> = ({ attachment, onRemove }) => (
@@ -332,35 +295,11 @@ const ViewTicketModal: React.FC<ViewTicketModalProps> = ({ isOpen, onClose, tick
     
     const Comment: React.FC<{ comment: SupportTicketComment, isInternal?: boolean, onDelete: () => void }> = ({ comment, isInternal, onDelete }) => {
         const canDelete = currentUser?.role === 'admin' && (currentUser.fullName === comment.author || comment.author === 'Support Staff');
-        const isCustomerComment = !isInternal && comment.author === ticket.customerName;
-
-        let bgColor = 'bg-gray-50 dark:bg-slate-700/50';
-        let borderColor = 'border-transparent';
-        let roleLabel = 'Staff';
-        let roleIcon = 'fas fa-user-tie';
-
-        if (isInternal) {
-            bgColor = 'bg-yellow-50 dark:bg-yellow-900/20';
-            borderColor = 'border-yellow-400';
-            roleLabel = 'Internal Note';
-            roleIcon = 'fas fa-sticky-note';
-        } else if (isCustomerComment) {
-            bgColor = 'bg-gray-200/50 dark:bg-slate-700'; 
-            borderColor = 'border-[#679a41] dark:border-emerald-500';
-            roleLabel = 'Customer';
-            roleIcon = 'fas fa-user';
-        }
 
         return (
-            <div className={`p-4 rounded-lg border-l-4 transition-colors ${bgColor} ${borderColor}`}>
+            <div className={`p-4 rounded-lg ${isInternal ? 'bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400' : 'bg-gray-50 dark:bg-slate-700/50'}`}>
                 <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
-                    <div className="flex items-center gap-2">
-                        <Icon name={roleIcon} className="text-[#679a41] dark:text-emerald-400" />
-                        <p className="font-semibold text-sm text-[#293c51] dark:text-gray-200">{comment.author}</p>
-                        <span className="px-1.5 py-0.5 rounded bg-white/50 dark:bg-black/20 border dark:border-white/10 font-bold uppercase tracking-tighter text-[10px]">
-                            {roleLabel}
-                        </span>
-                    </div>
+                    <p className="font-semibold text-sm text-[#293c51] dark:text-gray-200">{comment.author}</p>
                     <div className="flex items-center space-x-2">
                         <p>{new Date(comment.timestamp).toLocaleString()}</p>
                         {canDelete && (
@@ -387,117 +326,77 @@ const ViewTicketModal: React.FC<ViewTicketModalProps> = ({ isOpen, onClose, tick
     };
 
     return (
-        <>
-            <Modal isOpen={isOpen} onClose={onClose} title={`Ticket: ${ticket.id}`} size="3xl">
-                <div className="flex flex-col h-[80vh]">
-                    {/* UNPICKED WARNING - YELLOW THEME */}
-                    {isUserAdminOrReseller && !ticket.assignedAdminName && (
-                        <div className="flex-shrink-0 mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg flex items-center gap-3 text-yellow-800 dark:text-yellow-300 text-sm">
-                            <Icon name="fas fa-exclamation-triangle" className="text-lg" />
-                            <span className="font-bold uppercase tracking-wide">Warning: This ticket has not been picked up by any staff member.</span>
-                        </div>
-                    )}
-
-                    <div className="flex-shrink-0 pr-4 pb-4 border-b dark:border-gray-700 space-y-4">
-                        <div className="flex justify-between items-start gap-4">
-                            <h3 className="text-xl font-bold text-[#293c51] dark:text-gray-100 flex-grow">{ticket.subject}</h3>
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                                <span className={getPriorityChipClass(ticket.priority)}>{ticket.priority}</span>
-                                {isUserAdminOrReseller ? (
-                                    <select 
-                                        value={newStatus} 
-                                        onChange={handleStatusSelectChange}
-                                        className={`text-xs font-semibold rounded-full border-0 focus:ring-2 focus:ring-[#679a41] cursor-pointer py-1 px-2 ${getStatusChipClass(newStatus || ticket.status)}`}
-                                    >
-                                        <option value="Open">Open</option>
-                                        <option value="In Progress">In Progress</option>
-                                        <option value="Resolved">Resolved</option>
-                                        <option value="Closed">Closed</option>
-                                    </select>
-                                ) : (
-                                    <span className={getStatusChipClass(ticket.status)}>{ticket.status}</span>
-                                )}
-                            </div>
-                        </div>
-                        
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
-                            Product/Service: <span className="font-medium text-[#293c51] dark:text-gray-300">{ticket.product}</span>
-                        </div>
-
-                        <div className="p-4 bg-gray-100 dark:bg-slate-700 rounded-lg">
-                            <h4 className="font-semibold text-sm mb-1 text-[#293c51] dark:text-gray-200">Initial Description</h4>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{ticket.description}</p>
-                            {ticket.attachments && ticket.attachments.length > 0 && (
-                                <div className="mt-2 pt-2 border-t dark:border-gray-600 flex flex-wrap gap-2">
-                                    {ticket.attachments.map((att, i) => <AttachmentChip key={i} attachment={att} />)}
-                                </div>
-                            )}
-                        </div>
+        <Modal isOpen={isOpen} onClose={onClose} title={`Ticket: ${ticket.id}`} size="3xl">
+            <div className="flex flex-col max-h-[75vh]">
+                {/* --- Pinned Section --- */}
+                <div className="flex-shrink-0 pr-4 space-y-4">
+                    <div className="flex justify-between items-center">
+                        <h3 className="text-xl font-bold text-[#293c51] dark:text-gray-100">{ticket.subject}</h3>
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusChipClass(ticket.status)}`}>{ticket.status}</span>
+                    </div>
+                    
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                        Product/Service: <span className="font-medium text-[#293c51] dark:text-gray-300">{ticket.product}</span>
                     </div>
 
-                    <div className="flex-grow overflow-y-auto pr-4 pt-4">
-                        <div className="space-y-4">
-                            {isUserAdminOrReseller && (
-                                <div className="border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-slate-800 z-10">
-                                    <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-                                        <button onClick={() => setActiveTab('customer')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'customer' ? 'border-[#679a41] text-[#679a41] dark:border-emerald-400 dark:text-emerald-400' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-                                            Customer Comments
-                                        </button>
-                                        <button onClick={() => setActiveTab('internal')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'internal' ? 'border-yellow-500 text-yellow-600 dark:border-yellow-400 dark:text-yellow-400' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-                                            Internal Notes
-                                        </button>
-                                    </nav>
-                                </div>
-                            )}
-                            
-                            <div className="space-y-3 pb-4">
-                                {activeTab === 'customer' && (
-                                    ticket.comments && ticket.comments.length > 0
-                                    ? ticket.comments.map((comment, i) => <div className="group" key={`cust-${i}`}><Comment comment={comment} onDelete={() => handleDeleteComment(comment, false)} /></div>)
-                                    : <p className="text-sm text-center text-gray-500 dark:text-gray-400 py-4">No customer comments yet.</p>
-                                )}
-                                {activeTab === 'internal' && isUserAdminOrReseller && (
-                                    ticket.internalComments && ticket.internalComments.length > 0
-                                    ? ticket.internalComments.map((comment, i) => <div className="group" key={`int-${i}`}><Comment comment={comment} isInternal onDelete={() => handleDeleteComment(comment, true)} /></div>)
-                                    : <p className="text-sm text-center text-gray-500 dark:text-gray-400 py-4">No internal notes yet.</p>
-                                )}
+                    <div className="p-4 bg-gray-100 dark:bg-slate-700 rounded-lg">
+                        <h4 className="font-semibold text-sm mb-1 text-[#293c51] dark:text-gray-200">Initial Description</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{ticket.description}</p>
+                        {ticket.attachments && ticket.attachments.length > 0 && (
+                            <div className="mt-2 pt-2 border-t dark:border-gray-600 flex flex-wrap gap-2">
+                                {ticket.attachments.map((att, i) => <AttachmentChip key={i} attachment={att} />)}
                             </div>
-                        </div>
+                        )}
                     </div>
+                </div>
 
-                    <div className="flex-shrink-0 pt-4 mt-4 border-t dark:border-gray-700 bg-gray-50/80 dark:bg-slate-900/60 -mx-4 -mb-4 px-4 pb-4">
-                        <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-semibold text-sm text-[#293c51] dark:text-gray-200">Add Reply / Update Status</h4>
-                            <span className="text-[10px] uppercase font-bold text-gray-400">FIXED REPLY PANEL</span>
-                        </div>
-                        <FormField
-                            id="new-comment"
-                            label=""
-                            as="textarea"
-                            rows={2}
-                            value={newComment}
-                            onChange={(e) => setNewComment(e.target.value)}
-                            placeholder="Type your reply here..."
-                            wrapperClassName="mb-3"
-                            inputClassName="!text-sm"
-                        />
-                        
-                        {newAttachments.length > 0 && (
-                            <div className="mb-3 flex flex-wrap gap-2">
-                                {newAttachments.map((att, i) => (
-                                    <AttachmentChip key={i} attachment={att} onRemove={() => removeAttachment(att.name)} />
-                                ))}
+                {/* --- Scrollable Section --- */}
+                <div className="flex-grow overflow-y-auto pr-4 mt-4 pt-4 border-t dark:border-gray-700">
+                    <div className="space-y-4">
+                        {isUserAdminOrReseller && (
+                            <div className="border-b border-gray-200 dark:border-gray-700">
+                                <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+                                    <button onClick={() => setActiveTab('customer')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'customer' ? 'border-[#679a41] text-[#679a41] dark:border-emerald-400 dark:text-emerald-400' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+                                        Customer Comments
+                                    </button>
+                                    <button onClick={() => setActiveTab('internal')} className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'internal' ? 'border-yellow-500 text-yellow-600 dark:border-yellow-400 dark:text-yellow-400' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+                                        Internal Notes
+                                    </button>
+                                </nav>
                             </div>
                         )}
                         
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                            <div className="flex items-center gap-2">
+                        <div className="space-y-3">
+                            {activeTab === 'customer' && (
+                                ticket.comments && ticket.comments.length > 0
+                                ? ticket.comments.map((comment, i) => <div className="group" key={`cust-${i}`}><Comment comment={comment} onDelete={() => handleDeleteComment(comment, false)} /></div>)
+                                : <p className="text-sm text-center text-gray-500 dark:text-gray-400 py-4">No customer comments yet.</p>
+                            )}
+                            {activeTab === 'internal' && isUserAdminOrReseller && (
+                                ticket.internalComments && ticket.internalComments.length > 0
+                                ? ticket.internalComments.map((comment, i) => <div className="group" key={`int-${i}`}><Comment comment={comment} isInternal onDelete={() => handleDeleteComment(comment, true)} /></div>)
+                                : <p className="text-sm text-center text-gray-500 dark:text-gray-400 py-4">No internal notes yet.</p>
+                            )}
+                        </div>
+
+                        <div className="pt-4 border-t dark:border-gray-600">
+                            <h4 className="font-semibold text-lg mb-2">Add Reply / Update Status</h4>
+                            <FormField
+                                id="new-comment"
+                                label=""
+                                as="textarea"
+                                rows={3}
+                                value={newComment}
+                                onChange={(e) => setNewComment(e.target.value)}
+                                placeholder="Type your reply here..."
+                            />
+                            
+                            <div className="mt-2">
                                 <Button
                                     variant="outline"
                                     size="sm"
                                     leftIconName="fas fa-paperclip"
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="h-8 !text-xs"
                                 >
                                     Attach Files
                                 </Button>
@@ -509,51 +408,48 @@ const ViewTicketModal: React.FC<ViewTicketModalProps> = ({ isOpen, onClose, tick
                                     className="hidden"
                                 />
                             </div>
+                            {newAttachments.length > 0 && (
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                    {newAttachments.map((att, i) => (
+                                        <AttachmentChip key={i} attachment={att} onRemove={() => removeAttachment(att.name)} />
+                                    ))}
+                                </div>
+                            )}
+                            
+                            {isUserAdminOrReseller && (
+                                <div className="mt-4">
+                                    <FormField
+                                        id="ticket-status"
+                                        name="status"
+                                        label="Change Ticket Status"
+                                        as="select"
+                                        value={newStatus}
+                                        onChange={(e) => setNewStatus(e.target.value as SupportTicket['status'])}
+                                    >
+                                        <option value="Open">Open</option>
+                                        <option value="In Progress">In Progress</option>
+                                        <option value="Resolved">Resolved</option>
+                                        <option value="Closed">Closed</option>
+                                    </FormField>
+                                </div>
+                            )}
 
-                            <div className="flex justify-end items-center gap-2">
-                                <Button variant="ghost" onClick={onClose} size="sm" className="h-8 !text-xs">Cancel</Button>
-                                <Button 
-                                    onClick={handleTicketUpdate} 
-                                    size="sm"
-                                    className="h-8 !text-xs px-6"
-                                    disabled={(!newComment.trim() && newAttachments.length === 0) && (newStatus === ticket.status)}
-                                >
-                                    Update Ticket
-                                </Button>
+                            <div className="mt-4 flex justify-end items-center">
+                                <div className="space-x-2">
+                                    <Button variant="ghost" onClick={onClose}>Cancel</Button>
+                                    <Button 
+                                        onClick={handleTicketUpdate} 
+                                        disabled={(!newComment.trim() && newAttachments.length === 0) && (newStatus === ticket.status)}
+                                    >
+                                        Update Ticket
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </Modal>
-
-            {/* CUSTOM CONFIRMATION MODAL FOR CLOSING TICKET */}
-            {isCloseConfirmationOpen && (
-                <Modal
-                    isOpen={isCloseConfirmationOpen}
-                    onClose={() => setIsCloseConfirmationOpen(false)}
-                    title="Confirm Ticket Closure"
-                    size="md"
-                    footer={
-                        <>
-                            <Button variant="danger" onClick={handleConfirmClose}>Yes, Close Ticket</Button>
-                            <Button variant="ghost" onClick={() => setIsCloseConfirmationOpen(false)}>Cancel</Button>
-                        </>
-                    }
-                >
-                    <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center flex-shrink-0">
-                            <Icon name="fas fa-exclamation-triangle" className="text-red-600 dark:text-red-400 text-xl" />
-                        </div>
-                        <div>
-                            <p className="font-semibold text-lg text-[#293c51] dark:text-gray-100">Are you sure?</p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                Closing this ticket will finalize the case. You can still view it in your history, but further replies will require the ticket to be reopened.
-                            </p>
-                        </div>
-                    </div>
-                </Modal>
-            )}
-        </>
+            </div>
+        </Modal>
     );
 };
 
@@ -845,97 +741,20 @@ const CustomerSupportFilterPanel: React.FC<CustomerSupportFilterPanelProps> = ({
     );
 };
 
-const AssignTicketModal: React.FC<{
-    isOpen: boolean;
-    onClose: () => void;
-    onAssign: (adminId: string, adminName: string) => void;
-    staffOptions: { value: string; label: string }[];
-}> = ({ isOpen, onClose, onAssign, staffOptions }) => {
-    const [selectedAdminId, setSelectedAdminId] = useState('');
-
-    const handleAssign = () => {
-        const admin = staffOptions.find(opt => opt.value === selectedAdminId);
-        if (admin) {
-            onAssign(admin.value, admin.label);
-        }
-    };
-
-    return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Assign Ticket to Staff" size="md">
-            <div className="space-y-4 min-h-[350px]">
-                <SearchableSelect
-                    id="admin-assignment"
-                    label="Internal Staff Member"
-                    options={staffOptions}
-                    value={selectedAdminId}
-                    onChange={setSelectedAdminId}
-                    placeholder="Select an admin or reseller..."
-                    listHeight="max-h-72"
-                />
-                <div className="flex justify-end gap-2 pt-4 border-t dark:border-gray-700 absolute bottom-4 right-4 left-4">
-                    <Button variant="ghost" onClick={onClose}>Cancel</Button>
-                    <Button onClick={handleAssign} disabled={!selectedAdminId}>Assign Staff</Button>
-                </div>
-            </div>
-        </Modal>
-    );
-};
-
-const AdminStats: React.FC<{ tickets: SupportTicket[] }> = ({ tickets }) => {
-    const stats = useMemo(() => ({
-        open: tickets.filter(t => t.status === 'Open' || t.status === 'In Progress').length,
-        resolved: tickets.filter(t => t.status === 'Resolved' || t.status === 'Closed').length,
-        highPriority: tickets.filter(t => t.priority === 'High' || t.priority === 'Urgent').length,
-    }), [tickets]);
-
-    return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <StatCard title="Total Tickets" metric={tickets.length.toString()} iconName="fas fa-ticket-alt" iconColor="text-blue-500" />
-            <StatCard title="Open" metric={stats.open.toString()} iconName="fas fa-envelope-open" iconColor="text-yellow-500" />
-            <StatCard title="Resolved" metric={stats.resolved.toString()} iconName="fas fa-check-circle" iconColor="text-green-500" />
-            <StatCard title="Critical" metric={stats.highPriority.toString()} iconName="fas fa-exclamation-triangle" iconColor="text-red-500" />
-        </div>
-    );
-};
-
 
 export const SupportPage: React.FC = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
-    
     const [tickets, setTickets] = useState<SupportTicket[]>(mockSupportTickets);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isKbModalOpen, setIsKbModalOpen] = useState(false);
     const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
-    const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
-    const [ticketToAssign, setTicketToAssign] = useState<SupportTicket | null>(null);
-    
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
-    const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-    const kebabMenuRef = useRef<HTMLDivElement>(null);
-
-    // Sorting State
-    const [sortConfig, setSortConfig] = useState<{ key: keyof SupportTicket | 'customer' | 'reseller' | null; direction: 'asc' | 'desc' }>({ key: 'lastUpdate', direction: 'desc' });
     
-    const viewAsUserId = searchParams.get('viewAsUser');
     const isAdmin = user?.role === 'admin';
-    const isElevated = (user?.role === 'admin' || user?.role === 'reseller') && !viewAsUserId;
-
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (kebabMenuRef.current && !kebabMenuRef.current.contains(event.target as Node)) {
-                setOpenMenuId(null);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, []);
 
     const [filters, setFilters] = useState<SupportFilters>({
         customerId: '',
@@ -947,86 +766,48 @@ export const SupportPage: React.FC = () => {
         dateFrom: '',
         dateTo: '',
     });
-    
-    const allCustomers = useMemo(() => getAllMockCustomers(), []);
-    const internalStaff = useMemo(() => getAllMockInternalUsers(), []);
+    const [allCustomers] = useState<User[]>(getAllMockCustomers);
 
     const customerOptions = useMemo(() => 
         allCustomers.map(c => ({ value: c.id, label: `${c.fullName} (${c.companyName})` })),
         [allCustomers]
     );
 
-    const staffOptions = useMemo(() => 
-        internalStaff.map(s => ({ value: s.id, label: s.fullName })),
-        [internalStaff]
-    );
-
-    const handleSort = (key: keyof SupportTicket | 'customer' | 'reseller') => {
-        setSortConfig(prev => ({
-            key,
-            direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
-        }));
-    };
-
-    const renderSortIcon = (key: string) => {
-        if (sortConfig.key !== key) return <Icon name="fas fa-sort" className="ml-2 opacity-30 group-hover:opacity-100 transition-opacity" />;
-        return <Icon name={sortConfig.direction === 'asc' ? "fas fa-sort-up" : "fas fa-sort-down"} className="ml-2 text-[#679a41] dark:text-emerald-400" />;
-    };
-
     const filteredTickets = useMemo(() => {
-        let result = tickets.filter(ticket => {
-            // Context Restriction
-            if (viewAsUserId && ticket.customerId !== viewAsUserId) return false;
-            if (!isElevated && !viewAsUserId && ticket.customerId !== user?.id) return false;
-
-            // Application Filtering
-            if (isElevated && filters.customerId && ticket.customerId !== filters.customerId) return false;
-            if (filters.status !== 'all' && ticket.status !== filters.status) return false;
-            if (filters.ticketId && !ticket.id.toLowerCase().includes(filters.ticketId.toLowerCase())) return false;
-            if (filters.subject && !ticket.subject.toLowerCase().includes(filters.subject.toLowerCase())) return false;
-            if (filters.severity !== 'all' && ticket.priority !== filters.severity) return false;
-            if (filters.type !== 'all' && ticket.requestType !== filters.type) return false;
+        return tickets.filter(ticket => {
+            if (isAdmin && filters.customerId && ticket.customerId !== filters.customerId) {
+                return false;
+            }
+            if (filters.status !== 'all' && ticket.status !== filters.status) {
+                return false;
+            }
+            if (filters.ticketId && !ticket.id.toLowerCase().includes(filters.ticketId.toLowerCase())) {
+                return false;
+            }
+            if (filters.subject && !ticket.subject.toLowerCase().includes(filters.subject.toLowerCase())) {
+                return false;
+            }
+            if (filters.severity !== 'all' && ticket.priority !== filters.severity) {
+                return false;
+            }
+            if (filters.type !== 'all' && ticket.requestType !== filters.type) {
+                return false;
+            }
             
             const ticketDate = new Date(ticket.lastUpdate);
-            if (filters.dateFrom && ticketDate < new Date(filters.dateFrom)) return false;
+            if (filters.dateFrom && ticketDate < new Date(filters.dateFrom)) {
+                return false;
+            }
             if (filters.dateTo) {
                 const toDate = new Date(filters.dateTo);
                 toDate.setHours(23, 59, 59, 999);
-                if (ticketDate > toDate) return false;
+                if (ticketDate > toDate) {
+                    return false;
+                }
             }
             return true;
         });
-
-        // Sorting Logic
-        if (sortConfig.key) {
-            result.sort((a, b) => {
-                let valA: any = a[sortConfig.key as keyof SupportTicket] || '';
-                let valB: any = b[sortConfig.key as keyof SupportTicket] || '';
-
-                // Handle special weight-based sorting
-                if (sortConfig.key === 'priority') {
-                    valA = PRIORITY_WEIGHT[a.priority] || 0;
-                    valB = PRIORITY_WEIGHT[b.priority] || 0;
-                } else if (sortConfig.key === 'status') {
-                    valA = STATUS_WEIGHT[a.status] || 0;
-                    valB = STATUS_WEIGHT[b.status] || 0;
-                } else if (sortConfig.key === 'customer') {
-                    valA = a.customerName || '';
-                    valB = b.customerName || '';
-                } else if (sortConfig.key === 'reseller') {
-                    // Assuming resellerName is part of the ticket or can be fetched
-                    valA = (a as any).resellerName || '';
-                    valB = (b as any).resellerName || '';
-                }
-
-                if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
-                if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
-                return 0;
-            });
-        }
-
-        return result;
-    }, [tickets, filters, isElevated, viewAsUserId, user?.id, sortConfig]);
+    }, [tickets, filters, isAdmin]);
     
     useEffect(() => {
         setCurrentPage(1);
@@ -1053,7 +834,7 @@ export const SupportPage: React.FC = () => {
         setFilters(prev => ({ 
             ...prev, 
             ...newFilters, 
-            customerId: '' 
+            customerId: '' // Ensure customerId is cleared for customer view
         }));
     };
 
@@ -1075,16 +856,6 @@ export const SupportPage: React.FC = () => {
         if (ticket) {
             setSelectedTicket(ticket);
             setIsViewModalOpen(true);
-        }
-    };
-
-    const handleCloseTicket = (ticketId: string) => {
-        if (window.confirm(`Are you sure you want to close ticket ${ticketId}?`)) {
-            setTickets(prev => prev.map(t => 
-                t.id === ticketId 
-                    ? { ...t, status: 'Closed', lastUpdate: new Date().toISOString() } 
-                    : t
-            ));
         }
     };
     
@@ -1118,32 +889,18 @@ export const SupportPage: React.FC = () => {
         setIsCreateModalOpen(false);
     };
 
-    const handleAssignTicket = (adminId: string, adminName: string) => {
-        if (ticketToAssign) {
-            setTickets(prev => prev.map(t => 
-                t.id === ticketToAssign.id 
-                    ? { ...t, assignedAdminId: adminId, assignedAdminName: adminName, lastUpdate: new Date().toISOString() } 
-                    : t
-            ));
-            setIsAssignModalOpen(false);
-            setTicketToAssign(null);
-        }
-    };
-
-    const handlePickupTicket = (ticketId: string) => {
-        if (user) {
-            setTickets(prev => prev.map(t => 
-                t.id === ticketId 
-                    ? { ...t, assignedAdminId: user.id, assignedAdminName: user.fullName, lastUpdate: new Date().toISOString() } 
-                    : t
-            ));
+    const getStatusChipClass = (status: SupportTicket['status']) => {
+        switch (status) {
+            case 'Open': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+            case 'In Progress': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+            case 'Resolved': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+            case 'Closed': return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
         }
     };
     
     return (
         <>
-            {isElevated && <AdminStats tickets={filteredTickets} />}
-            <Card title={isElevated ? "Support Center Administration" : "Support Center"} titleActions={
+            <Card title="Support Center" titleActions={
                 <div className="flex items-center gap-2">
                     <Button
                         variant="outline"
@@ -1167,147 +924,37 @@ export const SupportPage: React.FC = () => {
                     <table className="min-w-full bg-white dark:bg-slate-800">
                         <thead className="bg-gray-50 dark:bg-slate-700">
                             <tr>
-                                <th onClick={() => handleSort('id')} className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-600 transition-colors group">
-                                    <div className="flex items-center justify-center">
-                                        Ticket ID {renderSortIcon('id')}
-                                    </div>
-                                </th>
-                                {isElevated && (
-                                    <>
-                                        <th onClick={() => handleSort('customer')} className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-600 transition-colors group">
-                                            <div className="flex items-center justify-center">
-                                                Customer {renderSortIcon('customer')}
-                                            </div>
-                                        </th>
-                                        <th onClick={() => handleSort('reseller')} className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-600 transition-colors group">
-                                            <div className="flex items-center justify-center">
-                                                Reseller {renderSortIcon('reseller')}
-                                            </div>
-                                        </th>
-                                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                            Assign To
-                                        </th>
-                                    </>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Ticket ID</th>
+                                {isAdmin && (
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Customer Name</th>
                                 )}
-                                <th onClick={() => handleSort('subject')} className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-600 transition-colors group">
-                                    <div className="flex items-center justify-center">
-                                        Subject {renderSortIcon('subject')}
-                                    </div>
-                                </th>
-                                <th onClick={() => handleSort('product')} className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-600 transition-colors group">
-                                    <div className="flex items-center justify-center">
-                                        Product {renderSortIcon('product')}
-                                    </div>
-                                </th>
-                                <th onClick={() => handleSort('status')} className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-600 transition-colors group">
-                                    <div className="flex items-center justify-center">
-                                        Status {renderSortIcon('status')}
-                                    </div>
-                                </th>
-                                <th onClick={() => handleSort('priority')} className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-600 transition-colors group">
-                                    <div className="flex items-center justify-center">
-                                        Priority {renderSortIcon('priority')}
-                                    </div>
-                                </th>
-                                <th onClick={() => handleSort('lastUpdate')} className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-600 transition-colors group">
-                                    <div className="flex items-center justify-center">
-                                        Last Update {renderSortIcon('lastUpdate')}
-                                    </div>
-                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Subject</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Product</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Status</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Last Update</th>
                                 <th className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                             {paginatedTickets.map(ticket => (
                                 <tr key={ticket.id}>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-center">
-                                        <button 
-                                            onClick={() => handleViewTicket(ticket.id)}
-                                            className="text-[#679a41] dark:text-emerald-400 hover:underline font-bold transition-all focus:outline-none"
-                                        >
-                                            {ticket.id}
-                                        </button>
-                                    </td>
-                                    {isElevated && (
-                                        <>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 text-center">{ticket.customerName}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 text-center">{(ticket as any).resellerName || 'N/A'}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                                                {ticket.assignedAdminName ? (
-                                                    <button 
-                                                        onClick={() => { if(isAdmin) { setTicketToAssign(ticket); setIsAssignModalOpen(true); } }}
-                                                        disabled={!isAdmin}
-                                                        className={`inline-flex items-center gap-1.5 font-medium transition-colors ${isAdmin ? 'text-gray-700 dark:text-gray-200 hover:text-[#679a41] dark:hover:text-emerald-400 hover:underline' : 'text-gray-400 cursor-default'}`}
-                                                    >
-                                                        {ticket.assignedAdminName}
-                                                        {isAdmin && <Icon name="fas fa-pencil-alt" className="text-[10px]" />}
-                                                    </button>
-                                                ) : (
-                                                    isAdmin ? (
-                                                        <button 
-                                                            onClick={() => handlePickupTicket(ticket.id)}
-                                                            className="text-[#679a41] dark:text-emerald-400 hover:underline font-bold transition-all"
-                                                        >
-                                                            Pickup
-                                                        </button>
-                                                    ) : <span className="text-gray-400 italic text-xs">Unassigned</span>
-                                                )}
-                                            </td>
-                                        </>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#293c51] dark:text-white">{ticket.id}</td>
+                                    {isAdmin && (
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{ticket.customerName}</td>
                                     )}
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 text-center">{ticket.subject}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 text-center">{ticket.product}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                                        <span className={getStatusChipClass(ticket.status)}>{ticket.status}</span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                                        <span className={getPriorityChipClass(ticket.priority)}>{ticket.priority}</span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-center">{new Date(ticket.lastUpdate).toLocaleString()}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{ticket.subject}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{ticket.product}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm"><span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusChipClass(ticket.status)}`}>{ticket.status}</span></td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{new Date(ticket.lastUpdate).toLocaleString()}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <div className="relative inline-block text-left" ref={openMenuId === ticket.id ? kebabMenuRef : null}>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setOpenMenuId(openMenuId === ticket.id ? null : ticket.id);
-                                                }}
-                                                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-800 focus:ring-[#679a41]"
-                                                aria-label="Actions"
-                                            >
-                                                <Icon name="fas fa-ellipsis-v" />
-                                            </button>
-                                            {openMenuId === ticket.id && (
-                                                <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-slate-700 rounded-md shadow-lg z-10 ring-1 ring-black ring-opacity-5 dark:ring-slate-600 overflow-hidden">
-                                                    <ul className="py-1">
-                                                        <li>
-                                                            <button 
-                                                                onClick={() => { handleViewTicket(ticket.id); setOpenMenuId(null); }}
-                                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-600 flex items-center gap-2"
-                                                            >
-                                                                <Icon name="fas fa-eye" className="text-gray-400" /> View Ticket
-                                                            </button>
-                                                        </li>
-                                                        {(isAdmin || isElevated) && ticket.status !== 'Closed' && (
-                                                            <li>
-                                                                <button 
-                                                                    onClick={() => { handleCloseTicket(ticket.id); setOpenMenuId(null); }}
-                                                                    className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
-                                                                >
-                                                                    <Icon name="fas fa-times-circle" /> Close Ticket
-                                                                </button>
-                                                            </li>
-                                                        )}
-                                                    </ul>
-                                                </div>
-                                            )}
-                                        </div>
+                                        <Button size="sm" onClick={() => handleViewTicket(ticket.id)}>View Ticket</Button>
                                     </td>
                                 </tr>
                             ))}
                               {filteredTickets.length === 0 && (
                                 <tr>
-                                    <td colSpan={isElevated ? 10 : 7} className="text-center py-10 text-gray-500 dark:text-gray-400">
-                                        No tickets found matching your criteria.
+                                    <td colSpan={isAdmin ? 7 : 6} className="text-center py-10 text-gray-500 dark:text-gray-400">
+                                        No tickets found.
                                     </td>
                                 </tr>
                             )}
@@ -1345,15 +992,8 @@ export const SupportPage: React.FC = () => {
                 onUpdateTicket={handleUpdateTicket}
                 currentUser={user}
             />
-
-            <AssignTicketModal
-                isOpen={isAssignModalOpen}
-                onClose={() => { setIsAssignModalOpen(false); setTicketToAssign(null); }}
-                onAssign={handleAssignTicket}
-                staffOptions={staffOptions}
-            />
             
-            {isElevated ? (
+            {isAdmin ? (
                 <SupportFilterPanel
                     isOpen={isFilterPanelOpen}
                     onClose={() => setIsFilterPanelOpen(false)}

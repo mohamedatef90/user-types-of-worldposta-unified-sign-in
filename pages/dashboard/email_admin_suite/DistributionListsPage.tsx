@@ -78,9 +78,9 @@ const VerificationRequiredRow: React.FC<{ colSpan: number }> = ({ colSpan }) => 
 );
 
 export const DistributionListsPage: React.FC = () => {
+    const navigate = useNavigate();
     const { isDomainVerifiedForDemo } = useAppLayout();
     const { user } = useAuth();
-    const navigate = useNavigate();
     const isNewDemoUser = user?.email === 'new.user@worldposta.com';
     const isDisabled = isNewDemoUser && !isDomainVerifiedForDemo;
 
@@ -117,12 +117,12 @@ export const DistributionListsPage: React.FC = () => {
 
     useEffect(() => { setCurrentPage(1); }, [filters, rowsPerPage]);
 
-    const handleOpenAddPage = () => {
-        navigate('/app/email-admin-suite/exchange/distribution-lists/add');
+    const handleOpenAddPanel = () => {
+        navigate('add');
     };
 
-    const handleOpenEditPage = (listId: string) => {
-        navigate(`/app/email-admin-suite/exchange/distribution-lists/edit/${listId}`);
+    const handleOpenEditPanel = (list: DistributionList) => {
+        navigate(`edit/${list.id}`);
     };
 
     // --- Bulk Action Logic ---
@@ -153,7 +153,7 @@ export const DistributionListsPage: React.FC = () => {
     const DefaultToolbar = () => (
         <div className="flex items-center gap-2">
             <Button variant="outline" onClick={() => setIsFilterPanelOpen(true)} leftIconName="fas fa-filter" disabled={isDisabled}>Filters & Search</Button>
-            <Button leftIconName="fas fa-plus-circle" onClick={handleOpenAddPage} disabled={isDisabled}>Add Distribution List</Button>
+            <Button leftIconName="fas fa-plus-circle" onClick={handleOpenAddPanel} disabled={isDisabled}>Add Distribution List</Button>
         </div>
     );
     
@@ -199,7 +199,7 @@ export const DistributionListsPage: React.FC = () => {
                                     <td className="px-4 py-4 whitespace-nowrap text-sm">{new Date(list.creationDate).toLocaleDateString()}</td>
                                     <td className="px-4 py-4 whitespace-nowrap text-right text-sm">
                                         <div className="flex justify-end items-center">
-                                            <Button size="icon" variant="ghost" onClick={() => handleOpenEditPage(list.id)} title="Edit" disabled={isDisabled}><Icon name="fas fa-pencil-alt" /></Button>
+                                            <Button size="icon" variant="ghost" onClick={() => handleOpenEditPanel(list)} title="Edit" disabled={isDisabled}><Icon name="fas fa-pencil-alt" /></Button>
                                         </div>
                                     </td>
                                 </tr>

@@ -68,17 +68,15 @@ const UserStatusCard: React.FC = () => {
                 <MultiSegmentDoughnutChart segments={userStatusData} size={150} strokeWidth={20} />
                 <div className="w-full sm:w-auto space-y-2 text-sm">
                     {userStatusData.map(segment => (
-                        <div key={segment.label} className="flex items-center justify-between">
-                            <div className="flex items-center">
-                                <span className="w-3 h-3 rounded-sm mr-2" style={{ backgroundColor: segment.color }}></span>
-                                <span className="text-gray-600 dark:text-gray-400">{segment.label}:</span>
-                            </div>
+                        <div key={segment.label} className="flex items-center">
+                            <span className="w-3 h-3 rounded-sm mr-2" style={{ backgroundColor: segment.color }}></span>
+                            <span className="text-gray-600 dark:text-gray-400">{segment.label}:</span>
                             <span className="font-semibold text-gray-700 dark:text-gray-300 ml-auto">{segment.value.toLocaleString()}</span>
                         </div>
                     ))}
-                    <div className="pt-2 border-t dark:border-gray-600 flex items-center justify-between font-bold">
+                    <div className="pt-2 border-t dark:border-gray-600 flex items-center">
                         <span className="text-gray-600 dark:text-gray-400">Total Users:</span>
-                        <span className="text-gray-700 dark:text-gray-300 ml-auto">{totalUsers.toLocaleString()}</span>
+                        <span className="font-semibold text-gray-700 dark:text-gray-300 ml-auto">{totalUsers.toLocaleString()}</span>
                     </div>
                 </div>
             </div>
@@ -333,6 +331,7 @@ export const EmailAdminSuiteDashboardPage: React.FC = () => {
         } catch (e) {
             console.error("Failed to parse dashboard visibility from localStorage", e);
         }
+        // Default: all cards visible
         return ALL_DASHBOARD_CARDS.reduce((acc, card) => {
             (acc as any)[card.id] = true;
             return acc;
@@ -392,7 +391,7 @@ export const EmailAdminSuiteDashboardPage: React.FC = () => {
         if (!planSelectedForDemo) {
             return <DemoPlanSelectionPage onPlanSelect={handlePlanSelect} />;
         }
-        return <OldVersionPage />;
+        return <DemoPlanDetailsPage />;
     }
 
     return (

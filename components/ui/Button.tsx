@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Icon } from './Icon';
 import { Spinner } from './Spinner';
@@ -9,9 +10,25 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   fullWidth?: boolean;
   leftIconName?: string;
   leftIconClassName?: string;
+  // Fix: Added rightIconName and rightIconClassName to ButtonProps to resolve type errors in components using icons on the right
+  rightIconName?: string;
+  rightIconClassName?: string;
 }
 
-export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ children, variant = 'primary', size = 'md', isLoading = false, fullWidth = false, className, leftIconName, leftIconClassName, ...props }, ref) => {
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ 
+  children, 
+  variant = 'primary', 
+  size = 'md', 
+  isLoading = false, 
+  fullWidth = false, 
+  className, 
+  leftIconName, 
+  leftIconClassName,
+  // Fix: Destructured new right icon props
+  rightIconName,
+  rightIconClassName,
+  ...props 
+}, ref) => {
   const baseStyles = "font-semibold rounded-md focus:outline-none focus:ring-2 focus:ring-offset-1 dark:focus:ring-offset-gray-800 transition-colors duration-150 ease-in-out inline-flex items-center justify-center";
   const variantStyles = {
     primary: "bg-[#679a41] text-white hover:bg-[#588836] focus:ring-[#679a41] dark:bg-emerald-500 dark:hover:bg-emerald-600 dark:focus:ring-emerald-500",
@@ -45,6 +62,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ childr
         <>
         {leftIconName && <Icon name={leftIconName} className={`${children ? 'mr-2' : ''} ${leftIconClassName || ''}`} />}
         {children}
+        {/* Fix: Render right icon if rightIconName is provided */}
+        {rightIconName && <Icon name={rightIconName} className={`${children ? 'ml-2' : ''} ${rightIconClassName || ''}`} />}
         </>
       )}
     </button>
