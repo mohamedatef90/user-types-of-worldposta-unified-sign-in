@@ -25,10 +25,17 @@ export const BillingSidebar: React.FC<BillingSidebarProps> = ({ isCollapsed, isO
     const iconHoverColor = "group-hover:text-[#588836] dark:group-hover:text-emerald-500";
 
     const navItems = [
-        { name: 'My Subscriptions', path: '/app/billing/subscriptions', icon: 'fas fa-box-open' },
-        { name: 'Invoice History', path: '/app/billing/invoices', icon: 'fas fa-file-invoice-dollar' },
-        { name: 'Payment & Wallet', path: '/app/billing/wallet', icon: 'fas fa-wallet' },
-        ...(user?.role === 'admin' ? [{ name: 'Admin Tools', path: '/app/billing/admin', icon: 'fas fa-tools' }] : [])
+        ...(user?.role === 'super_admin' ? [
+            { name: 'Packages', path: '/app/billing/admin-packages', icon: 'fas fa-box-open' },
+            { name: 'Subscriptions Tracker', path: '/app/billing/admin-subscriptions', icon: 'fas fa-sync-alt' },
+            { name: 'Global Invoices', path: '/app/billing/admin-invoices', icon: 'fas fa-file-invoice' },
+            { name: 'Revenue Reports', path: '/app/billing/admin-reports', icon: 'fas fa-chart-line' },
+        ] : [
+            { name: 'My Subscriptions', path: '/app/billing/subscriptions', icon: 'fas fa-box-open' },
+            { name: 'Invoice History', path: '/app/billing/invoices', icon: 'fas fa-file-invoice-dollar' },
+            { name: 'Payment & Wallet', path: '/app/billing/wallet', icon: 'fas fa-wallet' },
+            ...(user?.role === 'admin' ? [{ name: 'Admin Tools', path: '/app/billing/admin', icon: 'fas fa-tools' }] : [])
+        ])
     ];
 
     return (

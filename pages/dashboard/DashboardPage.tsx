@@ -691,6 +691,14 @@ export const DashboardPage: React.FC = () => { // This is the Customer Dashboard
           launchUrl: '/app/email-admin-suite',
           section: 'product',
         },
+        { 
+          id: 'postagate', 
+          name: 'Posta Gate', 
+          description: 'AI-powered email security gateway to stop phishing, malware, and BEC.', 
+          iconName: "https://i.postimg.cc/Y4GWHh1r/Asset-1-4x.png", 
+          launchUrl: '/app/posta-gate',
+          section: 'product',
+        },
          {
           id: 'kubernetes',
           name: 'Kubernetes',

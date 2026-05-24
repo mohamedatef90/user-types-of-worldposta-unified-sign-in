@@ -41,6 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             let expectedPassword = "";
             if (foundUser?.role === 'customer') expectedPassword = "password";
             else if (foundUser?.role === 'admin') expectedPassword = "password_admin";
+            else if (foundUser?.role === 'super_admin') expectedPassword = "password_super_admin";
             else if (foundUser?.role === 'reseller') expectedPassword = "password_reseller";
             
             const isPasswordCorrect = (pass === expectedPassword);
@@ -55,7 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     navigate(redirectPath);
                 } else {
                     const role = userData.role;
-                    if (role === 'admin') navigate('/app/admin-dashboard');
+                    if (role === 'admin' || role === 'super_admin') navigate('/app/admin-dashboard');
                     else if (role === 'reseller') navigate('/app/reseller-dashboard');
                     else navigate('/app/dashboard');
                 }
@@ -122,6 +123,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         let currentExpectedOldPass = "password";
          if (user?.role === 'admin') currentExpectedOldPass = "password_admin";
+         else if (user?.role === 'super_admin') currentExpectedOldPass = "password_super_admin";
          else if (user?.role === 'reseller') currentExpectedOldPass = "password_reseller";
 
         if (user && oldPass === currentExpectedOldPass) { 

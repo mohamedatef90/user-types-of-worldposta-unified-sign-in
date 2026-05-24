@@ -71,7 +71,7 @@ const getAppLauncherItems = (role: User['role'] | undefined): ApplicationCardDat
     if (role === 'customer') {
         return [...baseApps, ...customerApps];
     }
-    if (role === 'admin') {
+    if (role === 'super_admin' || role === 'admin') {
         return [
             { id: 'customers', name: 'Customers', description: 'Search, manage, and view customer accounts.', iconName: 'fas fa-users', launchUrl: '/app/admin/users' },
             { id: 'billing', name: 'Billing Overview', description: 'Access and manage billing for all customer accounts.', iconName: 'fas fa-cash-register', launchUrl: '/app/billing' },
@@ -124,7 +124,7 @@ const HeroSlider: React.FC = () => {
     const handleCtaClick = () => {
         if (isAuthenticated) {
             const role = user?.role;
-            if (role === 'admin') navigate('/app/admin-dashboard');
+            if (role === 'admin' || role === 'super_admin') navigate('/app/admin-dashboard');
             else if (role === 'reseller') navigate('/app/reseller-dashboard');
             else navigate('/app/dashboard');
         } else {
@@ -328,7 +328,7 @@ const DataCenter: React.FC = () => {
     const handleCtaClick = () => {
         if (isAuthenticated) {
             const role = user?.role;
-            if (role === 'admin') navigate('/app/admin-dashboard');
+            if (role === 'admin' || role === 'super_admin') navigate('/app/admin-dashboard');
             else if (role === 'reseller') navigate('/app/reseller-dashboard');
             else navigate('/app/dashboard');
         } else {
@@ -474,7 +474,7 @@ export const LandingPage: React.FC = () => {
     
     const appLauncherItems = getAppLauncherItems(user?.role);
     const userNavItems: NavItem[] = [
-        { name: 'Dashboard', path: user?.role === 'admin' ? '/app/admin-dashboard' : user?.role === 'reseller' ? '/app/reseller-dashboard' : '/app/dashboard', iconName: 'fas fa-home' },
+        { name: 'Dashboard', path: (user?.role === 'super_admin' || user?.role === 'admin') ? '/app/admin-dashboard' : user?.role === 'reseller' ? '/app/reseller-dashboard' : '/app/dashboard', iconName: 'fas fa-home' },
         { name: 'Settings', path: '/app/settings', iconName: 'fas fa-cog' },
     ];
     

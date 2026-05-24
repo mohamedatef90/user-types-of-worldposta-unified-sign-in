@@ -771,7 +771,7 @@ export const ManageSubscriptionContent: React.FC<ManageSubscriptionContentProps>
                         { id: 'addons', label: 'Add-ons & Resources' },
                         ...(subscription.billingMode === 'payg_wallet' ? [{ id: 'payg_wallet', label: 'Wallet' }] : []),
                         ...(subscription.billingMode === 'subscription' ? [{ id: 'renew', label: 'Renewal' }] : []),
-                        ...(user?.role === 'admin' || user?.role === 'reseller' ? [{ id: 'admin_tools', label: 'Admin Tools' }] : []),
+                        ...(user?.role === 'super_admin' || user?.role === 'admin' || user?.role === 'reseller' ? [{ id: 'admin_tools', label: 'Admin Tools' }] : []),
                     ].map(tab => (
                         <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-all ${activeTab === tab.id ? 'border-[#679a41] text-[#679a41] dark:border-emerald-400 dark:text-emerald-400' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>{tab.label}</button>
                     ))}

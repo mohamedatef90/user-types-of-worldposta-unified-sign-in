@@ -7,7 +7,7 @@ export interface User {
   fullName: string;
   email: string;
   companyName: string;
-  role: 'customer' | 'admin' | 'reseller'; // Added role
+  role: 'customer' | 'admin' | 'reseller' | 'super_admin'; // Added role
   status?: 'active' | 'suspended' | 'blocked';
   displayName?: string;
   phoneNumber?: string;

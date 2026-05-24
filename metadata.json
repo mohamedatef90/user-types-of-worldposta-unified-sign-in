@@ -1,6 +1,6 @@
 {
-  "name": "SSO user-types-of-worldposta-unified-sign-in",
-  "description": "Simulations UX for all soultion",
+  "name": "WorldPosta Unified Console",
+  "description": "A comprehensive dashboard for managing WorldPosta user types, authentication, cloud services, and the Posta Gate email security gateway.",
   "requestFramePermissions": [],
   "prompt": ""
 }

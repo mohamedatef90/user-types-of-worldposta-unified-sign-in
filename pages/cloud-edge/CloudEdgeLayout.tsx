@@ -2,92 +2,10 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { Link, useLocation, useSearchParams, NavLink, Outlet } from 'react-router-dom';
 import { Icon, FormField, Button, ToggleSwitch, DoughnutChart, FloatingAppLauncher, FeedbackSystem, Breadcrumbs } from '@/components/ui';
 import { useAuth } from '@/context';
+import { getAppLauncherItems } from '@/lib/appLauncher';
 import type { NavItem, ApplicationCardData } from '@/types';
 import type { User } from '@/types';
 import { getMockUserById } from '@/data';
-
-const getAppLauncherItems = (role: User['role'] | undefined): ApplicationCardData[] => {
-    const baseApps: ApplicationCardData[] = [
-        {
-            id: 'website',
-            name: 'WorldPosta.com',
-            description: 'Visit the main WorldPosta website for news and service information.',
-            iconName: 'https://www.worldposta.com/assets/Newhomeimgs/vds-vs-vms/icons/Asset%201.png',
-            launchUrl: '/'
-        },
-        { 
-            id: 'cloudedge', 
-            name: 'CloudEdge', 
-            description: 'Manage your cloud infrastructure, VMs, and network resources efficiently.',
-            iconName: "https://console.worldposta.com/assets/loginImgs/edgeLogo.png", 
-            launchUrl: '/app/cloud-edge' 
-        },
-        { 
-            id: 'emailadmin', 
-            name: 'Email Admin Suite', 
-            description: 'Administer your email services, mailboxes, users, and domains with ease.',
-            iconName: "https://www.worldposta.com/assets/Posta-Logo.avif", 
-            launchUrl: '/app/email-admin-suite'
-        }
-    ];
-
-    const customerApps: ApplicationCardData[] = [
-        { 
-            id: 'billing', 
-            name: 'Subscriptions', 
-            description: 'Oversee your subscriptions and add new services.', 
-            iconName: 'fas fa-wallet', 
-            launchUrl: '/app/billing',
-        },
-        { 
-            id: 'invoices', 
-            name: 'Invoice History', 
-            description: 'View and download past invoices for your records.', 
-            iconName: 'fas fa-file-invoice', 
-            launchUrl: '/app/invoices',
-        },
-        {
-            id: 'user-management',
-            name: 'Users Management',
-            description: 'Manage team members, user groups, and their permissions.',
-            iconName: 'fas fa-users-cog',
-            launchUrl: '/app/team-management',
-        },
-        {
-            id: 'support',
-            name: 'Support Center',
-            description: 'Access knowledge base or create support tickets with our team.',
-            iconName: 'fas fa-headset',
-            launchUrl: '/app/support',
-        },
-        {
-            id: 'action-logs',
-            name: 'Action Logs',
-            description: 'Review a detailed history of all activities and events on your account.',
-            iconName: 'fas fa-history',
-            launchUrl: '/app/action-logs',
-        },
-    ];
-
-    if (role === 'customer') {
-        return [...baseApps, ...customerApps];
-    }
-    if (role === 'admin') {
-        return [
-            { id: 'customers', name: 'Customers', description: 'Search, manage, and view customer accounts.', iconName: 'fas fa-users', launchUrl: '/app/admin/users' },
-            { id: 'billing', name: 'Billing Overview', description: 'Access and manage billing for all customer accounts.', iconName: 'fas fa-cash-register', launchUrl: '/app/billing' },
-            ...baseApps,
-        ];
-    }
-    if (role === 'reseller') {
-        return [
-            { id: 'customers', name: 'My Customers', description: 'Access and manage your customer accounts.', iconName: 'fas fa-user-friends', launchUrl: '/app/reseller/customers' },
-            { id: 'billing', name: 'Reseller Billing', description: 'Manage your billing, commissions, and payment history.', iconName: 'fas fa-file-invoice-dollar', launchUrl: '/app/billing' },
-            ...baseApps,
-        ];
-    }
-    return baseApps;
-};
 
 interface CloudEdgeSidebarProps {
     isCollapsed: boolean;

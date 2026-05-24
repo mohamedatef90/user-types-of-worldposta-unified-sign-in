@@ -83,6 +83,9 @@ export const LoginPage: React.FC = () => {
         </Button>
       </form>
       <div className="mt-4 space-y-2">
+        <Button onClick={() => handleRoleLogin('superadmin@worldposta.com', 'password_super_admin')} variant="outline" size="md" fullWidth isLoading={isLoading}>
+          Login as Super Admin (Demo)
+        </Button>
         <Button onClick={() => handleRoleLogin('customer@worldposta.com', 'password')} variant="outline" size="md" fullWidth isLoading={isLoading}>
           Login as Customer (Demo)
         </Button>

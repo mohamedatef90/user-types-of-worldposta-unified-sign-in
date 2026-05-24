@@ -4,7 +4,7 @@ import { Card, FormField, Button, Icon, CollapsibleSection, LineChart, BarChart,
 import { mockSmtpLogs, mockMailboxDomains } from '@/data';
 import type { SmtpLogEntry, SmtpLogAction, SmtpLogStatus, AIAnalysisResult } from '@/types';
 import { GoogleGenAI, Type } from "@google/genai";
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAppLayout, useAuth } from '@/context';
 
 
@@ -151,6 +151,8 @@ export const EmailAdminSmtpLogsPage: React.FC = () => {
     const { user } = useAuth();
     const isNewDemoUser = user?.email === 'new.user@worldposta.com';
     const isDisabled = isNewDemoUser && !isDomainVerifiedForDemo;
+    const location = useLocation();
+    const isPostaGate = location.pathname.startsWith('/app/posta-gate');
 
     const [activeTab, setActiveTab] = useState('statistics');
     const [filters, setFilters] = useState<Filters>(initialFilters);
@@ -467,32 +469,34 @@ export const EmailAdminSmtpLogsPage: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div role="tablist" className="inline-flex space-x-1 p-1 bg-gray-200/50 dark:bg-slate-700/50 rounded-lg">
-                <button
-                    role="tab"
-                    aria-selected={activeTab === 'statistics'}
-                    onClick={() => setActiveTab('statistics')}
-                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#679a41] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${
-                        activeTab === 'statistics'
-                            ? 'bg-white dark:bg-slate-800 text-[#679a41] dark:text-emerald-400 shadow-sm'
-                            : 'text-gray-600 dark:text-gray-400 hover:text-[#293c51] dark:hover:text-gray-100'
-                    }`}
-                >
-                    Statistics
-                </button>
-                <button
-                    role="tab"
-                    aria-selected={activeTab === 'logs'}
-                    onClick={() => setActiveTab('logs')}
-                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#679a41] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${
-                        activeTab === 'logs'
-                            ? 'bg-white dark:bg-slate-800 text-[#679a41] dark:text-emerald-400 shadow-sm'
-                            : 'text-gray-600 dark:text-gray-400 hover:text-[#293c51] dark:hover:text-gray-100'
-                    }`}
-                >
-                    SMTP Logs
-                </button>
-            </div>
+            {!isPostaGate && (
+                <div role="tablist" className="inline-flex space-x-1 p-1 bg-gray-200/50 dark:bg-slate-700/50 rounded-lg">
+                    <button
+                        role="tab"
+                        aria-selected={activeTab === 'statistics'}
+                        onClick={() => setActiveTab('statistics')}
+                        className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#679a41] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${
+                            activeTab === 'statistics'
+                                ? 'bg-white dark:bg-slate-800 text-[#679a41] dark:text-emerald-400 shadow-sm'
+                                : 'text-gray-600 dark:text-gray-400 hover:text-[#293c51] dark:hover:text-gray-100'
+                        }`}
+                    >
+                        Statistics
+                    </button>
+                    <button
+                        role="tab"
+                        aria-selected={activeTab === 'logs'}
+                        onClick={() => setActiveTab('logs')}
+                        className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#679a41] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${
+                            activeTab === 'logs'
+                                ? 'bg-white dark:bg-slate-800 text-[#679a41] dark:text-emerald-400 shadow-sm'
+                                : 'text-gray-600 dark:text-gray-400 hover:text-[#293c51] dark:hover:text-gray-100'
+                        }`}
+                    >
+                        SMTP Logs
+                    </button>
+                </div>
+            )}
             
             {activeTab === 'statistics' && (
                 <div className="space-y-8">
@@ -525,6 +529,40 @@ export const EmailAdminSmtpLogsPage: React.FC = () => {
                             <StatCard className="!p-3" title="Attachment Blocked" metric={isDisabled ? "0" : todaySummary.AttachmentBlocked.toLocaleString()} iconName="fas fa-paperclip" iconColor="text-red-400" />
                         </div>
                     </div>
+
+                    {/* POSTA GATE QUICK START SECTION */}
+                    {isPostaGate && (
+                        <div>
+                            <div className="mb-4 flex items-center justify-between">
+                                <h2 className="text-xl font-bold text-[#293c51] dark:text-gray-100 flex items-center gap-2">
+                                    <Icon name="fas fa-rocket" className="text-[#679a41] dark:text-emerald-400" />
+                                    Quick Start
+                                </h2>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                {[
+                                    { label: 'View Mail Log', icon: 'fas fa-list-alt', color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20', hover: 'hover:bg-blue-100 dark:hover:bg-blue-900/40', path: '/app/posta-gate/mail-log' },
+                                    { label: 'Check Quarantine', icon: 'fas fa-shield-alt', color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20', hover: 'hover:bg-amber-100 dark:hover:bg-amber-900/40', path: '/app/posta-gate/quarantine' },
+                                    { label: 'Manage Policies', icon: 'fas fa-gavel', color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20', hover: 'hover:bg-emerald-100 dark:hover:bg-emerald-900/40', path: '/app/posta-gate/policies' },
+                                    { label: 'Protected Users', icon: 'fas fa-user-shield', color: 'text-slate-600 dark:text-slate-400', bg: 'bg-slate-50 dark:bg-slate-800', hover: 'hover:bg-slate-100 dark:hover:bg-slate-700', path: '/app/posta-gate/protected-users' },
+                                ].map((action, i) => (
+                                    <Link 
+                                        to={action.path}
+                                        key={i}
+                                        className={`flex items-center gap-4 p-4 rounded-xl ${action.bg} ${action.hover} transition-all duration-200 group text-left shadow-sm border border-transparent hover:border-white/50 active:scale-[0.98] cursor-pointer`}
+                                    >
+                                        <div className={`w-12 h-12 rounded-lg bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm ${action.color} group-hover:scale-110 transition-transform`}>
+                                            <Icon name={action.icon} className="text-xl" />
+                                        </div>
+                                        <div>
+                                            <div className={`font-bold text-sm ${action.color}`}>{action.label}</div>
+                                            <div className="text-[10px] text-gray-500 font-medium">Quick access tools</div>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* PERIODICAL ANALYSIS SECTION (Grouped Cards) */}
                     <div className="bg-white/30 dark:bg-slate-800/20 p-6 rounded-2xl border border-gray-200/50 dark:border-slate-700/50 space-y-6">
@@ -633,39 +671,111 @@ export const EmailAdminSmtpLogsPage: React.FC = () => {
                                     ))}
                                 </div>
                             </Card>
+
+                            <Card title={isPostaGate ? "Top Attacked Users" : "Top Contributors Today"} className="lg:col-span-2">
+                                <p className="text-sm text-gray-500 dark:text-gray-400 -mt-2 mb-4">{isPostaGate ? "Users receiving the most threats" : "Users with the highest email traffic today"}</p>
+                                <div className="space-y-2">
+                                    {isDisabled ? (
+                                        <div className="text-center py-8 text-sm text-gray-500 dark:text-gray-400">
+                                            <Icon name="fas fa-lock" className="mb-2 text-xl" />
+                                            <p>Data unavailable. Verify domain to see contributors.</p>
+                                        </div>
+                                    ) : topActiveUsers.length > 0 ? topActiveUsers.map((user, index) => (
+                                        <div key={index} className="flex items-center p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50">
+                                            <div className={`flex-shrink-0 w-10 h-10 rounded-full ${isPostaGate ? 'bg-red-500' : 'bg-[#679a41]'} text-white flex items-center justify-center font-bold text-sm mr-3`}>{user.initials}</div>
+                                            <div className="flex-grow">
+                                                <p className="font-semibold text-[#293c51] dark:text-gray-100 truncate max-w-[150px] sm:max-w-full">{user.name}</p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1"><Icon name="fas fa-paper-plane" className="mr-1"/> {user.count.toLocaleString()} {isPostaGate ? 'Threats Blocked' : 'Mails Today'}</p>
+                                            </div>
+                                            <div className="flex items-center gap-2 flex-shrink-0">
+                                                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getRiskTagClass(user.risk)}`}>{user.risk}</span>
+                                            </div>
+                                            <span className="ml-4 w-6 text-right font-bold text-gray-400 dark:text-gray-500">{index + 1}</span>
+                                        </div>
+                                    )) : (
+                                        <div className="text-center py-8 text-sm text-gray-500 dark:text-gray-400">
+                                            {isPostaGate ? "No attacked users found." : "No active users found for this domain."}
+                                        </div>
+                                    )}
+                                </div>
+                            </Card>
+
+                            {isPostaGate && (
+                                <Card title="Top Threat Senders" className="lg:col-span-2">
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 -mt-2 mb-4">External senders with the highest block rate</p>
+                                    <div className="space-y-3">
+                                        {[
+                                            { email: 'attacker@malicious.com', count: 142 },
+                                            { email: 'spoof@lookalike.net', count: 89 },
+                                            { email: 'bot@spam-relay.org', count: 67 },
+                                        ].map((s, i) => (
+                                            <div key={i} className="flex items-center justify-between p-2 rounded hover:bg-gray-50 dark:hover:bg-slate-700/50">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex-shrink-0 w-8 h-8 rounded bg-gray-200 dark:bg-slate-600 flex items-center justify-center text-gray-500">
+                                                        <Icon name="fas fa-biohazard" />
+                                                    </div>
+                                                    <div className="text-sm font-semibold truncate max-w-[180px]">{s.email}</div>
+                                                </div>
+                                                <div className="text-xs font-bold text-red-600 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded">
+                                                    {s.count} blocks
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </Card>
+                            )}
                         </div>
                     </div>
 
-                    {/* SEPARATE ROW FOR TOP CONTRIBUTORS TODAY */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <Card title="Top Contributors Today">
-                            <p className="text-sm text-gray-500 dark:text-gray-400 -mt-2 mb-4">Users with the highest email traffic today</p>
-                            <div className="space-y-2">
-                                {isDisabled ? (
-                                    <div className="text-center py-8 text-sm text-gray-500 dark:text-gray-400">
-                                        <Icon name="fas fa-lock" className="mb-2 text-xl" />
-                                        <p>Data unavailable. Verify domain to see contributors.</p>
-                                    </div>
-                                ) : topActiveUsers.length > 0 ? topActiveUsers.map((user, index) => (
-                                    <div key={index} className="flex items-center p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700/50">
-                                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#679a41] text-white flex items-center justify-center font-bold text-sm mr-3">{user.initials}</div>
-                                        <div className="flex-grow">
-                                            <p className="font-semibold text-[#293c51] dark:text-gray-100 truncate max-w-[150px] sm:max-w-full">{user.name}</p>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1"><Icon name="fas fa-paper-plane" className="mr-1"/> {user.count.toLocaleString()} Mails Today</p>
-                                        </div>
-                                        <div className="flex items-center gap-2 flex-shrink-0">
-                                            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getRiskTagClass(user.risk)}`}>{user.risk}</span>
-                                        </div>
-                                        <span className="ml-4 w-6 text-right font-bold text-gray-400 dark:text-gray-500">{index + 1}</span>
-                                    </div>
-                                )) : (
-                                    <div className="text-center py-8 text-sm text-gray-500 dark:text-gray-400">
-                                        No active users found for this domain today.
-                                    </div>
-                                )}
+                    {/* DOMAIN STATUS TABLE FOR POSTA GATE */}
+                    {isPostaGate && (
+                        <Card title="Domain Protection Status">
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full text-left text-sm whitespace-nowrap">
+                                    <thead className="bg-gray-50 dark:bg-slate-700/50 text-gray-500 uppercase text-xs">
+                                        <tr>
+                                            <th className="px-4 py-3 font-semibold">Domain</th>
+                                            <th className="px-4 py-3 font-semibold text-center">MX</th>
+                                            <th className="px-4 py-3 font-semibold text-center">SPF</th>
+                                            <th className="px-4 py-3 font-semibold text-center">Transport</th>
+                                            <th className="px-4 py-3 font-semibold text-center">DKIM</th>
+                                            <th className="px-4 py-3 font-semibold">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
+                                        {[
+                                            { domain: 'worldposta.com', mx: true, spf: true, transport: true, dkim: true, status: 'Protected' },
+                                            { domain: 'cloud-edge.com', mx: true, spf: true, transport: true, dkim: false, status: 'Warning' },
+                                            { domain: 'demo-corp.net', mx: false, spf: false, transport: false, dkim: false, status: 'Unprotected' },
+                                        ].map((d, i) => (
+                                            <tr key={i} className="hover:bg-gray-50 dark:hover:bg-slate-800/50">
+                                                <td className="px-4 py-3 font-medium text-[#293c51] dark:text-gray-200">{d.domain}</td>
+                                                <td className="px-4 py-3 text-center">
+                                                    {d.mx ? <Icon name="fas fa-check-circle" className="text-green-500"/> : <Icon name="fas fa-times-circle" className="text-red-500"/>}
+                                                </td>
+                                                <td className="px-4 py-3 text-center">
+                                                    {d.spf ? <Icon name="fas fa-check-circle" className="text-green-500"/> : <Icon name="fas fa-times-circle" className="text-red-500"/>}
+                                                </td>
+                                                <td className="px-4 py-3 text-center">
+                                                    {d.transport ? <Icon name="fas fa-check-circle" className="text-green-500"/> : <Icon name="fas fa-times-circle" className="text-red-500"/>}
+                                                </td>
+                                                <td className="px-4 py-3 text-center">
+                                                    {d.dkim ? <Icon name="fas fa-check-circle" className="text-green-500"/> : <Icon name="fas fa-exclamation-triangle" className="text-amber-500"/>}
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                                        d.status === 'Protected' ? 'bg-green-100 text-green-700 dark:bg-green-900/30' :
+                                                        d.status === 'Warning' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30' :
+                                                        'bg-red-100 text-red-700 dark:bg-red-900/30'
+                                                    }`}>{d.status}</span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         </Card>
-                    </div>
+                    )}
                 </div>
             )}
             

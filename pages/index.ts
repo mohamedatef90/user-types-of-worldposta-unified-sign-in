@@ -76,6 +76,7 @@ export * from './products/NetworkingPage';
 export * from './products/StoragePage';
 export * from './products/MonitoringPage';
 export * from './products/BackupPage';
+export * from './dashboard/posta_gate';
 export * from './cloud-edge/security/DistributedFirewallPage';
 export * from './cloud-edge/security/GatewayFirewallPage';
 export * from './cloud-edge/security/IdsIpsMalwarePreventionPage';

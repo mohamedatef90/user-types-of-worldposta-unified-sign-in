@@ -5,6 +5,12 @@ import { AuthProvider, ThemeProvider, useAuth, AppLayoutContext } from '@/contex
 import type { User, AuthContextType, NavItem, UserGroup, ApplicationCardData } from '@/types';
 import { Navbar, Sidebar, BillingSidebar, Spinner, Breadcrumbs, Footer, Icon, Button, Chatbot, FeedbackSystem } from '@/components/ui'; 
 import { getMockUserById } from '@/data';
+import { getAppLauncherItems } from '@/lib/appLauncher';
+import { PackagesManagementPage } from '@/pages/admin/billing/PackagesManagementPage';
+import { PackageFormPage } from '@/pages/admin/billing/PackageFormPage';
+import { AdminSubscriptionsPage } from '@/pages/admin/billing/AdminSubscriptionsPage';
+import { AdminInvoicesPage } from '@/pages/admin/billing/AdminInvoicesPage';
+import { AdminReportsPage } from '@/pages/admin/billing/AdminReportsPage';
 import { 
     LandingPage, 
     LoginPage, 
@@ -79,9 +85,25 @@ import {
     SubscriptionsListView,
     PaymentAndDetailsView,
     AdminToolsView,
-    EmailMigrationPage
+    EmailMigrationPage,
+    PostaGateSidebar,
+    PostaGateMailLogPage,
+    PostaGateForensicsPage,
+    PostaGatePolicyBuilderPage,
+    PostaGateQuarantinePage,
+    PostaGateReportsPage,
+    PostaGateGetStartedPage,
+    PostaGateMSPConsolePage,
+    PostaGateSettingsPage
 } from '@/pages';
 
+
+const BillingBillingRedirect: React.FC<{ user: User | null }> = ({ user }) => {
+    if (user?.role === 'super_admin') {
+        return <Navigate to="admin-packages" replace />;
+    }
+    return <Navigate to="subscriptions" replace />;
+};
 
 const ProtectedRoute: React.FC<{
     user: User | null;
@@ -113,6 +135,14 @@ const ProtectedRoute: React.FC<{
 
 const getNavItems = (role: User['role']): NavItem[] => {
   switch (role) {
+    case 'super_admin':
+      return [
+        { name: 'Dashboard', path: '/app/admin-dashboard', iconName: 'fas fa-home' },
+        { name: 'Admins Management', path: '/app/admin/staff', iconName: 'fas fa-user-tie' },
+        { name: 'Customers', path: '/app/admin/users', iconName: 'fas fa-users' },
+        { name: 'Billings', path: '/app/billing', iconName: 'fas fa-file-invoice-dollar' },
+        { name: 'Support Center', path: '/app/admin/support', iconName: 'fas fa-headset' },
+      ];
     case 'admin':
       return [
         { name: 'Dashboard', path: '/app/admin-dashboard', iconName: 'fas fa-home' },
@@ -139,81 +169,6 @@ const getNavItems = (role: User['role']): NavItem[] => {
   }
 };
 
-const getAppLauncherItems = (role: User['role'] | undefined): ApplicationCardData[] => {
-    const baseApps: ApplicationCardData[] = [
-        {
-            id: 'website',
-            name: 'WorldPosta.com',
-            description: 'Visit the main WorldPosta website for news and service information.',
-            iconName: 'https://www.worldposta.com/assets/Newhomeimgs/vds-vs-vms/icons/Asset%201.png',
-            launchUrl: '/'
-        },
-        { 
-            id: 'cloudedge', 
-            name: 'CloudEdge', 
-            description: 'Manage your cloud infrastructure, VMs, and network resources efficiently.',
-            iconName: "https://console.worldposta.com/assets/loginImgs/edgeLogo.png", 
-            launchUrl: '/app/cloud-edge' 
-        },
-        { 
-            id: 'emailadmin', 
-            name: 'Email Admin Suite', 
-            description: 'Manage mailboxes, security, and settings for your email services.',
-            iconName: "https://www.worldposta.com/assets/Posta-Logo.avif", 
-            launchUrl: '/app/email-admin-suite'
-        }
-    ];
-
-    const customerApps: ApplicationCardData[] = [
-        { 
-            id: 'billing', 
-            name: 'Billing and Subscriptions', 
-            description: 'Oversee your subscriptions and add new services.', 
-            iconName: 'fas fa-wallet', 
-            launchUrl: '/app/billing',
-        },
-        { 
-            id: 'invoices', 
-            name: 'Invoice History', 
-            description: 'View and download past invoices for your records.', 
-            iconName: 'fas fa-file-invoice', 
-            launchUrl: '/app/billing/invoices',
-        },
-        {
-            id: 'support',
-            name: 'Support Center',
-            description: 'Access knowledge base or create support tickets with our team.',
-            iconName: 'fas fa-headset',
-            launchUrl: '/app/support',
-        },
-        {
-            id: 'action-logs',
-            name: 'Action Logs',
-            description: 'Review a detailed history of all activities and events on your account.',
-            iconName: 'fas fa-history',
-            launchUrl: '/app/action-logs',
-        },
-    ];
-
-    if (role === 'customer') {
-        return [...baseApps, ...customerApps];
-    }
-    if (role === 'admin') {
-        return [
-            { id: 'billing', name: 'Billings', description: 'Access and manage billing for all customer accounts.', iconName: 'fas fa-cash-register', launchUrl: '/app/billing' },
-            ...baseApps,
-        ];
-    }
-    if (role === 'reseller') {
-        return [
-            { id: 'billing', name: 'Reseller Billing', description: 'Manage your billing, commissions, and payment history.', iconName: 'fas fa-file-invoice-dollar', launchUrl: '/app/billing' },
-            ...baseApps,
-        ];
-    }
-    return baseApps;
-};
-
-
 const AppLayout: React.FC = () => {
     const { user, logout } = useAuth();
     const location = useLocation();
@@ -222,13 +177,15 @@ const AppLayout: React.FC = () => {
     const [isDesktopSidebarCollapsed, setDesktopSidebarCollapsed] = useState(() => {
         const isEmailAdmin = location.pathname.startsWith('/app/email-admin-suite');
         const isBilling = location.pathname.startsWith('/app/billing');
-        const storageKey = isEmailAdmin ? 'emailAdminSidebarCollapsed' : isBilling ? 'billingSidebarCollapsed' : 'sidebarCollapsed';
+        const isPosta = location.pathname.startsWith('/app/posta-gate');
+        const storageKey = isEmailAdmin ? 'emailAdminSidebarCollapsed' : isBilling ? 'billingSidebarCollapsed' : isPosta ? 'postaGateSidebarCollapsed' : 'sidebarCollapsed';
         return localStorage.getItem(storageKey) === 'true';
     });
     const [isSearchPanelOpen, setSearchPanelOpen] = useState(false);
 
     const isEmailAdminSuite = location.pathname.startsWith('/app/email-admin-suite');
     const isBillingCenter = location.pathname.startsWith('/app/billing');
+    const isPostaGate = location.pathname.startsWith('/app/posta-gate');
     const isNewDemoUser = user?.email === 'new.user@worldposta.com';
     
     const [isStatusBannerVisible, setStatusBannerVisible] = useState(true);
@@ -290,14 +247,14 @@ const AppLayout: React.FC = () => {
     }, [location, updateBannerStatus]);
 
     useEffect(() => {
-        const storageKey = isEmailAdminSuite ? 'emailAdminSidebarCollapsed' : isBillingCenter ? 'billingSidebarCollapsed' : 'sidebarCollapsed';
+        const storageKey = isEmailAdminSuite ? 'emailAdminSidebarCollapsed' : isBillingCenter ? 'billingSidebarCollapsed' : isPostaGate ? 'postaGateSidebarCollapsed' : 'sidebarCollapsed';
         localStorage.setItem(storageKey, String(isDesktopSidebarCollapsed));
-    }, [isDesktopSidebarCollapsed, isEmailAdminSuite, isBillingCenter]);
+    }, [isDesktopSidebarCollapsed, isEmailAdminSuite, isBillingCenter, isPostaGate]);
 
     const viewAsUserId = searchParams.get('viewAsUser');
     const returnToPath = searchParams.get('returnTo');
     const viewedUser = viewAsUserId ? getMockUserById(viewAsUserId) : null;
-    const isViewAsMode = !!(viewAsUserId && returnToPath && viewedUser && user && (user.role === 'admin' || user.role === 'reseller'));
+    const isViewAsMode = !!(viewAsUserId && returnToPath && viewedUser && user && (user.role === 'admin' || user.role === 'super_admin' || user.role === 'reseller'));
     const isCustomerView = useMemo(() => user?.role === 'customer' && !isViewAsMode, [user, isViewAsMode]);
 
     
@@ -313,6 +270,7 @@ const AppLayout: React.FC = () => {
         const pathnames = location.pathname.split('/').filter(x => x);
 
         const BREADCRUMB_LABELS: { [key: string]: string } = {
+            'super_admin': 'Super Admin',
             'admin': 'Admin',
             'users': 'Customer Management',
             'staff': 'Admins Management',
@@ -403,7 +361,7 @@ const AppLayout: React.FC = () => {
         if (pathnames[0] !== 'app') return [];
 
         let homePath = '/app/dashboard';
-        if (user?.role === 'admin') homePath = '/app/admin-dashboard';
+        if (user?.role === 'super_admin' || user?.role === 'admin') homePath = '/app/admin-dashboard';
         if (user?.role === 'reseller') homePath = '/app/reseller-dashboard';
         if (isEmailAdminSuite) homePath = '/app/email-admin-suite';
 
@@ -476,6 +434,12 @@ const AppLayout: React.FC = () => {
                     />
                 ) : isEmailAdminSuite ? (
                     <EmailAdminSidebar 
+                         isCollapsed={isDesktopSidebarCollapsed}
+                         isOpen={isMobileSidebarOpen} 
+                         onClose={() => setMobileSidebarOpen(false)}
+                    />
+                ) : isPostaGate ? (
+                    <PostaGateSidebar 
                          isCollapsed={isDesktopSidebarCollapsed}
                          isOpen={isMobileSidebarOpen} 
                          onClose={() => setMobileSidebarOpen(false)}
@@ -553,6 +517,7 @@ const AppIndexRedirect: React.FC = () => {
     }
   
     switch (user.role) {
+      case 'super_admin':
       case 'admin':
         return <Navigate to="/app/admin-dashboard" replace />;
       case 'reseller':
@@ -584,13 +549,21 @@ const AppRoutes: React.FC = () => {
                     
                     {/* Billing Center Standalone App */}
                     <Route path="billing">
-                        <Route index element={<Navigate to="subscriptions" replace />} />
+                        <Route index element={<BillingBillingRedirect user={user} />} />
                         <Route path="subscriptions" element={<SubscriptionsListView />} />
                         <Route path="invoices" element={<InvoiceHistoryPage />} />
                         <Route path="provisioning" element={<CloudEdgeConfigurationsPage />} />
                         <Route path="posta" element={<EmailAdminSubscriptionsPage />} />
                         <Route path="wallet" element={<PaymentAndDetailsView />} />
-                        <Route path="admin" element={<ProtectedRoute user={user} isAuthenticated={isAuthenticated} isLoading={isLoading} allowedRoles={['admin']}><AdminToolsView /></ProtectedRoute>} />
+                        <Route path="admin" element={<ProtectedRoute user={user} isAuthenticated={isAuthenticated} isLoading={isLoading} allowedRoles={['admin', 'super_admin']}><AdminToolsView /></ProtectedRoute>} />
+                        
+                        {/* Super Admin Billing Routes */}
+                        <Route path="admin-packages" element={<ProtectedRoute user={user} isAuthenticated={isAuthenticated} isLoading={isLoading} allowedRoles={['super_admin']}><PackagesManagementPage /></ProtectedRoute>} />
+                        <Route path="admin-packages/new" element={<ProtectedRoute user={user} isAuthenticated={isAuthenticated} isLoading={isLoading} allowedRoles={['super_admin']}><PackageFormPage /></ProtectedRoute>} />
+                        <Route path="admin-packages/edit/:pkgId" element={<ProtectedRoute user={user} isAuthenticated={isAuthenticated} isLoading={isLoading} allowedRoles={['super_admin']}><PackageFormPage /></ProtectedRoute>} />
+                        <Route path="admin-subscriptions" element={<ProtectedRoute user={user} isAuthenticated={isAuthenticated} isLoading={isLoading} allowedRoles={['super_admin']}><AdminSubscriptionsPage /></ProtectedRoute>} />
+                        <Route path="admin-invoices" element={<ProtectedRoute user={user} isAuthenticated={isAuthenticated} isLoading={isLoading} allowedRoles={['super_admin']}><AdminInvoicesPage /></ProtectedRoute>} />
+                        <Route path="admin-reports" element={<ProtectedRoute user={user} isAuthenticated={isAuthenticated} isLoading={isLoading} allowedRoles={['super_admin']}><AdminReportsPage /></ProtectedRoute>} />
                         
                         <Route path="cloudedge-configurations" element={<Navigate to="../provisioning" replace />} />
                         <Route path="cloudedge-configurations/add" element={<AddCloudEdgeConfigurationPage />} />
@@ -608,8 +581,8 @@ const AppRoutes: React.FC = () => {
                     <Route path="blogs-center" element={<BlogsCenterPage />} />
                     <Route path="blogs-center/:blogId" element={<BlogDetailsPage />} />
                     
-                    <Route path="admin-dashboard" element={<ProtectedRoute user={user} isAuthenticated={isAuthenticated} isLoading={isLoading} allowedRoles={['admin']}><AdminDashboardPage /></ProtectedRoute>} />
-                    <Route path="admin" element={<ProtectedRoute user={user} isAuthenticated={isAuthenticated} isLoading={isLoading} allowedRoles={['admin']}><AdminRouterPage /></ProtectedRoute>}>
+                    <Route path="admin-dashboard" element={<ProtectedRoute user={user} isAuthenticated={isAuthenticated} isLoading={isLoading} allowedRoles={['admin', 'super_admin']}><AdminDashboardPage /></ProtectedRoute>} />
+                    <Route path="admin" element={<ProtectedRoute user={user} isAuthenticated={isAuthenticated} isLoading={isLoading} allowedRoles={['admin', 'super_admin']}><AdminRouterPage /></ProtectedRoute>}>
                         <Route path="staff" element={<StaffManagementPage />} />
                         <Route path="users" element={<UserManagementPage />} />
                         <Route path="users/add" element={<AddCustomerPage />} />
@@ -672,6 +645,18 @@ const AppRoutes: React.FC = () => {
                         <Route path="security/ids-ips" element={<PlaceholderPage />} />
                         <Route path="security/suspicious-traffic" element={<PlaceholderPage />} />
                         <Route path="security/filtering-analysis" element={<PlaceholderPage />} />
+                    </Route>
+
+                    <Route path="posta-gate">
+                        <Route index element={<EmailAdminSmtpLogsPage />} />
+                        <Route path="mail-log" element={<PostaGateMailLogPage />} />
+                        <Route path="forensics" element={<PostaGateForensicsPage />} />
+                        <Route path="policies" element={<PostaGatePolicyBuilderPage />} />
+                        <Route path="quarantine" element={<PostaGateQuarantinePage />} />
+                        <Route path="reports" element={<PostaGateReportsPage />} />
+                        <Route path="get-started" element={<PostaGateGetStartedPage />} />
+                        <Route path="msp" element={<PostaGateMSPConsolePage />} />
+                        <Route path="settings" element={<PostaGateSettingsPage />} />
                     </Route>
                 </Route>
             </Route>

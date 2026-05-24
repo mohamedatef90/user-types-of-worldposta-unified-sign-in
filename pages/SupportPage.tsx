@@ -171,7 +171,7 @@ const ViewTicketModal: React.FC<ViewTicketModalProps> = ({ isOpen, onClose, tick
 
     if (!ticket) return null;
 
-    const isUserAdminOrReseller = currentUser?.role === 'admin' || currentUser?.role === 'reseller';
+    const isUserAdminOrReseller = currentUser?.role === 'super_admin' || currentUser?.role === 'admin' || currentUser?.role === 'reseller';
 
     // FIX: Refactor file handling to use Promise.all for robustness, which may resolve cascading type errors.
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -294,7 +294,7 @@ const ViewTicketModal: React.FC<ViewTicketModalProps> = ({ isOpen, onClose, tick
     );
     
     const Comment: React.FC<{ comment: SupportTicketComment, isInternal?: boolean, onDelete: () => void }> = ({ comment, isInternal, onDelete }) => {
-        const canDelete = currentUser?.role === 'admin' && (currentUser.fullName === comment.author || comment.author === 'Support Staff');
+        const canDelete = (currentUser?.role === 'super_admin' || currentUser?.role === 'admin') && (currentUser.fullName === comment.author || comment.author === 'Support Staff');
 
         return (
             <div className={`p-4 rounded-lg ${isInternal ? 'bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400' : 'bg-gray-50 dark:bg-slate-700/50'}`}>
@@ -754,7 +754,7 @@ export const SupportPage: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     
-    const isAdmin = user?.role === 'admin';
+    const isAdmin = user?.role === 'super_admin' || user?.role === 'admin';
 
     const [filters, setFilters] = useState<SupportFilters>({
         customerId: '',
@@ -869,7 +869,7 @@ export const SupportPage: React.FC = () => {
 
     const handleProceedToCreateTicket = () => {
         setIsKbModalOpen(false);
-        if (user?.role === 'admin') {
+        if (user?.role === 'super_admin' || user?.role === 'admin') {
             navigate('/app/admin/support/create');
         } else {
             setIsCreateModalOpen(true);
