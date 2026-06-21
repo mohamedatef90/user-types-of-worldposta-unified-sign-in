@@ -25,6 +25,8 @@ export * from './FeatureComparison';
 export * from './FaqSection';
 export * from './FeedbackSystem';
 export * from './Chatbot';
+export * from './glowing-ai-chat-assistant';
+export * from './floating-chat-widget-shadcnui';
 export * from './BarChart';
 export * from './LineChart';
 export * from './MultiSegmentDoughnutChart';

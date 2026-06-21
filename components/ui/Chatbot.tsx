@@ -90,13 +90,20 @@ export const Chatbot: React.FC = () => {
     return (
         <>
             <div className={`fixed bottom-6 right-6 z-50 transition-all duration-300 ${isOpen ? 'scale-90 opacity-0 pointer-events-none' : 'scale-100 opacity-100'}`}>
+                <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-[#679a41] to-emerald-400 opacity-75 blur-sm animate-pulse"></div>
                 <Button
                     variant="primary"
                     onClick={() => setIsOpen(true)}
-                    className="rounded-full !p-0 w-12 h-12 shadow-lg hover:scale-110 transform transition-transform hover:shadow-xl"
-                    aria-label="Open chat"
+                    className="relative rounded-full !p-0 w-14 h-14 bg-gradient-to-tr from-[#679a41] to-emerald-500 hover:from-[#5b873a] hover:to-emerald-600 text-white shadow-xl hover:scale-110 transform transition-all hover:shadow-[#679a41]/40 flex items-center justify-center border-2 border-white dark:border-slate-800"
+                    aria-label="Open AI assistant chat"
                 >
-                    <Icon name="fas fa-comment-dots" className="text-lg" />
+                    <div className="relative flex items-center justify-center">
+                        <Icon name="fas fa-robot" className="text-xl" />
+                        <span className="absolute -top-1.5 -right-1.5 flex h-3 w-3">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-400 border border-white dark:border-slate-800"></span>
+                        </span>
+                    </div>
                 </Button>
             </div>
 

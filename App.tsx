@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation, Outlet, useSearchParams, Link } from 'react-router-dom';
 import { AuthProvider, ThemeProvider, useAuth, AppLayoutContext } from '@/context';
 import type { User, AuthContextType, NavItem, UserGroup, ApplicationCardData } from '@/types';
-import { Navbar, Sidebar, BillingSidebar, Spinner, Breadcrumbs, Footer, Icon, Button, Chatbot, FeedbackSystem } from '@/components/ui'; 
+import { Navbar, Sidebar, BillingSidebar, Spinner, Breadcrumbs, Footer, Icon, Button, Chatbot, FloatingChatWidget, FeedbackSystem } from '@/components/ui'; 
 import { getMockUserById } from '@/data';
 import { getAppLauncherItems } from '@/lib/appLauncher';
 import { PackagesManagementPage } from '@/pages/admin/billing/PackagesManagementPage';
@@ -502,7 +502,7 @@ const AppLayout: React.FC = () => {
                     </main>
                 </div>
                 {isCustomerView && !isEmailAdminSuite && !isBillingCenter && <FeedbackSystem position="raised" />}
-                <Chatbot />
+                <FloatingChatWidget />
             </div>
         </AppLayoutContext.Provider>
     );
